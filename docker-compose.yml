@@ -1,7 +1,7 @@
 # Docker Compose Configuration for VSCode Web IDE
 # Production-ready setup with best practices
 
-version: '3.8'
+version: "3.8"
 
 services:
   # Main application service
@@ -59,10 +59,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
     # Health check

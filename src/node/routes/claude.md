@@ -24,6 +24,7 @@ src/node/routes/
 ## Files
 
 ### index.ts
+
 **Purpose:** Central route registration and middleware setup
 
 **Location:** `src/node/routes/index.ts:1`
@@ -31,21 +32,23 @@ src/node/routes/
 **Exports:** `register(app: App, args: DefaultedArgs): Promise<void>`
 
 **Responsibilities:**
+
 1. Register common middleware
 2. Set up static file serving
 3. Register all route handlers
 4. Configure error handling
 
 **Middleware Stack:**
+
 ```typescript
 export const register = async (app: App, args: DefaultedArgs) => {
   // 1. Common middleware (runs on all requests)
   const common: express.RequestHandler = (req, _, next) => {
-    heart.beat()              // Update activity heartbeat
-    req.args = args          // Inject CLI args
-    req.heart = heart        // Inject heartbeat tracker
-    req.settings = settings  // Inject settings provider
-    req.updater = updater    // Inject update checker
+    heart.beat() // Update activity heartbeat
+    req.args = args // Inject CLI args
+    req.heart = heart // Inject heartbeat tracker
+    req.settings = settings // Inject settings provider
+    req.updater = updater // Inject update checker
     next()
   }
 
@@ -56,31 +59,34 @@ export const register = async (app: App, args: DefaultedArgs) => {
   app.router.use(cookieParser())
 
   // 3. Static assets
-  app.router.use('/_static', express.static(rootPath, {
-    cacheControl: commit !== "development",
-    maxAge: commit !== "development" ? '1y' : 0
-  }))
+  app.router.use(
+    "/_static",
+    express.static(rootPath, {
+      cacheControl: commit !== "development",
+      maxAge: commit !== "development" ? "1y" : 0,
+    }),
+  )
 
   // 4. Health checks
-  app.router.use('/healthz', health.router)
-  app.wsRouter.use('/healthz', health.wsRouter.router)
+  app.router.use("/healthz", health.router)
+  app.wsRouter.use("/healthz", health.wsRouter.router)
 
   // 5. Authentication routes
   if (args.auth === AuthType.Password) {
-    app.router.use('/login', login.router)
-    app.router.use('/logout', logout.router)
+    app.router.use("/login", login.router)
+    app.router.use("/logout", logout.router)
   }
 
   // 6. Update notifications
-  app.router.use('/update', update.router)
+  app.router.use("/update", update.router)
 
   // 7. Proxy routes
-  app.router.all('/proxy/:port/*', pathProxy.proxy)
-  app.wsRouter.ws('/proxy/:port/*', pathProxy.wsProxy)
+  app.router.all("/proxy/:port/*", pathProxy.proxy)
+  app.wsRouter.ws("/proxy/:port/*", pathProxy.wsProxy)
 
   // 8. VS Code routes (main IDE)
-  app.router.use('/', vscode.router)
-  app.wsRouter.use('/', vscode.wsRouter.router)
+  app.router.use("/", vscode.router)
+  app.wsRouter.use("/", vscode.wsRouter.router)
 
   // 9. Error handling (must be last)
   app.router.use(errorHandler)
@@ -89,6 +95,7 @@ export const register = async (app: App, args: DefaultedArgs) => {
 ```
 
 **Execution Order:**
+
 1. Common middleware
 2. Cookie parsing
 3. Static files
@@ -101,11 +108,13 @@ export const register = async (app: App, args: DefaultedArgs) => {
 ---
 
 ### vscode.ts
+
 **Purpose:** VS Code IDE integration and serving
 
 **Location:** `src/node/routes/vscode.ts:1`
 
 **Key Features:**
+
 - Lazy-loads VS Code server module
 - Handles workspace/folder opening
 - Generates PWA manifest
@@ -115,9 +124,11 @@ export const register = async (app: App, args: DefaultedArgs) => {
 **Routes:**
 
 #### `GET /manifest.json`
+
 Generates Progressive Web App manifest.
 
 **Response:**
+
 ```json
 {
   "name": "code-server",
@@ -146,29 +157,34 @@ Generates Progressive Web App manifest.
 ---
 
 #### `GET /favicon.ico`
+
 Serves favicon (legacy ICO format).
 
 ---
 
 #### `GET /favicon.svg`
+
 Serves modern SVG favicon.
 
 ---
 
 #### `GET /favicon-dark-support.svg`
+
 Serves dark mode-aware SVG favicon.
 
 ---
 
 #### `GET /` and `GET /vscode/*`
+
 Main VS Code IDE interface.
 
 **Flow:**
+
 ```typescript
 async function handleVSCodeRequest(req, res) {
   // 1. Check authentication
-  if (!await authenticated(req)) {
-    return redirect(req, res, '/login')
+  if (!(await authenticated(req))) {
+    return redirect(req, res, "/login")
   }
 
   // 2. Lazy-load VS Code
@@ -185,6 +201,7 @@ async function handleVSCodeRequest(req, res) {
 ```
 
 **VS Code Loading:**
+
 ```typescript
 async function loadVSCode(req: express.Request): Promise<IVSCodeServerAPI> {
   // Dynamic import of VS Code's server-main.js
@@ -193,14 +210,15 @@ async function loadVSCode(req: express.Request): Promise<IVSCodeServerAPI> {
   const serverModule = await mod.loadCodeWithNls()
 
   return serverModule.createServer(null, {
-    ...await toCodeArgs(req.args),
+    ...(await toCodeArgs(req.args)),
     "accept-server-license-terms": true,
-    "without-connection-token": true
+    "without-connection-token": true,
   })
 }
 ```
 
 **VS Code Server API:**
+
 ```typescript
 interface IVSCodeServerAPI {
   handleRequest(req: express.Request, res: express.Response): Promise<void>
@@ -211,8 +229,9 @@ interface IVSCodeServerAPI {
 ```
 
 **WebSocket Handler:**
+
 ```typescript
-wsRouter.ws('/', async (req: WebsocketRequest) => {
+wsRouter.ws("/", async (req: WebsocketRequest) => {
   const vscode = await ensureVSCodeLoaded(req)
   vscode.handleUpgrade(req, req.ws)
   req.ws.resume()
@@ -224,11 +243,13 @@ wsRouter.ws('/', async (req: WebsocketRequest) => {
 ---
 
 ### login.ts
+
 **Purpose:** Authentication and login page
 
 **Location:** `src/node/routes/login.ts:1`
 
 **Features:**
+
 - Login page rendering
 - Password validation
 - Session cookie creation
@@ -239,9 +260,11 @@ wsRouter.ws('/', async (req: WebsocketRequest) => {
 **Routes:**
 
 #### `GET /login`
+
 Serves login page with i18n support.
 
 **Template Variables:**
+
 ```typescript
 {
   BASE: relativeRoot(req),
@@ -256,19 +279,23 @@ Serves login page with i18n support.
 ```
 
 **Query Parameters:**
+
 - `error` - Error message to display
 - `to` - Redirect target after successful login
 
 **Pages:**
+
 - Modern design: `src/browser/pages/modern-login.html`
 - Legacy design: `src/browser/pages/login.html`
 
 ---
 
 #### `POST /login`
+
 Handles login form submission.
 
 **Request Body:**
+
 ```typescript
 {
   password: string
@@ -277,16 +304,17 @@ Handles login form submission.
 ```
 
 **Flow:**
+
 ```typescript
 async function handleLogin(req, res) {
   // 1. Rate limiting (2/min, 12/hour)
   if (!rateLimit.check(req.ip)) {
-    return res.redirect('/login?error=Too+many+attempts')
+    return res.redirect("/login?error=Too+many+attempts")
   }
 
   // 2. CSRF validation
   if (!csrf.validateToken(req.body._csrf)) {
-    return res.redirect('/login?error=Invalid+token')
+    return res.redirect("/login?error=Invalid+token")
   }
 
   // 3. Password validation
@@ -294,7 +322,7 @@ async function handleLogin(req, res) {
 
   if (!isValid) {
     failedLogins.track(req.ip)
-    return res.redirect('/login?error=Invalid+password')
+    return res.redirect("/login?error=Invalid+password")
   }
 
   // 4. Create session
@@ -302,32 +330,28 @@ async function handleLogin(req, res) {
   res.cookie(CookieKeys.Session, sessionToken, {
     httpOnly: true,
     secure: req.secure,
-    sameSite: 'lax',
-    maxAge: 86400000  // 24 hours
+    sameSite: "lax",
+    maxAge: 86400000, // 24 hours
   })
 
   // 5. Redirect to target
-  const to = req.query.to || '/'
+  const to = req.query.to || "/"
   res.redirect(to)
 }
 ```
 
 **Password Validation:**
+
 ```typescript
-async function validatePassword(
-  password: string,
-  args: DefaultedArgs
-): Promise<boolean> {
+async function validatePassword(password: string, args: DefaultedArgs): Promise<boolean> {
   // Argon2 hashing (modern)
-  if (args['hashed-password']) {
-    return await argon2.verify(args['hashed-password'], password)
+  if (args["hashed-password"]) {
+    return await argon2.verify(args["hashed-password"], password)
   }
 
   // SHA256 (legacy)
-  if (args.password?.startsWith('sha256:')) {
-    const hash = crypto.createHash('sha256')
-      .update(password)
-      .digest('hex')
+  if (args.password?.startsWith("sha256:")) {
+    const hash = crypto.createHash("sha256").update(password).digest("hex")
     return args.password === `sha256:${hash}`
   }
 
@@ -337,15 +361,16 @@ async function validatePassword(
 ```
 
 **Rate Limiting:**
+
 ```typescript
 const loginRateLimiter = new RateLimiter({
   maxRequests: 2,
-  windowMs: 60000  // 2 attempts per minute
+  windowMs: 60000, // 2 attempts per minute
 })
 
 const globalRateLimiter = new RateLimiter({
   maxRequests: 12,
-  windowMs: 3600000  // 12 attempts per hour
+  windowMs: 3600000, // 12 attempts per hour
 })
 ```
 
@@ -354,6 +379,7 @@ const globalRateLimiter = new RateLimiter({
 ---
 
 ### logout.ts
+
 **Purpose:** Session termination
 
 **Location:** `src/node/routes/logout.ts:1`
@@ -361,9 +387,11 @@ const globalRateLimiter = new RateLimiter({
 **Routes:**
 
 #### `GET /logout` and `POST /logout`
+
 Terminates user session.
 
 **Flow:**
+
 ```typescript
 function handleLogout(req, res) {
   // 1. Clear session cookie
@@ -373,11 +401,12 @@ function handleLogout(req, res) {
   res.clearCookie(CookieKeys.CSRF)
 
   // 3. Redirect to login
-  res.redirect('/login')
+  res.redirect("/login")
 }
 ```
 
 **Features:**
+
 - Supports GET and POST methods
 - Clears all authentication cookies
 - Redirects to login page
@@ -387,6 +416,7 @@ function handleLogout(req, res) {
 ---
 
 ### health.ts
+
 **Purpose:** Health check and readiness endpoints
 
 **Location:** `src/node/routes/health.ts:1`
@@ -394,9 +424,11 @@ function handleLogout(req, res) {
 **Routes:**
 
 #### `GET /healthz`
+
 Basic health check.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -411,9 +443,11 @@ Basic health check.
 ---
 
 #### `GET /healthz/ready`
+
 Readiness check (more comprehensive).
 
 **Response:**
+
 ```json
 {
   "status": "ready",
@@ -426,24 +460,28 @@ Readiness check (more comprehensive).
 ```
 
 **Checks:**
+
 - VS Code server loaded
 - Plugin health status
 - External service connections
 
 **HTTP Status:**
+
 - 200 OK if ready
 - 503 Service Unavailable if not ready
 
 ---
 
 #### `WS /healthz`
+
 WebSocket health check.
 
 **Flow:**
+
 ```typescript
-wsRouter.ws('/healthz', async (req: WebsocketRequest) => {
+wsRouter.ws("/healthz", async (req: WebsocketRequest) => {
   wss.handleUpgrade(req, req.ws, req.head, (ws) => {
-    ws.send(JSON.stringify({ status: 'ok' }))
+    ws.send(JSON.stringify({ status: "ok" }))
     ws.close()
     req.ws.resume()
   })
@@ -455,6 +493,7 @@ wsRouter.ws('/healthz', async (req: WebsocketRequest) => {
 ---
 
 ### update.ts
+
 **Purpose:** Update notification endpoint
 
 **Location:** `src/node/routes/update.ts:1`
@@ -462,9 +501,11 @@ wsRouter.ws('/healthz', async (req: WebsocketRequest) => {
 **Routes:**
 
 #### `GET /update`
+
 Checks for available updates.
 
 **Response (update available):**
+
 ```json
 {
   "isLatest": false,
@@ -478,6 +519,7 @@ Checks for available updates.
 ```
 
 **Response (up to date):**
+
 ```json
 {
   "isLatest": true,
@@ -486,11 +528,13 @@ Checks for available updates.
 ```
 
 **Caching:**
+
 - Checks GitHub at most once per 24 hours
 - Cached in settings file
 - Bypassed if `?force=true` query parameter
 
 **Features:**
+
 - Semantic version comparison
 - GitHub API integration
 - Proxy support
@@ -501,6 +545,7 @@ Checks for available updates.
 ---
 
 ### pathProxy.ts
+
 **Purpose:** Port forwarding with relative paths
 
 **Location:** `src/node/routes/pathProxy.ts:1`
@@ -508,9 +553,11 @@ Checks for available updates.
 **Routes:**
 
 #### `ALL /proxy/:port/*`
+
 Proxies HTTP requests to local port.
 
 **Example:**
+
 ```
 Client: GET /proxy/3000/api/data
   ↓
@@ -520,27 +567,30 @@ Local Server: Returns response
 ```
 
 **Features:**
+
 - Supports all HTTP methods
 - WebSocket proxying
 - Error handling
 - Base path rewriting
 
 **Path Rewriting:**
+
 ```typescript
 // Remove /proxy/:port prefix
-const targetPath = req.url.replace(/^\/proxy\/\d+/, '')
+const targetPath = req.url.replace(/^\/proxy\/\d+/, "")
 
 // Forward to localhost
 const targetUrl = `http://localhost:${port}${targetPath}`
 ```
 
 **Error Handling:**
+
 ```typescript
-proxy.on('error', (err, req, res) => {
-  if (err.code === 'ECONNREFUSED') {
+proxy.on("error", (err, req, res) => {
+  if (err.code === "ECONNREFUSED") {
     res.status(502).json({
-      error: 'Service unavailable',
-      port: port
+      error: "Service unavailable",
+      port: port,
     })
   } else {
     res.status(500).json({ error: err.message })
@@ -551,9 +601,11 @@ proxy.on('error', (err, req, res) => {
 ---
 
 #### `WS /proxy/:port/*`
+
 Proxies WebSocket connections to local port.
 
 **Example:**
+
 ```
 Client: WS /proxy/3000/ws
   ↓
@@ -561,8 +613,9 @@ Proxy: WS http://localhost:3000/ws
 ```
 
 **Implementation:**
+
 ```typescript
-wsRouter.ws('/proxy/:port/*', async (req: WebsocketRequest) => {
+wsRouter.ws("/proxy/:port/*", async (req: WebsocketRequest) => {
   const { port } = req.params
   const target = `ws://localhost:${port}${req.path}`
 
@@ -570,11 +623,11 @@ wsRouter.ws('/proxy/:port/*', async (req: WebsocketRequest) => {
 
   wss.handleUpgrade(req, req.ws, req.head, (ws) => {
     // Bidirectional piping
-    ws.on('message', (data) => client.send(data))
-    client.on('message', (data) => ws.send(data))
+    ws.on("message", (data) => client.send(data))
+    client.on("message", (data) => ws.send(data))
 
-    ws.on('close', () => client.close())
-    client.on('close', () => ws.close())
+    ws.on("close", () => client.close())
+    client.on("close", () => ws.close())
 
     req.ws.resume()
   })
@@ -586,6 +639,7 @@ wsRouter.ws('/proxy/:port/*', async (req: WebsocketRequest) => {
 ---
 
 ### domainProxy.ts
+
 **Purpose:** Domain-based proxying for multi-tenant setups
 
 **Location:** `src/node/routes/domainProxy.ts:1`
@@ -593,18 +647,21 @@ wsRouter.ws('/proxy/:port/*', async (req: WebsocketRequest) => {
 **Use Case:** Route requests based on subdomain
 
 **Example:**
+
 ```
 user1.code-server.com → workspace1
 user2.code-server.com → workspace2
 ```
 
 **Features:**
+
 - Subdomain extraction
 - Workspace mapping
 - Custom routing logic
 - Multi-tenant support
 
 **Implementation:**
+
 ```typescript
 app.use(async (req, res, next) => {
   const subdomain = extractSubdomain(req.hostname)
@@ -623,11 +680,13 @@ app.use(async (req, res, next) => {
 ---
 
 ### errors.ts
+
 **Purpose:** Error handling middleware
 
 **Location:** `src/node/routes/errors.ts:1`
 
 **Error Handler:**
+
 ```typescript
 export const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
   // 1. Log error
@@ -637,53 +696,55 @@ export const errorHandler: express.ErrorRequestHandler = (err, req, res, next) =
   if (err instanceof HttpError) {
     return res.status(err.statusCode).json({
       error: err.message,
-      details: err.details
+      details: err.details,
     })
   }
 
   // 3. Handle validation errors
-  if (err.name === 'ValidationError') {
+  if (err.name === "ValidationError") {
     return res.status(400).json({
-      error: 'Validation failed',
-      details: err.details
+      error: "Validation failed",
+      details: err.details,
     })
   }
 
   // 4. Handle authentication errors
-  if (err.message.includes('Unauthorized')) {
+  if (err.message.includes("Unauthorized")) {
     return res.status(401).json({
-      error: 'Unauthorized'
+      error: "Unauthorized",
     })
   }
 
   // 5. Default error response
   res.status(500).json({
-    error: 'Internal server error'
+    error: "Internal server error",
   })
 }
 ```
 
 **WebSocket Error Handler:**
+
 ```typescript
 export const wsErrorHandler = (err, req: WebsocketRequest, next) => {
   logError(logger, err)
 
   if (req.ws) {
-    req.ws.close(1011, err.message)  // Internal error code
+    req.ws.close(1011, err.message) // Internal error code
   }
 }
 ```
 
 **Error Page Rendering:**
+
 ```typescript
 function renderErrorPage(res, statusCode, message) {
-  const html = fs.readFileSync('src/browser/pages/error.html', 'utf-8')
+  const html = fs.readFileSync("src/browser/pages/error.html", "utf-8")
 
   const rendered = replaceTemplates(html, {
     ERROR_CODE: statusCode,
     ERROR_MESSAGE: message,
-    BASE: '/',
-    CS_STATIC_BASE: '/_static'
+    BASE: "/",
+    CS_STATIC_BASE: "/_static",
   })
 
   res.status(statusCode).send(rendered)
@@ -697,23 +758,25 @@ function renderErrorPage(res, statusCode, message) {
 ### Adding Custom Routes
 
 **Before VS Code (specific routes):**
+
 ```typescript
 // In routes/index.ts
-app.router.use('/api/custom', customRouter)  // Add before vscode.router
+app.router.use("/api/custom", customRouter) // Add before vscode.router
 ```
 
 **Route Module Structure:**
+
 ```typescript
 // routes/custom.ts
-import express from 'express'
+import express from "express"
 
 export const router = express.Router()
 
-router.get('/data', async (req, res) => {
-  res.json({ message: 'Custom route' })
+router.get("/data", async (req, res) => {
+  res.json({ message: "Custom route" })
 })
 
-router.post('/action', ensureAuthenticated, async (req, res) => {
+router.post("/action", ensureAuthenticated, async (req, res) => {
   // Handle action
   res.json({ success: true })
 })
@@ -724,11 +787,12 @@ router.post('/action', ensureAuthenticated, async (req, res) => {
 ### Custom Authentication
 
 **Replace login handler:**
+
 ```typescript
 // routes/oauth-login.ts
 export const router = express.Router()
 
-router.get('/oauth/callback', async (req, res) => {
+router.get("/oauth/callback", async (req, res) => {
   const { code } = req.query
 
   // Exchange code for token
@@ -740,7 +804,7 @@ router.get('/oauth/callback', async (req, res) => {
   // Create session
   req.session.user = user
 
-  res.redirect('/')
+  res.redirect("/")
 })
 ```
 
@@ -749,8 +813,9 @@ router.get('/oauth/callback', async (req, res) => {
 ### Proxy Customization
 
 **Custom proxy logic:**
+
 ```typescript
-router.all('/proxy/:service/*', async (req, res) => {
+router.all("/proxy/:service/*", async (req, res) => {
   const { service } = req.params
 
   // Map service to URL
@@ -760,7 +825,7 @@ router.all('/proxy/:service/*', async (req, res) => {
   const response = await fetch(serviceUrl + req.path, {
     method: req.method,
     headers: req.headers,
-    body: req.body
+    body: req.body,
   })
 
   res.status(response.status).send(await response.text())
@@ -805,41 +870,39 @@ router.all('/proxy/:service/*', async (req, res) => {
 ## Testing Routes
 
 ### Unit Tests
+
 ```typescript
-describe('Login Route', () => {
-  it('should render login page', async () => {
-    const response = await request(app).get('/login')
+describe("Login Route", () => {
+  it("should render login page", async () => {
+    const response = await request(app).get("/login")
     expect(response.status).toBe(200)
-    expect(response.text).toContain('Sign In')
+    expect(response.text).toContain("Sign In")
   })
 
-  it('should validate password', async () => {
-    const response = await request(app)
-      .post('/login')
-      .send({ password: 'wrong' })
+  it("should validate password", async () => {
+    const response = await request(app).post("/login").send({ password: "wrong" })
 
     expect(response.status).toBe(302)
-    expect(response.header.location).toContain('error=')
+    expect(response.header.location).toContain("error=")
   })
 })
 ```
 
 ### Integration Tests
+
 ```typescript
-describe('VS Code Route', () => {
-  it('should require authentication', async () => {
-    const response = await request(app).get('/')
+describe("VS Code Route", () => {
+  it("should require authentication", async () => {
+    const response = await request(app).get("/")
     expect(response.status).toBe(302)
-    expect(response.header.location).toBe('/login')
+    expect(response.header.location).toBe("/login")
   })
 
-  it('should serve IDE when authenticated', async () => {
-    const response = await request(app)
-      .get('/')
-      .set('Cookie', validSessionCookie)
+  it("should serve IDE when authenticated", async () => {
+    const response = await request(app).get("/").set("Cookie", validSessionCookie)
 
     expect(response.status).toBe(200)
-    expect(response.text).toContain('vscode')
+    expect(response.text).toContain("vscode")
   })
 })
 ```

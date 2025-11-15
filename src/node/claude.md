@@ -45,11 +45,13 @@ src/node/
 ## Core Entry Points
 
 ### entry.ts
+
 **Purpose:** Main application entry point and mode dispatcher
 
 **Location:** `src/node/entry.ts:1`
 
 **Responsibilities:**
+
 - Parse command-line arguments
 - Determine execution mode
 - Route to appropriate handler
@@ -79,6 +81,7 @@ src/node/
    - Returns immediately
 
 **Flow:**
+
 ```typescript
 async function entry() {
   const args = await parseArgs()
@@ -108,6 +111,7 @@ async function entry() {
 ---
 
 ### main.ts
+
 **Purpose:** Core server orchestration and initialization
 
 **Location:** `src/node/main.ts:1`
@@ -115,9 +119,11 @@ async function entry() {
 **Key Functions:**
 
 #### `runCodeServer(args: DefaultedArgs): Promise<void>`
+
 Main server initialization and startup.
 
 **Steps:**
+
 1. Create Express application
 2. Register routes and middleware
 3. Set up authentication
@@ -127,6 +133,7 @@ Main server initialization and startup.
 7. Handle graceful shutdown
 
 **Code Flow:**
+
 ```typescript
 async function runCodeServer(args: DefaultedArgs): Promise<void> {
   // 1. Create app
@@ -143,7 +150,7 @@ async function runCodeServer(args: DefaultedArgs): Promise<void> {
   const heart = new Heart()
 
   // 5. Handle shutdown
-  process.on('SIGTERM', async () => {
+  process.on("SIGTERM", async () => {
     await server.close()
     await cleanup()
   })
@@ -157,9 +164,11 @@ async function runCodeServer(args: DefaultedArgs): Promise<void> {
 ---
 
 #### `runCodeCli(args: DefaultedArgs): Promise<void>`
+
 Handles VS Code CLI operations.
 
 **Supported Operations:**
+
 - Install extensions
 - Uninstall extensions
 - List installed extensions
@@ -167,27 +176,28 @@ Handles VS Code CLI operations.
 - Enable proposed APIs
 
 **Implementation:**
+
 ```typescript
 async function runCodeCli(args: DefaultedArgs): Promise<void> {
   const vscode = await loadVSCode()
 
-  if (args['install-extension']) {
-    for (const ext of args['install-extension']) {
+  if (args["install-extension"]) {
+    for (const ext of args["install-extension"]) {
       await vscode.installExtension(ext)
       logger.info(`Installed ${ext}`)
     }
   }
 
-  if (args['uninstall-extension']) {
-    for (const ext of args['uninstall-extension']) {
+  if (args["uninstall-extension"]) {
+    for (const ext of args["uninstall-extension"]) {
       await vscode.uninstallExtension(ext)
       logger.info(`Uninstalled ${ext}`)
     }
   }
 
-  if (args['list-extensions']) {
+  if (args["list-extensions"]) {
     const extensions = await vscode.listExtensions()
-    extensions.forEach(ext => console.log(ext.id))
+    extensions.forEach((ext) => console.log(ext.id))
   }
 }
 ```
@@ -197,17 +207,20 @@ async function runCodeCli(args: DefaultedArgs): Promise<void> {
 ---
 
 #### `openInExistingInstance(args: DefaultedArgs): Promise<void>`
+
 Opens files in running instance via IPC.
 
 **Use Case:** User runs `code-server file.txt` when server is already running
 
 **Flow:**
+
 1. Connect to existing instance via socket
 2. Send file paths via IPC
 3. Wait for acknowledgment
 4. Exit
 
 **Benefits:**
+
 - Fast file opening
 - No duplicate servers
 - Seamless user experience
@@ -215,6 +228,7 @@ Opens files in running instance via IPC.
 ---
 
 ### app.ts
+
 **Purpose:** Express application factory and HTTP server creation
 
 **Location:** `src/node/app.ts:1`
@@ -222,18 +236,21 @@ Opens files in running instance via IPC.
 **Key Functions:**
 
 #### `createApp(args: DefaultedArgs): Promise<App>`
+
 Creates and configures Express application.
 
 **Returns:**
+
 ```typescript
 interface App {
-  router: express.Express         // HTTP router
-  wsRouter: WsRouter              // WebSocket router
-  listen(): Promise<Server>       // Start server
+  router: express.Express // HTTP router
+  wsRouter: WsRouter // WebSocket router
+  listen(): Promise<Server> // Start server
 }
 ```
 
 **Configuration:**
+
 ```typescript
 async function createApp(args: DefaultedArgs): Promise<App> {
   const app = express()
@@ -251,12 +268,10 @@ async function createApp(args: DefaultedArgs): Promise<App> {
   const sessionManager = new EditorSessionManager()
 
   // 4. TLS setup (if configured)
-  const server = args.cert
-    ? https.createServer(tlsOptions, app)
-    : http.createServer(app)
+  const server = args.cert ? https.createServer(tlsOptions, app) : http.createServer(app)
 
   // 5. WebSocket upgrade handler
-  server.on('upgrade', (req, socket, head) => {
+  server.on("upgrade", (req, socket, head) => {
     wsRouter.handleUpgrade(req, socket, head)
   })
 
@@ -265,6 +280,7 @@ async function createApp(args: DefaultedArgs): Promise<App> {
 ```
 
 **Security Features:**
+
 - HTTPS support (TLS/SSL)
 - Cookie parsing
 - Body parsing with size limits
@@ -277,6 +293,7 @@ async function createApp(args: DefaultedArgs): Promise<App> {
 ## HTTP & WebSocket
 
 ### http.ts
+
 **Purpose:** HTTP utilities, middleware, and authentication
 
 **Location:** `src/node/http.ts:1`
@@ -284,11 +301,13 @@ async function createApp(args: DefaultedArgs): Promise<App> {
 **Key Functions:**
 
 #### `authenticated(req: express.Request): Promise<boolean>`
+
 Checks if request is authenticated.
 
 **Returns:** `true` if authenticated, `false` otherwise
 
 **Checks:**
+
 ```typescript
 async function authenticated(req: express.Request): Promise<boolean> {
   // 1. Check if auth is disabled
@@ -308,27 +327,31 @@ async function authenticated(req: express.Request): Promise<boolean> {
 ```
 
 **Usage:**
+
 ```typescript
 if (await authenticated(req)) {
   // Proceed
 } else {
-  res.redirect('/login')
+  res.redirect("/login")
 }
 ```
 
 ---
 
 #### `ensureAuthenticated: express.RequestHandler`
+
 Middleware that enforces authentication.
 
 **Behavior:**
+
 - Checks authentication
 - Throws `HttpError` if not authenticated
 - Allows request to proceed if authenticated
 
 **Usage:**
+
 ```typescript
-app.get('/api/data', ensureAuthenticated, async (req, res) => {
+app.get("/api/data", ensureAuthenticated, async (req, res) => {
   // User is authenticated
   res.json(data)
 })
@@ -337,53 +360,63 @@ app.get('/api/data', ensureAuthenticated, async (req, res) => {
 ---
 
 #### `redirect(req: express.Request, to: string): express.Response`
+
 Creates redirect response with proper base path handling.
 
 **Features:**
+
 - Handles base path prefixes
 - Preserves query parameters
 - Relative path resolution
 
 **Usage:**
+
 ```typescript
-redirect(req, '/login?to=/workspace')
+redirect(req, "/login?to=/workspace")
 ```
 
 ---
 
 #### `replaceTemplates(content: string, variables: Record<string, any>): string`
+
 Replaces `{{VARIABLE}}` placeholders in HTML templates.
 
 **Variables:**
+
 ```typescript
 replaceTemplates(html, {
-  BASE: '/base',
-  CS_STATIC_BASE: '/_static',
-  ERROR: 'Invalid credentials',
-  I18N_LOGIN: 'Sign In',
-  OPTIONS: JSON.stringify({ theme: 'dark' })
+  BASE: "/base",
+  CS_STATIC_BASE: "/_static",
+  ERROR: "Invalid credentials",
+  I18N_LOGIN: "Sign In",
+  OPTIONS: JSON.stringify({ theme: "dark" }),
 })
 ```
 
 **Pattern:** `{{VARIABLE_NAME}}`
 
 **Usage:**
+
 ```html
 <h1>{{I18N_TITLE}}</h1>
 <p class="error">{{ERROR}}</p>
-<script>const config = {{OPTIONS}};</script>
+<script>
+  const config = {{OPTIONS}};
+</script>
 ```
 
 ---
 
 #### `relativeRoot(req: express.Request): string`
+
 Calculates relative path to root based on request path.
 
 **Examples:**
+
 ```typescript
-relativeRoot('/foo/bar')      // '../..'
-relativeRoot('/api')          // '..'
-relativeRoot('/')             // '.'
+relativeRoot("/foo/bar") // '../..'
+relativeRoot("/api") // '..'
+relativeRoot("/") // '.'
 ```
 
 **Use Case:** Generating relative asset paths in templates
@@ -391,6 +424,7 @@ relativeRoot('/')             // '.'
 ---
 
 ### wsRouter.ts
+
 **Purpose:** Express-compatible WebSocket routing system
 
 **Location:** `src/node/wsRouter.ts:1`
@@ -400,12 +434,14 @@ relativeRoot('/')             // '.'
 **Solution:** Custom router that mimics Express API for WebSockets
 
 **Features:**
+
 - Route-based WebSocket handling
 - Middleware support
 - Path parameter extraction
 - Express-compatible API
 
 **Interface:**
+
 ```typescript
 class WsRouter {
   ws(path: string, ...handlers: WsHandler[]): void
@@ -416,11 +452,12 @@ class WsRouter {
 ```
 
 **Usage:**
+
 ```typescript
 const wsRouter = new WsRouter()
 
 // Route with path parameters
-wsRouter.ws('/api/chat/:roomId', async (req: WsRequest) => {
+wsRouter.ws("/api/chat/:roomId", async (req: WsRequest) => {
   const { roomId } = req.params
 
   wss.handleUpgrade(req, req.ws, req.head, (ws) => {
@@ -431,8 +468,8 @@ wsRouter.ws('/api/chat/:roomId', async (req: WsRequest) => {
 
 // Nested routers
 const apiRouter = new WsRouter()
-apiRouter.ws('/chat', handler)
-wsRouter.use('/api', apiRouter)
+apiRouter.ws("/chat", handler)
+wsRouter.use("/api", apiRouter)
 
 // Middleware
 wsRouter.use(async (req, res, next) => {
@@ -457,6 +494,7 @@ wsRouter.use(async (req, res, next) => {
 ## VS Code Integration
 
 ### vscodeSocket.ts
+
 **Purpose:** Editor session management and workspace tracking
 
 **Location:** `src/node/vscodeSocket.ts:1`
@@ -468,15 +506,18 @@ wsRouter.use(async (req, res, next) => {
 **Classes:**
 
 #### `EditorSessionManager`
+
 Manages VS Code editor sessions.
 
 **Features:**
+
 - Tracks workspace → socket mappings
 - Connection verification
 - Session cleanup
 - Multi-workspace support
 
 **Interface:**
+
 ```typescript
 class EditorSessionManager {
   getSocketPath(workspace: string): string | undefined
@@ -488,14 +529,15 @@ class EditorSessionManager {
 ```
 
 **Usage:**
+
 ```typescript
 const manager = new EditorSessionManager()
 
 // Register session
-manager.addSession('/home/user/project', '/tmp/vscode-socket-123')
+manager.addSession("/home/user/project", "/tmp/vscode-socket-123")
 
 // Get socket for workspace
-const socketPath = manager.getSocketPath('/home/user/project')
+const socketPath = manager.getSocketPath("/home/user/project")
 
 // Verify connection still alive
 if (await manager.verifyConnection(socketPath)) {
@@ -508,21 +550,24 @@ if (await manager.verifyConnection(socketPath)) {
 ---
 
 #### `EditorSessionManagerClient`
+
 Client for communicating with session manager.
 
 **Use Case:** Child processes query parent for existing sessions
 
 **Methods:**
+
 - `getSession(workspace)` - Get socket path for workspace
 - `addSession(workspace, socket)` - Register new session
 - `removeSession(workspace)` - Remove session
 
 **IPC Communication:**
+
 ```typescript
 const client = new EditorSessionManagerClient()
 
 // Check for existing session
-const existing = await client.getSession('/home/user/project')
+const existing = await client.getSession("/home/user/project")
 if (existing) {
   // Reuse existing editor
 } else {
@@ -535,6 +580,7 @@ if (existing) {
 ## Proxying & Networking
 
 ### proxy.ts
+
 **Purpose:** HTTP proxy for port forwarding
 
 **Location:** `src/node/proxy.ts:1`
@@ -544,23 +590,26 @@ if (existing) {
 **Example:** User runs dev server on port 3000, proxy makes it available at `/proxy/3000/`
 
 **Features:**
+
 - Port forwarding
 - WebSocket proxying
 - Error handling
 - Base path rewriting
 
 **Usage:**
+
 ```typescript
-import { proxy, wsProxy } from './src/node/proxy'
+import { proxy, wsProxy } from "./src/node/proxy"
 
 // HTTP proxy
-app.all('/proxy/:port/*', proxy)
+app.all("/proxy/:port/*", proxy)
 
 // WebSocket proxy
-wsRouter.ws('/proxy/:port/*', wsProxy)
+wsRouter.ws("/proxy/:port/*", wsProxy)
 ```
 
 **Request Flow:**
+
 ```
 Client: GET /proxy/3000/api/data
   ↓
@@ -572,9 +621,10 @@ Proxy: Returns to client
 ```
 
 **Path Rewriting:**
+
 ```typescript
 // Remove /proxy/:port prefix
-const targetPath = req.url.replace(/^\/proxy\/\d+/, '')
+const targetPath = req.url.replace(/^\/proxy\/\d+/, "")
 
 // Proxy to localhost:port
 const target = `http://localhost:${port}${targetPath}`
@@ -585,6 +635,7 @@ const target = `http://localhost:${port}${targetPath}`
 ---
 
 ### socket.ts
+
 **Purpose:** TLS socket proxy for child processes
 
 **Location:** `src/node/socket.ts:1`
@@ -592,6 +643,7 @@ const target = `http://localhost:${port}${targetPath}`
 **Use Case:** Parent process handles TLS, forwards to child via Unix socket
 
 **Architecture:**
+
 ```
 Client (HTTPS) → Parent Process (TLS termination)
                       ↓ (Unix socket)
@@ -599,11 +651,13 @@ Client (HTTPS) → Parent Process (TLS termination)
 ```
 
 **Benefits:**
+
 - Centralized TLS handling
 - Child processes don't need certificates
 - Simplified certificate management
 
 **Interface:**
+
 ```typescript
 class SocketProxyProvider {
   constructor(socketPath: string)
@@ -613,10 +667,11 @@ class SocketProxyProvider {
 ```
 
 **Usage:**
-```typescript
-const provider = new SocketProxyProvider('/tmp/vscode-socket')
 
-server.on('connection', (socket) => {
+```typescript
+const provider = new SocketProxyProvider("/tmp/vscode-socket")
+
+server.on("connection", (socket) => {
   provider.proxy(socket)
 })
 ```
@@ -626,6 +681,7 @@ server.on('connection', (socket) => {
 ## Services
 
 ### heart.ts
+
 **Purpose:** Activity heartbeat tracking and idle timeout
 
 **Location:** `src/node/heart.ts:1`
@@ -633,17 +689,20 @@ server.on('connection', (socket) => {
 **Use Case:** Shut down server after period of inactivity
 
 **Features:**
+
 - File-based heartbeat indicator
 - Connection counting
 - Idle timeout support
 - State change events
 
 **States:**
+
 1. **Alive** - Recent activity
 2. **Expired** - No activity for timeout period
 3. **Unknown** - Heartbeat file doesn't exist
 
 **Interface:**
+
 ```typescript
 class Heart {
   beat(): void
@@ -655,8 +714,9 @@ class Heart {
 ```
 
 **Usage:**
+
 ```typescript
-const heart = new Heart('/tmp/code-server-heartbeat', 30000)
+const heart = new Heart("/tmp/code-server-heartbeat", 30000)
 
 // Every request
 app.use((req, res, next) => {
@@ -665,19 +725,20 @@ app.use((req, res, next) => {
 })
 
 // Monitor connections
-server.on('connection', () => heart.addConnection())
-server.on('close', () => heart.removeConnection())
+server.on("connection", () => heart.addConnection())
+server.on("close", () => heart.removeConnection())
 
 // Handle idle timeout
 heart.onStateChange((state) => {
   if (state === State.Expired && heart.connectionCount === 0) {
-    logger.info('Idle timeout reached, shutting down')
+    logger.info("Idle timeout reached, shutting down")
     process.exit(0)
   }
 })
 ```
 
 **Heartbeat File:**
+
 ```
 /tmp/code-server-heartbeat
 Content: timestamp of last activity
@@ -686,11 +747,13 @@ Content: timestamp of last activity
 ---
 
 ### update.ts
+
 **Purpose:** GitHub-based update checking
 
 **Location:** `src/node/update.ts:1`
 
 **Features:**
+
 - Checks GitHub releases for updates
 - Semantic version comparison
 - 24-hour caching
@@ -698,6 +761,7 @@ Content: timestamp of last activity
 - Settings persistence
 
 **Interface:**
+
 ```typescript
 class UpdateProvider {
   constructor(
@@ -718,8 +782,9 @@ interface Update {
 ```
 
 **Usage:**
+
 ```typescript
-const updater = new UpdateProvider('4.10.0', 'coder/code-server')
+const updater = new UpdateProvider("4.10.0", "coder/code-server")
 
 const update = await updater.checkForUpdates()
 if (update) {
@@ -729,6 +794,7 @@ if (update) {
 ```
 
 **Caching:**
+
 - Checks GitHub at most once per 24 hours
 - Cached in settings file
 - Prevents rate limiting
@@ -738,6 +804,7 @@ if (update) {
 ---
 
 ### settings.ts
+
 **Purpose:** JSON-based settings persistence
 
 **Location:** `src/node/settings.ts:1`
@@ -745,6 +812,7 @@ if (update) {
 **Use Case:** Store non-critical settings (last update check, query params, etc.)
 
 **Features:**
+
 - Type-safe settings
 - File-based storage
 - Shallow merge on writes
@@ -752,6 +820,7 @@ if (update) {
 - Atomic writes
 
 **Interface:**
+
 ```typescript
 class SettingsProvider<T> {
   constructor(settingsPath: string)
@@ -762,6 +831,7 @@ class SettingsProvider<T> {
 ```
 
 **Usage:**
+
 ```typescript
 interface AppSettings {
   lastUpdateCheck?: number
@@ -769,7 +839,7 @@ interface AppSettings {
   dismissedNotifications?: string[]
 }
 
-const settings = new SettingsProvider<AppSettings>('/config/settings.json')
+const settings = new SettingsProvider<AppSettings>("/config/settings.json")
 
 // Read settings
 const data = await settings.read()
@@ -777,11 +847,12 @@ console.log(data.lastUpdateCheck)
 
 // Write settings (merges)
 await settings.write({
-  lastUpdateCheck: Date.now()
+  lastUpdateCheck: Date.now(),
 })
 ```
 
 **Storage Format:**
+
 ```json
 {
   "lastUpdateCheck": 1620000000000,
@@ -793,6 +864,7 @@ await settings.write({
 ```
 
 **Error Handling:**
+
 - File doesn't exist → returns `{}`
 - Invalid JSON → returns `{}`
 - Write errors → throws exception
@@ -802,11 +874,13 @@ await settings.write({
 ## Process Management
 
 ### wrapper.ts
+
 **Purpose:** Process lifecycle management and graceful shutdown
 
 **Location:** `src/node/wrapper.ts:1`
 
 **Features:**
+
 - Parent/child process communication
 - Graceful shutdown handling
 - Signal handling (SIGTERM, SIGINT)
@@ -814,6 +888,7 @@ await settings.write({
 - Handshake protocol for IPC
 
 **Architecture:**
+
 ```
 Parent Process
     ↓ spawn
@@ -823,14 +898,16 @@ Main Application
 ```
 
 **Prevents:**
+
 - Abrupt process termination
 - Data loss on shutdown
 - Incomplete cleanup
 
 **Signal Handling:**
+
 ```typescript
-process.on('SIGTERM', async () => {
-  logger.info('Received SIGTERM, shutting down gracefully')
+process.on("SIGTERM", async () => {
+  logger.info("Received SIGTERM, shutting down gracefully")
 
   // 1. Stop accepting new connections
   await server.close()
@@ -845,13 +922,14 @@ process.on('SIGTERM', async () => {
 ```
 
 **IPC Handshake:**
+
 ```typescript
 // Child sends ready signal
-process.send({ type: 'ready', pid: process.pid })
+process.send({ type: "ready", pid: process.pid })
 
 // Parent acknowledges
-parentProcess.on('message', (msg) => {
-  if (msg.type === 'ack') {
+parentProcess.on("message", (msg) => {
+  if (msg.type === "ack") {
     // Start accepting requests
   }
 })
@@ -862,6 +940,7 @@ parentProcess.on('message', (msg) => {
 ## Utilities
 
 ### util.ts
+
 **Purpose:** Node-specific utility functions
 
 **Location:** `src/node/util.ts:1`
@@ -869,9 +948,11 @@ parentProcess.on('message', (msg) => {
 **Functions:**
 
 #### `getFirstString(value: string | string[] | undefined): string | undefined`
+
 Extracts first string from query parameter.
 
 **Usage:**
+
 ```typescript
 // req.query.workspace could be string or string[]
 const workspace = getFirstString(req.query.workspace)
@@ -880,6 +961,7 @@ const workspace = getFirstString(req.query.workspace)
 ---
 
 #### `normalize(path: string): string`
+
 Normalizes file system paths.
 
 **Platform-aware:** Handles Windows and Unix paths
@@ -887,26 +969,30 @@ Normalizes file system paths.
 ---
 
 #### `isDirectory(path: string): Promise<boolean>`
+
 Checks if path is a directory.
 
 ---
 
 #### `ensureDirectory(path: string): Promise<void>`
+
 Creates directory if it doesn't exist (recursive).
 
 ---
 
 ### constants.ts
+
 **Purpose:** Application-wide constants
 
 **Location:** `src/node/constants.ts:1`
 
 **Constants:**
+
 ```typescript
 export const DEFAULT_PORT = 8080
-export const DEFAULT_HOST = '127.0.0.1'
-export const SESSION_COOKIE_NAME = 'code-server-session'
-export const CSRF_COOKIE_NAME = 'code-server-csrf'
+export const DEFAULT_HOST = "127.0.0.1"
+export const SESSION_COOKIE_NAME = "code-server-session"
+export const CSRF_COOKIE_NAME = "code-server-csrf"
 export const HEARTBEAT_INTERVAL = 60000
 export const UPDATE_CHECK_INTERVAL = 86400000
 ```
@@ -916,49 +1002,53 @@ export const UPDATE_CHECK_INTERVAL = 86400000
 ## CLI Arguments
 
 ### cli.ts
+
 **Purpose:** Command-line argument parsing and validation
 
 **Location:** `src/node/cli.ts:1`
 
 **Exports:**
+
 ```typescript
 interface Args {
   // Server
-  'bind-addr'?: string
+  "bind-addr"?: string
   port?: number
   host?: string
   socket?: string
 
   // Authentication
-  auth?: 'password' | 'none'
+  auth?: "password" | "none"
   password?: string
-  'hashed-password'?: string
+  "hashed-password"?: string
 
   // HTTPS
   cert?: string
-  'cert-key'?: string
+  "cert-key"?: string
 
   // Paths
-  'user-data-dir'?: string
-  'extensions-dir'?: string
+  "user-data-dir"?: string
+  "extensions-dir"?: string
 
   // Features
-  'disable-telemetry'?: boolean
-  'disable-update-check'?: boolean
+  "disable-telemetry"?: boolean
+  "disable-update-check"?: boolean
 
   // VS Code args
-  _: string[]  // Positional args passed to VS Code
+  _: string[] // Positional args passed to VS Code
 }
 ```
 
 **Parsing:**
+
 ```typescript
-import { parse } from './src/node/cli'
+import { parse } from "./src/node/cli"
 
 const args = await parse(process.argv.slice(2))
 ```
 
 **Validation:**
+
 - Port range (1-65535)
 - Path existence
 - Mutually exclusive options
@@ -969,7 +1059,9 @@ const args = await parse(process.argv.slice(2))
 ## Extension Integration Points
 
 ### Custom Routes
+
 Add routes via plugin system:
+
 ```typescript
 async init(context: PluginContext): Promise<void> {
   const { app } = context
@@ -981,7 +1073,9 @@ async init(context: PluginContext): Promise<void> {
 ```
 
 ### Custom Authentication
+
 Replace or extend authentication:
+
 ```typescript
 app.use(async (req, res, next) => {
   // Custom auth logic
@@ -991,9 +1085,11 @@ app.use(async (req, res, next) => {
 ```
 
 ### Session Management
+
 Access session manager:
+
 ```typescript
-const sessionManager = context.services.get('sessionManager')
+const sessionManager = context.services.get("sessionManager")
 const sessions = sessionManager.getAllSessions()
 ```
 
@@ -1002,28 +1098,31 @@ const sessions = sessionManager.getAllSessions()
 ## Best Practices
 
 ### Error Handling
+
 ```typescript
-app.get('/api/data', async (req, res, next) => {
+app.get("/api/data", async (req, res, next) => {
   try {
     const data = await fetchData()
     res.json(data)
   } catch (error) {
-    next(error)  // Pass to error handler
+    next(error) // Pass to error handler
   }
 })
 ```
 
 ### Authentication
+
 ```typescript
-app.get('/api/secure', ensureAuthenticated, async (req, res) => {
+app.get("/api/secure", ensureAuthenticated, async (req, res) => {
   // User is authenticated
 })
 ```
 
 ### Logging
+
 ```typescript
-logger.info('Server started', { port, host })
-logger.error('Failed to connect', { error: error.message })
+logger.info("Server started", { port, host })
+logger.error("Failed to connect", { error: error.message })
 ```
 
 ---
@@ -1043,6 +1142,7 @@ The VSCode Web IDE now supports multi-user deployment through a comprehensive se
 ### Overview
 
 The multi-user system enables:
+
 - **Two deployment modes:** Single-user (default) and Multi-user (opt-in)
 - **Complete user isolation:** Separate filesystems, settings, extensions per user
 - **Production-ready security:** User authentication, session management, audit logging
@@ -1054,11 +1154,13 @@ The multi-user system enables:
 ---
 
 ### services/types.ts
+
 **Purpose:** TypeScript type definitions for all multi-user services
 
 **Location:** `src/node/services/types.ts:1`
 
 **Key Types:**
+
 - `DeploymentMode` - Single or Multi deployment mode
 - `User` - User entity with authentication data
 - `Session` - User session with expiration
@@ -1070,18 +1172,21 @@ The multi-user system enables:
 **Lines:** 400+
 
 **Usage:**
+
 ```typescript
-import { User, Session, DeploymentMode } from '../services/types'
+import { User, Session, DeploymentMode } from "../services/types"
 ```
 
 ---
 
 ### services/auth/AuthService.ts
+
 **Purpose:** User authentication and session management
 
 **Location:** `src/node/services/auth/AuthService.ts:1`
 
 **Responsibilities:**
+
 - User creation, update, deletion
 - Password hashing with Argon2
 - Login/logout with audit logging
@@ -1091,6 +1196,7 @@ import { User, Session, DeploymentMode } from '../services/types'
 - Session limits per user
 
 **Key Methods:**
+
 ```typescript
 class AuthService {
   // User management
@@ -1118,6 +1224,7 @@ class AuthService {
 **Lines:** 350+
 
 **Security Features:**
+
 - Argon2 password hashing
 - Password complexity validation
 - Session expiration
@@ -1127,15 +1234,18 @@ class AuthService {
 ---
 
 ### services/auth/UserRepository.ts
+
 **Purpose:** User data persistence layer
 
 **Location:** `src/node/services/auth/UserRepository.ts:1`
 
 **Implementations:**
+
 1. **MemoryUserRepository** - In-memory storage for development
 2. **DatabaseUserRepository** - Database storage for production (SQLite, PostgreSQL, MySQL)
 
 **Key Methods:**
+
 ```typescript
 interface UserRepository {
   create(user: User): Promise<User>
@@ -1152,6 +1262,7 @@ interface UserRepository {
 **Lines:** 200+
 
 **Features:**
+
 - Multiple backend support
 - Username/email uniqueness validation
 - Pagination support
@@ -1160,16 +1271,19 @@ interface UserRepository {
 ---
 
 ### services/session/SessionStore.ts
+
 **Purpose:** Session storage with multiple backend support
 
 **Location:** `src/node/services/session/SessionStore.ts:1`
 
 **Implementations:**
+
 1. **MemorySessionStore** - In-memory with automatic cleanup (development/single-instance)
 2. **RedisSessionStore** - Redis backend for distributed deployments
 3. **DatabaseSessionStore** - Database backend for persistent sessions
 
 **Key Methods:**
+
 ```typescript
 interface SessionStore {
   // CRUD operations
@@ -1195,12 +1309,14 @@ interface SessionStore {
 **Lines:** 400+
 
 **Features:**
+
 - TTL-based expiration
 - Automatic cleanup
 - Factory pattern for easy switching
 - User session tracking
 
 **Usage:**
+
 ```typescript
 // Development (in-memory)
 const sessionStore = new MemorySessionStore()
@@ -1215,15 +1331,18 @@ const sessionStore = new DatabaseSessionStore(dbConnection)
 ---
 
 ### services/isolation/UserIsolationManager.ts
+
 **Purpose:** User environment isolation and resource management
 
 **Location:** `src/node/services/isolation/UserIsolationManager.ts:1`
 
 **Strategies:**
+
 1. **DirectoryIsolationStrategy** - OS-level directory isolation (Phase 1 ready)
 2. **ContainerIsolationStrategy** - Container-based isolation (Phase 2 placeholder)
 
 **Key Methods:**
+
 ```typescript
 interface IsolationStrategy {
   // User environment setup
@@ -1250,6 +1369,7 @@ interface IsolationStrategy {
 **Lines:** 300+
 
 **Features:**
+
 - Per-user directory structure
 - Storage quota enforcement
 - Resource usage tracking
@@ -1257,6 +1377,7 @@ interface IsolationStrategy {
 - Default settings initialization
 
 **Directory Structure (per user):**
+
 ```
 /var/lib/code-server/users/
 └── {user-id}/
@@ -1270,16 +1391,19 @@ interface IsolationStrategy {
 ---
 
 ### services/audit/AuditLogger.ts
+
 **Purpose:** Security audit logging
 
 **Location:** `src/node/services/audit/AuditLogger.ts:1`
 
 **Implementations:**
+
 1. **FileAuditLogger** - File-based logging with daily rotation
 2. **DatabaseAuditLogger** - Database-backed queryable audit trail
 3. **CompositeAuditLogger** - Multiple backends simultaneously
 
 **Key Methods:**
+
 ```typescript
 interface AuditLogger {
   log(event: AuditEvent): Promise<void>
@@ -1291,6 +1415,7 @@ interface AuditLogger {
 **Lines:** 300+
 
 **Logged Events:**
+
 - User login/logout (success/failure)
 - User creation/update/deletion
 - Session creation/expiration/revocation
@@ -1300,6 +1425,7 @@ interface AuditLogger {
 - Admin actions
 
 **Features:**
+
 - Daily log rotation (file mode)
 - Queryable audit trail (database mode)
 - Event filtering and pagination
@@ -1307,11 +1433,12 @@ interface AuditLogger {
 - User activity tracking
 
 **Usage:**
+
 ```typescript
 // File-based logging
 const auditLogger = new FileAuditLogger({
-  logDir: '/var/log/code-server/audit',
-  rotateDaily: true
+  logDir: "/var/log/code-server/audit",
+  rotateDaily: true,
 })
 
 // Database logging
@@ -1324,11 +1451,13 @@ const auditLogger = new CompositeAuditLogger([fileLogger, dbLogger])
 ---
 
 ### services/config/MultiUserConfig.ts
+
 **Purpose:** Multi-user configuration loading and validation
 
 **Location:** `src/node/services/config/MultiUserConfig.ts:1`
 
 **Responsibilities:**
+
 - Load configuration from YAML/JSON files
 - Apply environment variable overrides
 - Validate configuration
@@ -1336,6 +1465,7 @@ const auditLogger = new CompositeAuditLogger([fileLogger, dbLogger])
 - Provide default values
 
 **Key Methods:**
+
 ```typescript
 class MultiUserConfigLoader {
   static async load(args: CodeServerArgs): Promise<MultiUserConfig | null>
@@ -1346,11 +1476,13 @@ class MultiUserConfigLoader {
 **Lines:** 250+
 
 **Configuration Sources (priority order):**
+
 1. Environment variables (highest priority)
 2. Configuration file (YAML/JSON)
 3. Default values (lowest priority)
 
 **Example Configuration:**
+
 ```yaml
 deployment-mode: multi
 
@@ -1377,6 +1509,7 @@ multi-user:
 ```
 
 **Environment Variable Overrides:**
+
 ```bash
 CODE_SERVER_DEPLOYMENT_MODE=multi
 CODE_SERVER_DB_TYPE=postgres
@@ -1390,17 +1523,20 @@ ADMIN_PASSWORD=SecurePassword123!
 ---
 
 ### services/MultiUserService.ts
+
 **Purpose:** Service container and orchestration
 
 **Location:** `src/node/services/MultiUserService.ts:1`
 
 **Responsibilities:**
+
 - Initialize all multi-user services
 - Manage service lifecycle
 - Provide unified service interface
 - Handle cleanup
 
 **Key Methods:**
+
 ```typescript
 class MultiUserService {
   public authService: AuthService
@@ -1415,6 +1551,7 @@ class MultiUserService {
 ```
 
 **Usage:**
+
 ```typescript
 // In main.ts
 const multiUserConfig = await MultiUserConfigLoader.load(args)
@@ -1423,9 +1560,9 @@ if (multiUserConfig) {
 
   // Create initial admin user
   await MultiUserConfigLoader.createInitialAdmin(multiUserService.authService, {
-    username: 'admin',
-    email: 'admin@example.com',
-    password: 'SecurePassword123!'
+    username: "admin",
+    email: "admin@example.com",
+    password: "SecurePassword123!",
   })
 
   // Pass to app
@@ -1438,12 +1575,14 @@ if (multiUserConfig) {
 ### Integration with Main Server
 
 **Modified Files:**
+
 1. `src/node/main.ts` - Load multi-user config, create services
 2. `src/node/app.ts` - Inject multi-user service into requests
 3. `src/node/routes/login.ts` - Use multi-user auth for login
 4. `src/node/routes/users.ts` - New user management API (to be created)
 
 **Request Flow (Multi-User Mode):**
+
 ```
 HTTP Request
     ↓
@@ -1465,6 +1604,7 @@ Response
 Multi-user mode requires the following database tables:
 
 **Users Table:**
+
 ```sql
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
@@ -1481,6 +1621,7 @@ CREATE TABLE users (
 ```
 
 **Sessions Table:**
+
 ```sql
 CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
@@ -1498,6 +1639,7 @@ CREATE TABLE sessions (
 ```
 
 **Audit Events Table:**
+
 ```sql
 CREATE TABLE audit_events (
   id TEXT PRIMARY KEY,
@@ -1518,6 +1660,7 @@ CREATE TABLE audit_events (
 ### API Endpoints (Multi-User Mode)
 
 **User Management:**
+
 - `GET /api/users/me` - Get current user info
 - `GET /api/users` - List all users (admin only)
 - `POST /api/users` - Create new user (admin only)
@@ -1525,10 +1668,12 @@ CREATE TABLE audit_events (
 - `DELETE /api/users/:userId` - Delete user (admin only)
 
 **Session Management:**
+
 - `GET /api/users/me/sessions` - List active sessions
 - `DELETE /api/users/me/sessions/:sessionId` - Revoke session
 
 **Resource Management:**
+
 - `GET /api/users/me/usage` - Get resource usage
 
 **See:** [IMPLEMENTATION_GUIDE.md](../../IMPLEMENTATION_GUIDE.md) for complete API documentation
@@ -1538,6 +1683,7 @@ CREATE TABLE audit_events (
 ### Configuration Examples
 
 **Development (SQLite + Memory):**
+
 ```yaml
 deployment-mode: multi
 multi-user:
@@ -1551,6 +1697,7 @@ multi-user:
 ```
 
 **Production (PostgreSQL + Redis):**
+
 ```yaml
 deployment-mode: multi
 multi-user:
@@ -1573,12 +1720,13 @@ multi-user:
 ### Testing Multi-User Services
 
 **Unit Tests:**
-```typescript
-import { AuthService } from '../services/auth/AuthService'
-import { MemoryUserRepository } from '../services/auth/UserRepository'
-import { MemorySessionStore } from '../services/session/SessionStore'
 
-describe('Multi-User System', () => {
+```typescript
+import { AuthService } from "../services/auth/AuthService"
+import { MemoryUserRepository } from "../services/auth/UserRepository"
+import { MemorySessionStore } from "../services/session/SessionStore"
+
+describe("Multi-User System", () => {
   let authService: AuthService
 
   beforeEach(() => {
@@ -1587,13 +1735,13 @@ describe('Multi-User System', () => {
     authService = new AuthService(userRepo, sessionStore)
   })
 
-  it('should create a user', async () => {
+  it("should create a user", async () => {
     const user = await authService.createUser({
-      username: 'testuser',
-      email: 'test@example.com',
-      password: 'Password123!',
+      username: "testuser",
+      email: "test@example.com",
+      password: "Password123!",
     })
-    expect(user.username).toBe('testuser')
+    expect(user.username).toBe("testuser")
   })
 })
 ```
@@ -1603,17 +1751,20 @@ describe('Multi-User System', () => {
 ### Performance Considerations
 
 **Single-User Mode:**
+
 - No overhead - services not loaded
 - Same performance as before
 - Backward compatible
 
 **Multi-User Mode:**
+
 - Database queries for authentication
 - Session store lookups
 - Resource usage tracking
 - Minimal overhead (<10ms per request)
 
 **Optimizations:**
+
 - Session caching
 - Database connection pooling
 - Lazy loading of user environments
@@ -1637,15 +1788,19 @@ describe('Multi-User System', () => {
 ### Troubleshooting
 
 **Issue: "Database locked" (SQLite)**
+
 - Solution: Use PostgreSQL for concurrent writes or ensure single-threaded access
 
 **Issue: "Session not found" after restart**
+
 - Solution: Use Redis or database session store for persistence
 
 **Issue: "Storage quota exceeded"**
+
 - Solution: Increase quota or clean up user files
 
 **Issue: "Permission denied" on user directories**
+
 - Solution: Check directory permissions (should be 0700)
 
 **See:** [IMPLEMENTATION_GUIDE.md#9-troubleshooting](../../IMPLEMENTATION_GUIDE.md#9-troubleshooting) for complete troubleshooting guide
@@ -1655,6 +1810,7 @@ describe('Multi-User System', () => {
 ### Documentation
 
 **Comprehensive Documentation:**
+
 - [MULTI_USER_README.md](../../MULTI_USER_README.md) - Overview and quick start
 - [MULTI_USER_ARCHITECTURE_DESIGN.md](../../MULTI_USER_ARCHITECTURE_DESIGN.md) - Complete architecture (70+ pages)
 - [IMPLEMENTATION_GUIDE.md](../../IMPLEMENTATION_GUIDE.md) - Step-by-step integration

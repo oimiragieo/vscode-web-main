@@ -34,6 +34,7 @@ test/
 **Location:** `test/unit/`
 
 **Structure:**
+
 - `test/unit/common/` - Tests for shared utilities
 - `test/unit/node/` - Tests for server code
 - `test/unit/node/routes/` - Tests for route handlers
@@ -41,9 +42,11 @@ test/
 **Example Tests:**
 
 #### test/unit/common/emitter.test.ts
+
 Tests the event emitter system.
 
 **Test Cases:**
+
 - Emitter subscription and emission
 - Multiple subscribers
 - Error handling in callbacks
@@ -51,8 +54,8 @@ Tests the event emitter system.
 - Async callback support
 
 ```typescript
-describe('Emitter', () => {
-  it('should emit events to subscribers', async () => {
+describe("Emitter", () => {
+  it("should emit events to subscribers", async () => {
     const emitter = new Emitter<string>()
     let received: string | undefined
 
@@ -60,26 +63,28 @@ describe('Emitter', () => {
       received = value
     })
 
-    await emitter.emit('test')
-    expect(received).toBe('test')
+    await emitter.emit("test")
+    expect(received).toBe("test")
   })
 
-  it('should handle errors in callbacks', async () => {
+  it("should handle errors in callbacks", async () => {
     const emitter = new Emitter<string>()
 
     emitter.event(() => {
-      throw new Error('Test error')
+      throw new Error("Test error")
     })
 
-    await expect(emitter.emit('test')).resolves.toBeUndefined()
+    await expect(emitter.emit("test")).resolves.toBeUndefined()
   })
 })
 ```
 
 #### test/unit/node/http.test.ts
+
 Tests HTTP utilities and middleware.
 
 **Test Cases:**
+
 - Authentication checking
 - Template replacement
 - Relative root calculation
@@ -87,9 +92,11 @@ Tests HTTP utilities and middleware.
 - Redirect logic
 
 #### test/unit/node/cli.test.ts
+
 Tests CLI argument parsing.
 
 **Test Cases:**
+
 - Argument parsing
 - Default values
 - Validation
@@ -108,9 +115,11 @@ Tests CLI argument parsing.
 **Example Tests:**
 
 #### test/integration/installExtension.test.ts
+
 Tests extension installation flow.
 
 **Test Cases:**
+
 - Install extension via CLI
 - Uninstall extension
 - List installed extensions
@@ -118,23 +127,22 @@ Tests extension installation flow.
 - Marketplace integration
 
 ```typescript
-describe('Extension Installation', () => {
-  it('should install extension', async () => {
-    const result = await runCodeServerCommand([
-      '--install-extension',
-      'ms-python.python'
-    ])
+describe("Extension Installation", () => {
+  it("should install extension", async () => {
+    const result = await runCodeServerCommand(["--install-extension", "ms-python.python"])
 
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toContain('successfully installed')
+    expect(result.stdout).toContain("successfully installed")
   })
 })
 ```
 
 #### test/integration/help.test.ts
+
 Tests help command output.
 
 **Test Cases:**
+
 - `--help` flag
 - `--version` flag
 - Usage information
@@ -153,9 +161,11 @@ Tests help command output.
 **Test Files:**
 
 #### test/e2e/login.test.ts
+
 Tests login functionality.
 
 **Test Cases:**
+
 - Login page renders
 - Password validation
 - Session creation
@@ -187,9 +197,11 @@ test('should show error for wrong password', async ({ page }) => {
 ---
 
 #### test/e2e/logout.test.ts
+
 Tests logout functionality.
 
 **Test Cases:**
+
 - Logout clears session
 - Redirects to login
 - Cannot access IDE after logout
@@ -197,9 +209,11 @@ Tests logout functionality.
 ---
 
 #### test/e2e/codeServer.test.ts
+
 Tests core IDE functionality.
 
 **Test Cases:**
+
 - Editor loads
 - File creation
 - File editing
@@ -210,9 +224,11 @@ Tests core IDE functionality.
 ---
 
 #### test/e2e/terminal.test.ts
+
 Tests integrated terminal.
 
 **Test Cases:**
+
 - Terminal opens
 - Command execution
 - Output display
@@ -220,22 +236,24 @@ Tests integrated terminal.
 - Terminal splitting
 
 ```typescript
-test('should execute command in terminal', async ({ codeServerPage }) => {
+test("should execute command in terminal", async ({ codeServerPage }) => {
   await codeServerPage.openTerminal()
 
   await codeServerPage.executeTerminalCommand('echo "Hello World"')
 
   const output = await codeServerPage.getTerminalOutput()
-  expect(output).toContain('Hello World')
+  expect(output).toContain("Hello World")
 })
 ```
 
 ---
 
 #### test/e2e/extensions.test.ts
+
 Tests extension functionality.
 
 **Test Cases:**
+
 - Extension marketplace access
 - Extension installation
 - Extension activation
@@ -245,9 +263,11 @@ Tests extension functionality.
 ---
 
 #### test/e2e/downloads.test.ts
+
 Tests file download functionality.
 
 **Test Cases:**
+
 - Download single file
 - Download multiple files
 - Download folder as ZIP
@@ -256,9 +276,11 @@ Tests file download functionality.
 ---
 
 #### test/e2e/uploads.test.ts
+
 Tests file upload functionality.
 
 **Test Cases:**
+
 - Upload single file
 - Upload multiple files
 - Drag and drop upload
@@ -267,9 +289,11 @@ Tests file upload functionality.
 ---
 
 #### test/e2e/webview.test.ts
+
 Tests webview functionality.
 
 **Test Cases:**
+
 - Webview creation
 - Webview communication
 - Webview navigation
@@ -278,9 +302,11 @@ Tests webview functionality.
 ---
 
 #### test/e2e/routes.test.ts
+
 Tests HTTP routes.
 
 **Test Cases:**
+
 - Health check endpoint
 - Static file serving
 - Proxy routes
@@ -290,9 +316,11 @@ Tests HTTP routes.
 ---
 
 #### test/e2e/github.test.ts
+
 Tests GitHub integration.
 
 **Test Cases:**
+
 - GitHub authentication
 - Repository cloning
 - Pull request creation
@@ -303,9 +331,11 @@ Tests GitHub integration.
 ## Test Utilities (test/utils/)
 
 ### helpers.ts
+
 Common test helper functions.
 
 **Functions:**
+
 - `setup()` - Test environment setup
 - `teardown()` - Cleanup after tests
 - `createTempDir()` - Create temporary directory
@@ -315,9 +345,11 @@ Common test helper functions.
 ---
 
 ### integration.ts
+
 Integration test utilities.
 
 **Functions:**
+
 - `runCodeServer()` - Start test code-server instance
 - `makeRequest()` - Make HTTP request to test server
 - `authenticate()` - Authenticate for testing
@@ -326,20 +358,24 @@ Integration test utilities.
 ---
 
 ### httpserver.ts
+
 HTTP test server utilities.
 
 **Purpose:** Create mock HTTP servers for testing proxying
 
 **Functions:**
+
 - `createTestServer()` - Create test HTTP server
 - `createTestWSServer()` - Create test WebSocket server
 
 ---
 
 ### runCodeServerCommand.ts
+
 Utility for running code-server CLI commands.
 
 **Function:**
+
 ```typescript
 async function runCodeServerCommand(args: string[]): Promise<{
   stdout: string
@@ -349,17 +385,20 @@ async function runCodeServerCommand(args: string[]): Promise<{
 ```
 
 **Usage:**
+
 ```typescript
-const result = await runCodeServerCommand(['--version'])
-expect(result.stdout).toContain('4.10.0')
+const result = await runCodeServerCommand(["--version"])
+expect(result.stdout).toContain("4.10.0")
 ```
 
 ---
 
 ### globalE2eSetup.ts
+
 Global Playwright test setup.
 
 **Responsibilities:**
+
 - Start code-server before E2E tests
 - Set up test environment
 - Configure browser contexts
@@ -367,9 +406,11 @@ Global Playwright test setup.
 ---
 
 ### globalUnitSetup.ts
+
 Global Jest test setup.
 
 **Responsibilities:**
+
 - Set up test environment variables
 - Mock external dependencies
 - Configure test database (if applicable)
@@ -377,12 +418,14 @@ Global Jest test setup.
 ---
 
 ### constants.ts
+
 Test constants.
 
 **Constants:**
+
 ```typescript
-export const TEST_PASSWORD = 'test-password'
-export const TEST_USER = 'test-user'
+export const TEST_PASSWORD = "test-password"
+export const TEST_USER = "test-user"
 export const TEST_PORT = 8081
 export const TIMEOUT = 30000
 ```
@@ -392,11 +435,13 @@ export const TIMEOUT = 30000
 ## Page Object Models (test/e2e/models/)
 
 ### CodeServer.ts
+
 Page object model for code-server.
 
 **Purpose:** Encapsulate browser interactions
 
 **Methods:**
+
 - `login(password)` - Perform login
 - `openFile(path)` - Open file in editor
 - `createFile(path, content)` - Create new file
@@ -409,27 +454,28 @@ Page object model for code-server.
 - `saveFile()` - Save current file
 
 **Example:**
+
 ```typescript
 export class CodeServer {
   constructor(private page: Page) {}
 
   async login(password: string): Promise<void> {
-    await this.page.goto('/login')
+    await this.page.goto("/login")
     await this.page.fill('input[name="password"]', password)
     await this.page.click('button[type="submit"]')
-    await this.page.waitForURL('/')
+    await this.page.waitForURL("/")
   }
 
   async openFile(filePath: string): Promise<void> {
-    await this.executeCommand('workbench.action.quickOpen')
+    await this.executeCommand("workbench.action.quickOpen")
     await this.page.keyboard.type(filePath)
-    await this.page.keyboard.press('Enter')
+    await this.page.keyboard.press("Enter")
   }
 
   async executeCommand(command: string): Promise<void> {
-    await this.page.keyboard.press('F1')
+    await this.page.keyboard.press("F1")
     await this.page.keyboard.type(command)
-    await this.page.keyboard.press('Enter')
+    await this.page.keyboard.press("Enter")
   }
 }
 ```
@@ -441,6 +487,7 @@ export class CodeServer {
 **Purpose:** Test extension for E2E tests
 
 **Features:**
+
 - Simple extension for testing extension API
 - Activation events
 - Commands
@@ -449,15 +496,12 @@ export class CodeServer {
 **File:** `test/e2e/extensions/test-extension/extension.ts`
 
 ```typescript
-import * as vscode from 'vscode'
+import * as vscode from "vscode"
 
 export function activate(context: vscode.ExtensionContext) {
-  const command = vscode.commands.registerCommand(
-    'test-extension.helloWorld',
-    () => {
-      vscode.window.showInformationMessage('Hello from test extension!')
-    }
-  )
+  const command = vscode.commands.registerCommand("test-extension.helloWorld", () => {
+    vscode.window.showInformationMessage("Hello from test extension!")
+  })
 
   context.subscriptions.push(command)
 }
@@ -470,9 +514,11 @@ export function deactivate() {}
 ## Configuration Files
 
 ### playwright.config.ts
+
 Playwright configuration.
 
 **Settings:**
+
 - Browser types (Chromium, Firefox, WebKit)
 - Viewport sizes
 - Test timeout
@@ -483,32 +529,34 @@ Playwright configuration.
 
 ```typescript
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   timeout: 30000,
   use: {
-    baseURL: 'http://localhost:8081',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    baseURL: "http://localhost:8081",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] }
-    }
-  ]
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+  ],
 })
 ```
 
 ---
 
 ### package.json
+
 Test dependencies.
 
 **Dependencies:**
+
 - jest
 - @playwright/test
 - ts-jest
@@ -518,9 +566,11 @@ Test dependencies.
 ---
 
 ### tsconfig.json
+
 TypeScript configuration for tests.
 
 **Settings:**
+
 - Includes test files
 - References main tsconfig.json
 - Allows importing from src/
@@ -597,11 +647,13 @@ npm run test:coverage
 **Target:** 60% code coverage
 
 **Report Formats:**
+
 - HTML (coverage/index.html)
 - Console summary
 - LCOV for CI tools
 
 **Viewing Coverage:**
+
 ```bash
 npm run test:coverage
 open coverage/index.html
@@ -612,11 +664,13 @@ open coverage/index.html
 ## CI Integration
 
 Tests run automatically on:
+
 - Pull requests
 - Main branch commits
 - Release tags
 
 **GitHub Actions Workflow:**
+
 ```yaml
 - name: Run tests
   run: |
@@ -695,46 +749,46 @@ npx playwright show-trace trace.zip
 ### Testing Async Code
 
 ```typescript
-test('async operation', async () => {
+test("async operation", async () => {
   const result = await asyncFunction()
-  expect(result).toBe('expected')
+  expect(result).toBe("expected")
 })
 ```
 
 ### Testing Errors
 
 ```typescript
-test('should throw error', async () => {
-  await expect(functionThatThrows()).rejects.toThrow('Error message')
+test("should throw error", async () => {
+  await expect(functionThatThrows()).rejects.toThrow("Error message")
 })
 ```
 
 ### Testing HTTP Endpoints
 
 ```typescript
-test('GET /api/data', async () => {
-  const response = await request(app).get('/api/data')
+test("GET /api/data", async () => {
+  const response = await request(app).get("/api/data")
 
   expect(response.status).toBe(200)
-  expect(response.body).toEqual({ data: 'value' })
+  expect(response.body).toEqual({ data: "value" })
 })
 ```
 
 ### Testing WebSockets
 
 ```typescript
-test('websocket connection', async () => {
-  const ws = new WebSocket('ws://localhost:8081/ws')
+test("websocket connection", async () => {
+  const ws = new WebSocket("ws://localhost:8081/ws")
 
-  await new Promise(resolve => ws.on('open', resolve))
+  await new Promise((resolve) => ws.on("open", resolve))
 
-  ws.send('test message')
+  ws.send("test message")
 
-  const response = await new Promise(resolve => {
-    ws.on('message', resolve)
+  const response = await new Promise((resolve) => {
+    ws.on("message", resolve)
   })
 
-  expect(response).toBe('expected response')
+  expect(response).toBe("expected response")
 })
 ```
 

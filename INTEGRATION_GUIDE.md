@@ -78,7 +78,7 @@ CMD ["start"]
 #### Docker Compose
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   ide:
     image: vscode-web-ide:latest
@@ -128,23 +128,23 @@ spec:
         app: vscode-ide
     spec:
       containers:
-      - name: ide
-        image: vscode-web-ide:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ide-secrets
-              key: password
-        volumeMounts:
-        - name: data
-          mountPath: /home/coder/.local/share/code-server
+        - name: ide
+          image: vscode-web-ide:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ide-secrets
+                  key: password
+          volumeMounts:
+            - name: data
+              mountPath: /home/coder/.local/share/code-server
       volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: vscode-data-pvc
+        - name: data
+          persistentVolumeClaim:
+            claimName: vscode-data-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -154,8 +154,8 @@ spec:
   selector:
     app: vscode-ide
   ports:
-  - port: 80
-    targetPort: 8080
+    - port: 80
+      targetPort: 8080
   type: LoadBalancer
 ```
 
@@ -171,20 +171,20 @@ metadata:
     nginx.ingress.kubernetes.io/websocket-services: vscode-ide-service
 spec:
   tls:
-  - hosts:
-    - ide.yourdomain.com
-    secretName: ide-tls
+    - hosts:
+        - ide.yourdomain.com
+      secretName: ide-tls
   rules:
-  - host: ide.yourdomain.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: vscode-ide-service
-            port:
-              number: 80
+    - host: ide.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vscode-ide-service
+                port:
+                  number: 80
 ```
 
 ### 3. NPM Package (Embedded)
@@ -198,42 +198,45 @@ npm install @vscode-web-ide/core
 #### Integrate into Express App
 
 ```typescript
-import express from 'express'
-import { createIDEMiddleware } from '@vscode-web-ide/core'
+import express from "express"
+import { createIDEMiddleware } from "@vscode-web-ide/core"
 
 const app = express()
 
 // Mount IDE at /ide path
-app.use('/ide', createIDEMiddleware({
-  auth: {
-    type: 'password',
-    password: process.env.IDE_PASSWORD
-  },
-  basePath: '/ide',
-  userDataDir: './data/ide'
-}))
+app.use(
+  "/ide",
+  createIDEMiddleware({
+    auth: {
+      type: "password",
+      password: process.env.IDE_PASSWORD,
+    },
+    basePath: "/ide",
+    userDataDir: "./data/ide",
+  }),
+)
 
 app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000')
-  console.log('IDE available at http://localhost:3000/ide')
+  console.log("Server running on http://localhost:3000")
+  console.log("IDE available at http://localhost:3000/ide")
 })
 ```
 
 #### Use Plugin System
 
 ```typescript
-import { WebIDE, BasePlugin } from '@vscode-web-ide/core'
+import { WebIDE, BasePlugin } from "@vscode-web-ide/core"
 
 // Create custom plugin
 class MyAuthPlugin extends BasePlugin {
   metadata = {
-    name: 'my-auth',
-    version: '1.0.0',
-    description: 'Custom authentication'
+    name: "my-auth",
+    version: "1.0.0",
+    description: "Custom authentication",
   }
 
   async init(context) {
-    context.app.use('/auth', this.authMiddleware)
+    context.app.use("/auth", this.authMiddleware)
   }
 
   authMiddleware = (req, res, next) => {
@@ -245,7 +248,7 @@ class MyAuthPlugin extends BasePlugin {
 // Start IDE with plugin
 const ide = new WebIDE({
   port: 8080,
-  plugins: [new MyAuthPlugin()]
+  plugins: [new MyAuthPlugin()],
 })
 
 await ide.start()
@@ -327,17 +330,17 @@ labels:
 Deploy separate instances for each user/tenant:
 
 ```typescript
-import { WebIDE } from '@vscode-web-ide/core'
+import { WebIDE } from "@vscode-web-ide/core"
 
 async function createTenantIDE(tenantId: string, port: number) {
   const ide = new WebIDE({
     port,
     auth: {
-      type: 'password',
-      password: getTenantPassword(tenantId)
+      type: "password",
+      password: getTenantPassword(tenantId),
     },
     userDataDir: `/data/tenants/${tenantId}`,
-    workspaceDir: `/workspace/${tenantId}`
+    workspaceDir: `/workspace/${tenantId}`,
   })
 
   await ide.start()
@@ -345,8 +348,8 @@ async function createTenantIDE(tenantId: string, port: number) {
 }
 
 // Create IDE for each tenant
-const tenant1 = await createTenantIDE('tenant-1', 8081)
-const tenant2 = await createTenantIDE('tenant-2', 8082)
+const tenant1 = await createTenantIDE("tenant-1", 8081)
+const tenant2 = await createTenantIDE("tenant-2", 8082)
 ```
 
 ### Pattern 3: Ephemeral/Session-Based
@@ -354,7 +357,7 @@ const tenant2 = await createTenantIDE('tenant-2', 8082)
 Create temporary IDE instances:
 
 ```typescript
-import { WebIDE } from '@vscode-web-ide/core'
+import { WebIDE } from "@vscode-web-ide/core"
 
 class IDESessionManager {
   private sessions = new Map()
@@ -363,9 +366,9 @@ class IDESessionManager {
     const port = await this.findFreePort()
     const ide = new WebIDE({
       port,
-      auth: { type: 'none' }, // Auth handled at proxy level
+      auth: { type: "none" }, // Auth handled at proxy level
       userDataDir: `/tmp/ide-sessions/${userId}`,
-      idleTimeout: 3600 // 1 hour
+      idleTimeout: 3600, // 1 hour
     })
 
     await ide.start()
@@ -495,14 +498,14 @@ kubectl create secret generic ide-secrets \
 
 ### HTTP Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/login` | GET | Login page |
-| `/login` | POST | Authenticate |
-| `/logout` | POST | Logout |
-| `/healthz` | GET | Health check |
-| `/update` | GET | Update check |
-| `/proxy/:port` | ALL | Port forwarding |
+| Endpoint       | Method | Description     |
+| -------------- | ------ | --------------- |
+| `/login`       | GET    | Login page      |
+| `/login`       | POST   | Authenticate    |
+| `/logout`      | POST   | Logout          |
+| `/healthz`     | GET    | Health check    |
+| `/update`      | GET    | Update check    |
+| `/proxy/:port` | ALL    | Port forwarding |
 
 ### Plugin API
 
@@ -525,11 +528,11 @@ interface IPlugin {
 
 ```typescript
 // pages/api/ide/[...path].ts
-import { createIDEMiddleware } from '@vscode-web-ide/core'
+import { createIDEMiddleware } from "@vscode-web-ide/core"
 
 const ideMiddleware = createIDEMiddleware({
-  auth: { type: 'none' }, // Use Next.js auth
-  basePath: '/api/ide'
+  auth: { type: "none" }, // Use Next.js auth
+  basePath: "/api/ide",
 })
 
 export default ideMiddleware
@@ -538,16 +541,16 @@ export default ideMiddleware
 ### Example 2: Custom Authentication
 
 ```typescript
-import { WebIDE } from '@vscode-web-ide/core'
-import { verifyJWT } from './auth'
+import { WebIDE } from "@vscode-web-ide/core"
+import { verifyJWT } from "./auth"
 
 const ide = new WebIDE({ port: 8080 })
 
 ide.app.use((req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1]
+  const token = req.headers.authorization?.split(" ")[1]
 
   if (!verifyJWT(token)) {
-    return res.status(401).json({ error: 'Unauthorized' })
+    return res.status(401).json({ error: "Unauthorized" })
   }
 
   next()
@@ -559,24 +562,24 @@ await ide.start()
 ### Example 3: Cloud Storage Integration
 
 ```typescript
-import { BasePlugin } from '@vscode-web-ide/core'
-import { S3Client } from '@aws-sdk/client-s3'
+import { BasePlugin } from "@vscode-web-ide/core"
+import { S3Client } from "@aws-sdk/client-s3"
 
 class S3StoragePlugin extends BasePlugin {
   metadata = {
-    name: 's3-storage',
-    version: '1.0.0'
+    name: "s3-storage",
+    version: "1.0.0",
   }
 
   async init(context) {
-    const s3 = new S3Client({ region: 'us-east-1' })
+    const s3 = new S3Client({ region: "us-east-1" })
 
     // Add S3 sync routes
-    context.app.post('/api/sync/upload', async (req, res) => {
+    context.app.post("/api/sync/upload", async (req, res) => {
       // Upload workspace to S3
     })
 
-    context.app.post('/api/sync/download', async (req, res) => {
+    context.app.post("/api/sync/download", async (req, res) => {
       // Download workspace from S3
     })
   }
@@ -590,18 +593,21 @@ class S3StoragePlugin extends BasePlugin {
 ### Common Issues
 
 **Issue: "No password set"**
+
 ```bash
 # Solution: Set PASSWORD env var
 export PASSWORD=your-password
 ```
 
 **Issue: "Port already in use"**
+
 ```bash
 # Solution: Change port
 export IDE_PORT=8081
 ```
 
 **Issue: "WebSocket connection failed"**
+
 ```nginx
 # Solution: Add WebSocket support to proxy
 proxy_http_version 1.1;

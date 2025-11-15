@@ -5,6 +5,7 @@
 This is a production-ready web-based IDE built on top of VSCode, designed to run in the browser with full VS Code functionality. The project enables remote development, collaborative coding, and cloud-based development environments.
 
 **Architecture:** Client/Server Web Application
+
 - **Backend:** Node.js/Express server with WebSocket support
 - **Frontend:** Full VSCode web client (Monaco Editor + Workbench)
 - **Communication:** HTTP + WebSocket for bidirectional real-time communication
@@ -13,12 +14,14 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 ### Deployment Modes
 
 **Single-User Mode (Default):**
+
 - Lightweight, simple deployment for personal use
 - Single password authentication
 - Shared resources (settings, extensions)
 - Zero overhead, backward compatible
 
 **Multi-User Mode (New):**
+
 - Enterprise-ready deployment for multiple concurrent users
 - Complete user isolation (processes, filesystems, state)
 - User authentication with database-backed sessions
@@ -36,7 +39,9 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 ### Two Approaches for Extensions
 
 #### 1. **Code-Server Plugins** (Server-Side Extensions)
+
 Modern plugin system for extending the server with new capabilities:
+
 - Add custom HTTP/WebSocket routes
 - Create new API endpoints
 - Integrate external tools and services
@@ -47,6 +52,7 @@ Modern plugin system for extending the server with new capabilities:
 **Location:** `src/core/plugin.ts`
 
 **Example Use Cases:**
+
 - Database connection managers
 - Cloud service integrations (AWS, GCP, Azure)
 - Custom file viewers (PDF, CSV, Markdown)
@@ -58,7 +64,9 @@ Modern plugin system for extending the server with new capabilities:
 - CI/CD integrations
 
 #### 2. **VSCode Extensions** (Client-Side Extensions)
+
 Standard VSCode extensions work out-of-the-box:
+
 - Language support (syntax, IntelliSense)
 - Themes and UI customizations
 - Debuggers
@@ -66,13 +74,16 @@ Standard VSCode extensions work out-of-the-box:
 - Keybindings
 
 **Installation:**
+
 ```bash
 code-server --install-extension ms-python.python
 code-server --install-extension dbaeumer.vscode-eslint
 ```
 
 ### Hybrid Approach
+
 Combine both for maximum flexibility:
+
 - **Plugins** provide backend services (database access, API integrations)
 - **Extensions** consume those services via API bridge
 - Example: Database plugin exposes REST API → VSCode extension provides UI
@@ -115,21 +126,26 @@ vscode-web-main/
 ## Quick Navigation Index
 
 ### Core Server Components
+
 - [src/node/](src/node/claude.md) - Backend server implementation
 - [src/node/routes/](src/node/routes/claude.md) - HTTP route handlers
 - [src/core/](src/core/claude.md) - Plugin system & security
 - [src/common/](src/common/claude.md) - Shared utilities
 
 ### Frontend & UI
+
 - [src/browser/](src/browser/claude.md) - Frontend assets and pages
 
 ### Testing
+
 - [test/](test/claude.md) - Test suites and utilities
 
 ### Build & Deployment
+
 - [ci/](ci/claude.md) - Build scripts and Docker configs
 
 ### Documentation
+
 - [docs/](docs/claude.md) - Integration guides and analysis
 
 ---
@@ -139,20 +155,26 @@ vscode-web-main/
 ### Server Entry Points
 
 #### `src/node/entry.ts`
+
 Main application entry point. Determines execution mode:
+
 - Server mode (web server)
 - CLI mode (extension management)
 - Child process mode (spawned instances)
 - Existing instance mode (IPC communication)
 
 #### `src/node/main.ts`
+
 Core server orchestration:
+
 - `runCodeServer()` - Initialize and start web server
 - `runCodeCli()` - Handle VSCode CLI commands
 - `openInExistingInstance()` - IPC for file opening
 
 #### `src/node/app.ts`
+
 Express application factory:
+
 - Creates HTTP/HTTPS server
 - Configures middleware stack
 - Sets up WebSocket routing
@@ -164,27 +186,27 @@ Express application factory:
 
 ### Application Services
 
-| Service | Location | Purpose |
-|---------|----------|---------|
-| **PluginManager** | `src/core/plugin.ts` | Plugin lifecycle & dependency management |
-| **SecurityManager** | `src/core/security.ts` | CSRF, input validation, rate limiting |
-| **UpdateProvider** | `src/node/update.ts` | GitHub-based update checking |
-| **SettingsProvider** | `src/node/settings.ts` | JSON-based settings persistence |
-| **Heart** | `src/node/heart.ts` | Activity tracking & idle timeout |
-| **EditorSessionManager** | `src/node/vscodeSocket.ts` | Editor session lifecycle |
-| **SocketProxyProvider** | `src/node/socket.ts` | TLS socket proxying |
+| Service                  | Location                   | Purpose                                  |
+| ------------------------ | -------------------------- | ---------------------------------------- |
+| **PluginManager**        | `src/core/plugin.ts`       | Plugin lifecycle & dependency management |
+| **SecurityManager**      | `src/core/security.ts`     | CSRF, input validation, rate limiting    |
+| **UpdateProvider**       | `src/node/update.ts`       | GitHub-based update checking             |
+| **SettingsProvider**     | `src/node/settings.ts`     | JSON-based settings persistence          |
+| **Heart**                | `src/node/heart.ts`        | Activity tracking & idle timeout         |
+| **EditorSessionManager** | `src/node/vscodeSocket.ts` | Editor session lifecycle                 |
+| **SocketProxyProvider**  | `src/node/socket.ts`       | TLS socket proxying                      |
 
 ### Multi-User Services (NEW)
 
-| Service | Location | Purpose |
-|---------|----------|---------|
-| **AuthService** | `src/node/services/auth/AuthService.ts` | User authentication, session management, login/logout |
-| **UserRepository** | `src/node/services/auth/UserRepository.ts` | User data persistence (Memory, SQLite, PostgreSQL) |
-| **SessionStore** | `src/node/services/session/SessionStore.ts` | Session storage (Memory, Redis, Database) |
-| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas |
-| **AuditLogger** | `src/node/services/audit/AuditLogger.ts` | Security audit logging (File, Database) |
-| **MultiUserConfig** | `src/node/services/config/MultiUserConfig.ts` | Multi-user configuration loader |
-| **MultiUserService** | `src/node/services/MultiUserService.ts` | Service container & orchestration |
+| Service                  | Location                                              | Purpose                                               |
+| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- |
+| **AuthService**          | `src/node/services/auth/AuthService.ts`               | User authentication, session management, login/logout |
+| **UserRepository**       | `src/node/services/auth/UserRepository.ts`            | User data persistence (Memory, SQLite, PostgreSQL)    |
+| **SessionStore**         | `src/node/services/session/SessionStore.ts`           | Session storage (Memory, Redis, Database)             |
+| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas          |
+| **AuditLogger**          | `src/node/services/audit/AuditLogger.ts`              | Security audit logging (File, Database)               |
+| **MultiUserConfig**      | `src/node/services/config/MultiUserConfig.ts`         | Multi-user configuration loader                       |
+| **MultiUserService**     | `src/node/services/MultiUserService.ts`               | Service container & orchestration                     |
 
 ### Request Flow
 
@@ -208,42 +230,42 @@ Response to Client
 
 ### HTTP Endpoints
 
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/` | GET | Yes* | VSCode IDE interface |
-| `/login` | GET/POST | No | Authentication |
-| `/logout` | GET/POST | Yes | Session termination |
-| `/healthz` | GET | No | Health check |
-| `/update` | GET | Yes | Check for updates |
-| `/manifest.json` | GET | No | PWA manifest |
-| `/proxy/:port/*` | ALL | Yes | Port forwarding (relative) |
-| `/absproxy/:port/*` | ALL | Yes | Port forwarding (absolute) |
-| `/_static/*` | GET | No | Static assets |
+| Endpoint            | Method   | Auth  | Purpose                    |
+| ------------------- | -------- | ----- | -------------------------- |
+| `/`                 | GET      | Yes\* | VSCode IDE interface       |
+| `/login`            | GET/POST | No    | Authentication             |
+| `/logout`           | GET/POST | Yes   | Session termination        |
+| `/healthz`          | GET      | No    | Health check               |
+| `/update`           | GET      | Yes   | Check for updates          |
+| `/manifest.json`    | GET      | No    | PWA manifest               |
+| `/proxy/:port/*`    | ALL      | Yes   | Port forwarding (relative) |
+| `/absproxy/:port/*` | ALL      | Yes   | Port forwarding (absolute) |
+| `/_static/*`        | GET      | No    | Static assets              |
 
-*Redirects to `/login` if not authenticated
+\*Redirects to `/login` if not authenticated
 
 ### Multi-User API Endpoints (NEW)
 
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/api/users/me` | GET | Yes | Get current user info |
-| `/api/users` | GET | Admin | List all users |
-| `/api/users` | POST | Admin | Create new user |
-| `/api/users/:userId` | PUT | Admin | Update user |
-| `/api/users/:userId` | DELETE | Admin | Delete user |
-| `/api/users/me/sessions` | GET | Yes | List active sessions |
-| `/api/users/me/sessions/:sessionId` | DELETE | Yes | Revoke session |
-| `/api/users/me/usage` | GET | Yes | Get resource usage |
+| Endpoint                            | Method | Auth  | Purpose               |
+| ----------------------------------- | ------ | ----- | --------------------- |
+| `/api/users/me`                     | GET    | Yes   | Get current user info |
+| `/api/users`                        | GET    | Admin | List all users        |
+| `/api/users`                        | POST   | Admin | Create new user       |
+| `/api/users/:userId`                | PUT    | Admin | Update user           |
+| `/api/users/:userId`                | DELETE | Admin | Delete user           |
+| `/api/users/me/sessions`            | GET    | Yes   | List active sessions  |
+| `/api/users/me/sessions/:sessionId` | DELETE | Yes   | Revoke session        |
+| `/api/users/me/usage`               | GET    | Yes   | Get resource usage    |
 
 **Note:** Multi-user endpoints are only available when `deployment-mode: multi` is configured.
 
 ### WebSocket Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/` | VSCode WebSocket connection |
-| `/proxy/:port/*` | WebSocket port forwarding |
-| `/healthz` | Health check WebSocket |
+| Endpoint         | Purpose                     |
+| ---------------- | --------------------------- |
+| `/`              | VSCode WebSocket connection |
+| `/proxy/:port/*` | WebSocket port forwarding   |
+| `/healthz`       | Health check WebSocket      |
 
 ---
 
@@ -260,12 +282,12 @@ interface IPlugin {
 }
 
 interface PluginContext {
-  app: Express              // HTTP router
-  wsRouter: Express         // WebSocket router
-  config: any              // Configuration
-  logger: Logger           // Logger instance
-  events: EventEmitter     // Event bus
-  services: Map<string, any>  // Service registry
+  app: Express // HTTP router
+  wsRouter: Express // WebSocket router
+  config: any // Configuration
+  logger: Logger // Logger instance
+  events: EventEmitter // Event bus
+  services: Map<string, any> // Service registry
 }
 ```
 
@@ -296,10 +318,10 @@ interface PluginContext {
 ```typescript
 export class MyPlugin extends BasePlugin {
   metadata = {
-    name: 'my-plugin',
-    version: '1.0.0',
-    description: 'Example plugin',
-    dependencies: []
+    name: "my-plugin",
+    version: "1.0.0",
+    description: "Example plugin",
+    dependencies: [],
   }
 
   async init(context: PluginContext): Promise<void> {
@@ -307,15 +329,15 @@ export class MyPlugin extends BasePlugin {
 
     // Register service
     const myService = new MyService()
-    services.set('my-service', myService)
+    services.set("my-service", myService)
 
     // Add route
-    app.get('/api/my-plugin', async (req, res) => {
+    app.get("/api/my-plugin", async (req, res) => {
       const data = await myService.getData()
       res.json(data)
     })
 
-    logger.info('MyPlugin initialized')
+    logger.info("MyPlugin initialized")
   }
 
   async destroy(): Promise<void> {
@@ -368,6 +390,7 @@ export class MyPlugin extends BasePlugin {
 ### CLI Configuration (src/node/cli.ts)
 
 **Key Flags:**
+
 - `--bind-addr` - Server address (default: 127.0.0.1:8080)
 - `--auth` - Authentication type (password|none)
 - `--password` - Set password
@@ -381,6 +404,7 @@ export class MyPlugin extends BasePlugin {
 ### Environment Variables (.env)
 
 See `.env.example` for complete configuration options:
+
 - Server settings
 - Authentication
 - Security options
@@ -396,23 +420,23 @@ Multi-user mode is configured via YAML/JSON configuration files.
 **Example `.code-server.yaml`:**
 
 ```yaml
-deployment-mode: multi  # single | multi
+deployment-mode: multi # single | multi
 
 multi-user:
   auth:
-    provider: database  # database | ldap | oauth | saml
+    provider: database # database | ldap | oauth | saml
     database:
-      type: sqlite  # sqlite | postgres | mysql
+      type: sqlite # sqlite | postgres | mysql
       path: /var/lib/code-server/users.db
     session:
-      store: redis  # memory | redis | database
+      store: redis # memory | redis | database
       ttl: 86400
       redis:
         host: localhost
         port: 6379
 
   isolation:
-    strategy: directory  # directory | container | process
+    strategy: directory # directory | container | process
     base-path: /var/lib/code-server/users
 
   limits:
@@ -519,6 +543,7 @@ test/
 **Coverage Target:** 60%
 
 **Frameworks:**
+
 - Jest (unit/integration)
 - Playwright (E2E)
 - ts-jest (TypeScript support)
@@ -530,6 +555,7 @@ test/
 ### Docker
 
 **Optimized multi-stage build:**
+
 - Alpine Linux base (minimal size)
 - Non-root user (security)
 - Health checks
@@ -548,6 +574,7 @@ docker-compose up -d
 ```
 
 **Features:**
+
 - Nginx reverse proxy
 - Resource limits
 - Health checks
@@ -571,6 +598,7 @@ code-server
 ### Multi-User Deployment (NEW)
 
 **Phase 1: Directory-Based Isolation**
+
 ```bash
 # Create configuration
 cat > .code-server.yaml <<EOF
@@ -591,18 +619,21 @@ code-server --multi-user-config=.code-server.yaml
 ```
 
 **Phase 2: Container-Based Isolation**
+
 ```bash
 # Docker Compose with multi-user support
 docker-compose -f docker-compose.multi-user.yml up -d
 ```
 
 **Phase 3: Kubernetes Deployment**
+
 ```bash
 # Helm chart with multi-user support
 helm install code-server ./helm-chart --values multi-user-values.yaml
 ```
 
 **See:**
+
 - [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) - Step-by-step setup instructions
 - [MULTI_USER_ARCHITECTURE_DESIGN.md](MULTI_USER_ARCHITECTURE_DESIGN.md) - Complete deployment configs
 
@@ -613,6 +644,7 @@ helm install code-server ./helm-chart --values multi-user-values.yaml
 ### 1. REST API Plugin
 
 Add custom REST endpoints for external integrations:
+
 - Project management APIs
 - Build system integrations
 - Deployment triggers
@@ -621,6 +653,7 @@ Add custom REST endpoints for external integrations:
 ### 2. Database Integration
 
 Connect to databases and provide query interfaces:
+
 - PostgreSQL, MySQL, MongoDB
 - Schema exploration
 - Query execution
@@ -629,6 +662,7 @@ Connect to databases and provide query interfaces:
 ### 3. Collaborative Editing
 
 Real-time collaboration features:
+
 - WebSocket-based sync
 - Operational transformation
 - Cursor tracking
@@ -637,6 +671,7 @@ Real-time collaboration features:
 ### 4. Custom Authentication
 
 Replace or extend authentication:
+
 - OAuth2/OIDC
 - SAML
 - LDAP/AD
@@ -645,6 +680,7 @@ Replace or extend authentication:
 ### 5. Cloud Service Integration
 
 Connect to cloud providers:
+
 - AWS S3, EC2, Lambda
 - GCP Storage, Compute
 - Azure Blob, VMs
@@ -653,6 +689,7 @@ Connect to cloud providers:
 ### 6. Linter/Formatter Integration
 
 Integrate code quality tools:
+
 - ESLint, Pylint, RuboCop
 - Prettier, Black, gofmt
 - Real-time feedback
@@ -661,6 +698,7 @@ Integrate code quality tools:
 ### 7. Terminal Enhancements
 
 Extend terminal capabilities:
+
 - Custom shells
 - Terminal multiplexing
 - Command logging
@@ -669,6 +707,7 @@ Extend terminal capabilities:
 ### 8. File System Providers
 
 Add virtual file systems:
+
 - Remote file systems (S3, FTP, SFTP)
 - In-memory file systems
 - Encrypted file systems
@@ -824,11 +863,13 @@ code-server --list-extensions --show-versions
 ## Resources
 
 ### Documentation
+
 - [VSCode API Docs](https://code.visualstudio.com/api)
 - [Express.js Docs](https://expressjs.com/)
 - [WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 
 ### Related Projects
+
 - [VSCode](https://github.com/microsoft/vscode)
 - [Monaco Editor](https://microsoft.github.io/monaco-editor/)
 - [code-server](https://github.com/coder/code-server)
@@ -844,9 +885,11 @@ The VSCode Web IDE now supports two deployment modes: **single-user** (default) 
 ### Key Documentation Files
 
 #### [MULTI_USER_README.md](MULTI_USER_README.md) - Executive Summary & Quick Start
+
 **Contains:** Project overview, quick start guides, feature summary
 
 **Key Sections:**
+
 - Executive summary
 - Quick start (single-user and multi-user modes)
 - Architecture overview diagrams
@@ -861,9 +904,11 @@ The VSCode Web IDE now supports two deployment modes: **single-user** (default) 
 ---
 
 #### [MULTI_USER_ARCHITECTURE_DESIGN.md](MULTI_USER_ARCHITECTURE_DESIGN.md) - Complete Architecture (70+ pages)
+
 **Contains:** Comprehensive technical specification for multi-user system
 
 **Key Sections:**
+
 1. Executive Summary
 2. Design Goals (single-user vs multi-user)
 3. Deployment Modes (comparison table)
@@ -897,9 +942,11 @@ The VSCode Web IDE now supports two deployment modes: **single-user** (default) 
 ---
 
 #### [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) - Step-by-Step Integration
+
 **Contains:** Developer-focused integration instructions
 
 **Key Sections:**
+
 1. Overview
 2. Prerequisites (dependencies)
 3. **7-Step Integration Process:**
@@ -925,9 +972,11 @@ The VSCode Web IDE now supports two deployment modes: **single-user** (default) 
 ---
 
 #### [SERVER_ARCHITECTURE_ANALYSIS.md](SERVER_ARCHITECTURE_ANALYSIS.md) - Current System Analysis
+
 **Contains:** Deep dive into current architecture and limitations
 
 **Key Sections:**
+
 1. Executive Summary
 2. Server Entry Points & Startup
 3. Existing Session/State Management
@@ -949,9 +998,11 @@ The VSCode Web IDE now supports two deployment modes: **single-user** (default) 
 ---
 
 #### [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) - Visual Diagrams
+
 **Contains:** Visual architecture diagrams
 
 **Diagrams:**
+
 1. Process Architecture
 2. Request Flow (HTTP)
 3. WebSocket Upgrade Flow
@@ -973,6 +1024,7 @@ The VSCode Web IDE now supports two deployment modes: **single-user** (default) 
 All multi-user services are fully implemented in TypeScript and ready for integration:
 
 #### Type System - `src/node/services/types.ts` (400+ lines)
+
 - Complete type definitions for all services
 - User, Session, Environment, Container types
 - Resource limits and quotas
@@ -981,6 +1033,7 @@ All multi-user services are fully implemented in TypeScript and ready for integr
 - API response types
 
 #### Authentication - `src/node/services/auth/AuthService.ts` (350+ lines)
+
 - User authentication with Argon2 password hashing
 - Session creation and management
 - Login/logout with audit logging
@@ -989,12 +1042,14 @@ All multi-user services are fully implemented in TypeScript and ready for integr
 - Session limits per user
 
 #### User Persistence - `src/node/services/auth/UserRepository.ts` (200+ lines)
+
 - Memory and Database implementations
 - User CRUD operations
 - SQLite, PostgreSQL, MySQL support
 - Username/email uniqueness validation
 
 #### Session Storage - `src/node/services/session/SessionStore.ts` (400+ lines)
+
 - **Three storage backends:**
   - MemorySessionStore (development/single instance)
   - RedisSessionStore (production/distributed)
@@ -1004,6 +1059,7 @@ All multi-user services are fully implemented in TypeScript and ready for integr
 - Factory pattern for easy switching
 
 #### User Isolation - `src/node/services/isolation/UserIsolationManager.ts` (300+ lines)
+
 - DirectoryIsolationStrategy (Phase 1 ready)
 - Per-user directory structure
 - Storage quota enforcement
@@ -1011,6 +1067,7 @@ All multi-user services are fully implemented in TypeScript and ready for integr
 - ContainerIsolationStrategy (Phase 2 placeholder)
 
 #### Audit Logging - `src/node/services/audit/AuditLogger.ts` (300+ lines)
+
 - FileAuditLogger (rotating daily logs)
 - DatabaseAuditLogger (queryable audit trail)
 - CompositeAuditLogger (multiple backends)
@@ -1018,6 +1075,7 @@ All multi-user services are fully implemented in TypeScript and ready for integr
 - Queryable audit trail
 
 #### Configuration - `src/node/services/config/MultiUserConfig.ts` (250+ lines)
+
 - YAML/JSON configuration loader
 - Environment variable overrides
 - Configuration validation
@@ -1029,6 +1087,7 @@ All multi-user services are fully implemented in TypeScript and ready for integr
 ### Multi-User Use Cases
 
 #### Single-User Mode (Default)
+
 ```bash
 # No changes needed - works exactly as before
 code-server
@@ -1037,12 +1096,14 @@ code-server
 **Use Case:** Personal development, single developer, simple deployment
 
 #### Multi-User Mode - Small Team (5-20 users)
+
 ```bash
 # Directory-based isolation with SQLite
 code-server --multi-user-config=.code-server.yaml
 ```
 
 **Features:**
+
 - User authentication with database
 - Directory-based isolation
 - In-memory session store
@@ -1052,12 +1113,14 @@ code-server --multi-user-config=.code-server.yaml
 **Use Case:** Small teams, internal deployments, development/staging environments
 
 #### Multi-User Mode - Production (20+ users)
+
 ```bash
 # Container-based isolation with Redis + PostgreSQL
 docker-compose -f docker-compose.multi-user.yml up -d
 ```
 
 **Features:**
+
 - Container-per-user isolation
 - Redis session store (distributed)
 - PostgreSQL user database
@@ -1068,12 +1131,14 @@ docker-compose -f docker-compose.multi-user.yml up -d
 **Use Case:** Production SaaS, cloud deployments, large teams
 
 #### Multi-User Mode - Enterprise (100+ users)
+
 ```bash
 # Kubernetes deployment with OAuth/SAML
 helm install code-server ./helm-chart --values enterprise-values.yaml
 ```
 
 **Features:**
+
 - Kubernetes orchestration
 - OAuth/SAML integration
 - Advanced RBAC
@@ -1091,11 +1156,13 @@ helm install code-server ./helm-chart --values enterprise-values.yaml
 #### From Single-User to Multi-User
 
 1. **Backup existing data**
+
    ```bash
    cp -r ~/.local/share/code-server ~/.local/share/code-server.backup
    ```
 
 2. **Create multi-user configuration**
+
    ```bash
    cat > .code-server.yaml <<EOF
    deployment-mode: multi
@@ -1109,12 +1176,14 @@ helm install code-server ./helm-chart --values enterprise-values.yaml
    ```
 
 3. **Set admin credentials**
+
    ```bash
    export ADMIN_USERNAME=admin
    export ADMIN_PASSWORD=SecurePassword123!
    ```
 
 4. **Start server**
+
    ```bash
    code-server --multi-user-config=.code-server.yaml
    ```
@@ -1135,9 +1204,11 @@ Detailed documentation for each directory is available in the respective `claude
 ### Frontend & Browser
 
 #### [src/browser/claude.md](src/browser/claude.md) - Frontend Assets & UI Components
+
 **Contains:** HTML pages, CSS stylesheets, media files, service worker
 
 **Key Files:**
+
 - `pages/modern-login.html` - Modern login page with accessibility features
 - `pages/design-system.css` - Design tokens and CSS variables
 - `pages/error.html` - Error page template
@@ -1145,6 +1216,7 @@ Detailed documentation for each directory is available in the respective `claude
 - `serviceWorker.ts` - Progressive Web App support
 
 **Focus Areas:**
+
 - Login page UI and authentication flow
 - Design system and theming
 - Progressive Web App capabilities
@@ -1152,6 +1224,7 @@ Detailed documentation for each directory is available in the respective `claude
 - Template variable system
 
 **Extension Points:**
+
 - Custom login pages (OAuth, SSO)
 - White-label branding
 - Custom error pages
@@ -1162,20 +1235,24 @@ Detailed documentation for each directory is available in the respective `claude
 ### Shared Code
 
 #### [src/common/claude.md](src/common/claude.md) - Shared Utilities
+
 **Contains:** Event emitters, HTTP constants, utility functions
 
 **Key Files:**
+
 - `emitter.ts` - Type-safe event emitter with async support
 - `http.ts` - HTTP status codes, error classes, cookie constants
 - `util.ts` - Common utilities (UUID, pluralization, path normalization)
 
 **Focus Areas:**
+
 - Event-driven architecture patterns
 - Consistent error handling with HttpError
 - Reusable utility functions
 - Type-safe event communication
 
 **Extension Points:**
+
 - Custom event systems for plugins
 - Domain-specific error types
 - Additional utility functions
@@ -1185,14 +1262,17 @@ Detailed documentation for each directory is available in the respective `claude
 ### Core Systems
 
 #### [src/core/claude.md](src/core/claude.md) - Plugin System, Security & Configuration
+
 **Contains:** Plugin architecture, security utilities, configuration management
 
 **Key Files:**
+
 - `plugin.ts` - Plugin manager and base plugin interface
 - `security.ts` - CSRF protection, input validation, security headers
 - `config.ts` - Type-safe configuration management
 
 **Focus Areas:**
+
 - Plugin lifecycle management (init, destroy, healthCheck)
 - Dependency injection via PluginContext
 - Service registry for inter-plugin communication
@@ -1202,6 +1282,7 @@ Detailed documentation for each directory is available in the respective `claude
 - Security headers (CSP, HSTS, X-Frame-Options)
 
 **Extension Points:**
+
 - Creating custom plugins
 - Adding new security validations
 - Custom rate limiting strategies
@@ -1212,9 +1293,11 @@ Detailed documentation for each directory is available in the respective `claude
 ### Backend Server
 
 #### [src/node/claude.md](src/node/claude.md) - Backend Server Implementation
+
 **Contains:** Core server code, HTTP/WebSocket handling, VS Code integration
 
 **Key Files:**
+
 - `entry.ts` - Application entry point and mode dispatcher
 - `main.ts` - Server orchestration and initialization
 - `app.ts` - Express application factory
@@ -1228,6 +1311,7 @@ Detailed documentation for each directory is available in the respective `claude
 - `cli.ts` - CLI argument parsing
 
 **Focus Areas:**
+
 - Server startup and initialization
 - WebSocket routing (Express-compatible)
 - VS Code integration and lazy loading
@@ -1238,6 +1322,7 @@ Detailed documentation for each directory is available in the respective `claude
 - Update notifications
 
 **Extension Points:**
+
 - Custom server middleware
 - Authentication providers
 - Session management customization
@@ -1246,9 +1331,11 @@ Detailed documentation for each directory is available in the respective `claude
 ---
 
 #### [src/node/routes/claude.md](src/node/routes/claude.md) - HTTP Route Handlers
+
 **Contains:** All HTTP and WebSocket route handlers
 
 **Key Files:**
+
 - `index.ts` - Central route registration
 - `vscode.ts` - VS Code IDE integration routes
 - `login.ts` - Authentication handlers
@@ -1259,6 +1346,7 @@ Detailed documentation for each directory is available in the respective `claude
 - `errors.ts` - Error handling middleware
 
 **Focus Areas:**
+
 - Route registration and middleware stack
 - VS Code server loading and delegation
 - Login/logout flow with rate limiting
@@ -1267,6 +1355,7 @@ Detailed documentation for each directory is available in the respective `claude
 - Error handling and custom error pages
 
 **Extension Points:**
+
 - Adding custom API endpoints
 - Custom authentication flows
 - Proxy customization
@@ -1277,9 +1366,11 @@ Detailed documentation for each directory is available in the respective `claude
 ### Testing
 
 #### [test/claude.md](test/claude.md) - Test Suites
+
 **Contains:** Unit, integration, and E2E tests
 
 **Key Directories:**
+
 - `unit/` - Jest unit tests for individual functions
 - `integration/` - Integration tests for component interaction
 - `e2e/` - Playwright E2E tests for user flows
@@ -1287,6 +1378,7 @@ Detailed documentation for each directory is available in the respective `claude
 - `e2e/models/` - Page object models
 
 **Focus Areas:**
+
 - Unit testing with Jest (60% coverage target)
 - Integration testing for CLI and APIs
 - End-to-end browser testing with Playwright
@@ -1294,6 +1386,7 @@ Detailed documentation for each directory is available in the respective `claude
 - Test fixtures and utilities
 
 **Test Categories:**
+
 - Login/logout functionality
 - Extension installation
 - Terminal usage
@@ -1306,9 +1399,11 @@ Detailed documentation for each directory is available in the respective `claude
 ### Build & Deployment
 
 #### [ci/claude.md](ci/claude.md) - Build Scripts & CI/CD
+
 **Contains:** Build automation, CI/CD scripts, Docker configurations, Helm charts
 
 **Key Directories:**
+
 - `build/` - Build scripts (VS Code, code-server, packages)
 - `dev/` - Development scripts (watch, test, lint)
 - `steps/` - CI step scripts (Docker, npm publish)
@@ -1316,6 +1411,7 @@ Detailed documentation for each directory is available in the respective `claude
 - `helm-chart/` - Kubernetes Helm chart
 
 **Focus Areas:**
+
 - Building VS Code from source
 - Compiling TypeScript code
 - Creating release artifacts (tar.gz, zip)
@@ -1325,6 +1421,7 @@ Detailed documentation for each directory is available in the respective `claude
 - CI/CD automation
 
 **Build Outputs:**
+
 - Platform binaries (Linux, macOS, Windows)
 - Docker images (Debian, Alpine, Fedora)
 - NPM packages
@@ -1336,9 +1433,11 @@ Detailed documentation for each directory is available in the respective `claude
 ### Documentation
 
 #### [docs/claude.md](docs/claude.md) - User & Developer Documentation
+
 **Contains:** Installation guides, deployment docs, FAQs, contribution guidelines
 
 **Key Files:**
+
 - `README.md` - Documentation overview
 - `install.md` - Installation for all platforms
 - `guide.md` - Comprehensive user guide
@@ -1349,6 +1448,7 @@ Detailed documentation for each directory is available in the respective `claude
 - `termux.md`, `android.md`, `ios.md`, `ipad.md` - Mobile platform guides
 
 **Focus Areas:**
+
 - Quick start and installation
 - Configuration and setup
 - Extension management

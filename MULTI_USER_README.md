@@ -1,4 +1,5 @@
 # Multi-User VSCode Web IDE
+
 ## Complete Implementation for Single & Multi-User Deployments
 
 **Status:** ✅ Design Complete, Ready for Implementation
@@ -17,26 +18,31 @@ This project extends the VSCode Web IDE to support **two distinct deployment mod
 ### Key Features
 
 ✅ **Two Deployment Modes**
+
 - Single-user: Backward compatible, zero overhead
 - Multi-user: Full isolation, session management, resource limits
 
 ✅ **Complete User Isolation**
+
 - Directory-based (Phase 1) or Container-based (Phase 2)
 - Per-user settings, extensions, and workspaces
 - Resource quotas and limits
 
 ✅ **Production-Ready Security**
+
 - Argon2 password hashing
 - Session management with expiration
 - Audit logging for all security events
 - RBAC (Role-Based Access Control)
 
 ✅ **Scalable Architecture**
+
 - Horizontal scaling with load balancing
 - Redis session store for distributed deployments
 - Container orchestration support (Docker, Kubernetes)
 
 ✅ **Easy Configuration**
+
 - YAML/JSON configuration files
 - Environment variable overrides
 - CLI flags for quick setup
@@ -136,6 +142,7 @@ code-server --multi-user-config=.code-server.yaml
 ### For Architects & Product Managers
 
 **[MULTI_USER_ARCHITECTURE_DESIGN.md](./MULTI_USER_ARCHITECTURE_DESIGN.md)**
+
 - Complete architectural design
 - Deployment mode comparison
 - Architecture options analysis (session-based, container-based, process pool)
@@ -149,6 +156,7 @@ code-server --multi-user-config=.code-server.yaml
 - Deployment examples (Docker Compose, Kubernetes)
 
 **Key Sections:**
+
 - Executive Summary
 - Design Goals
 - Deployment Modes
@@ -163,6 +171,7 @@ code-server --multi-user-config=.code-server.yaml
 ### For Developers
 
 **[IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)**
+
 - Step-by-step integration instructions
 - Code examples
 - Database schema
@@ -171,6 +180,7 @@ code-server --multi-user-config=.code-server.yaml
 - Troubleshooting
 
 **Key Sections:**
+
 - Prerequisites & dependencies
 - 7-step integration process
 - Database schema (users, sessions, audit_events)
@@ -182,6 +192,7 @@ code-server --multi-user-config=.code-server.yaml
 ### For DevOps
 
 **[SERVER_ARCHITECTURE_ANALYSIS.md](./SERVER_ARCHITECTURE_ANALYSIS.md)**
+
 - Current server architecture analysis
 - Process model (parent-child)
 - Session management (EditorSessionManager)
@@ -191,6 +202,7 @@ code-server --multi-user-config=.code-server.yaml
 - Multi-user design recommendations
 
 **[ARCHITECTURE_DIAGRAMS.md](./ARCHITECTURE_DIAGRAMS.md)**
+
 - Visual process architecture
 - Request flow diagrams
 - WebSocket upgrade sequence
@@ -249,6 +261,7 @@ code-server --multi-user-config=.code-server.yaml
 ## 🔐 Security Features
 
 ### Authentication
+
 - ✅ Argon2 password hashing (industry standard)
 - ✅ Rate limiting on login attempts
 - ✅ Session expiration and renewal
@@ -256,12 +269,14 @@ code-server --multi-user-config=.code-server.yaml
 - ✅ OAuth/SAML integration ready (Phase 3)
 
 ### Authorization
+
 - ✅ Role-Based Access Control (Admin, User, Viewer)
 - ✅ Per-user resource quotas
 - ✅ Resource-level permissions
 - ✅ Admin-only API endpoints
 
 ### Audit & Compliance
+
 - ✅ Comprehensive audit logging
   - User authentication events
   - User management actions
@@ -273,6 +288,7 @@ code-server --multi-user-config=.code-server.yaml
 - ✅ GDPR/compliance ready
 
 ### Isolation
+
 - ✅ Directory-based isolation (Phase 1)
   - OS-level file permissions
   - Per-user directories
@@ -288,29 +304,32 @@ code-server --multi-user-config=.code-server.yaml
 
 ### Performance Targets
 
-| Metric | Target |
-|--------|--------|
-| Login Response Time | < 500ms |
-| IDE Load Time (single-user) | < 2s |
-| IDE Load Time (multi-user, container) | < 5s |
-| WebSocket Latency | < 50ms |
-| Container Startup (cold) | < 3s |
-| Container Startup (warm pool) | < 1s |
-| Max Concurrent Users | 100+ per instance |
+| Metric                                | Target            |
+| ------------------------------------- | ----------------- |
+| Login Response Time                   | < 500ms           |
+| IDE Load Time (single-user)           | < 2s              |
+| IDE Load Time (multi-user, container) | < 5s              |
+| WebSocket Latency                     | < 50ms            |
+| Container Startup (cold)              | < 3s              |
+| Container Startup (warm pool)         | < 1s              |
+| Max Concurrent Users                  | 100+ per instance |
 
 ### Scalability
 
 **Vertical Scaling:**
+
 - Increase instance resources (CPU, memory)
 - Recommended: 2 GB RAM per 10 concurrent users
 
 **Horizontal Scaling:**
+
 - Load balancer with session affinity
 - Shared session store (Redis)
 - Shared user database (PostgreSQL)
 - Container orchestration (Kubernetes)
 
 **Auto-Scaling:**
+
 - Container pool pre-warming
 - Idle container cleanup
 - Dynamic resource allocation
@@ -320,6 +339,7 @@ code-server --multi-user-config=.code-server.yaml
 ## 🛠️ Implementation Phases
 
 ### Phase 1: Session-Based Multi-User (2-3 weeks)
+
 **Goal:** Basic multi-user functionality
 
 - ✅ User authentication & session management
@@ -332,6 +352,7 @@ code-server --multi-user-config=.code-server.yaml
 **Best For:** Teams of 5-20 users, internal deployments
 
 ### Phase 2: Container-Based Multi-User (4-6 weeks)
+
 **Goal:** Production-ready isolation
 
 - ⬜ Container orchestrator (Docker)
@@ -344,6 +365,7 @@ code-server --multi-user-config=.code-server.yaml
 **Best For:** Production SaaS, 20+ users, cloud deployment
 
 ### Phase 3: Enterprise Features (6-8 weeks)
+
 **Goal:** Enterprise-grade platform
 
 - ⬜ OAuth/SAML integration
@@ -363,23 +385,23 @@ code-server --multi-user-config=.code-server.yaml
 ### Configuration File (.code-server.yaml)
 
 ```yaml
-deployment-mode: multi  # single | multi
+deployment-mode: multi # single | multi
 
 multi-user:
   auth:
-    provider: database  # database | ldap | oauth | saml
+    provider: database # database | ldap | oauth | saml
     database:
-      type: sqlite  # sqlite | postgres | mysql
+      type: sqlite # sqlite | postgres | mysql
       path: /var/lib/code-server/users.db
     session:
-      store: redis  # memory | redis | database
+      store: redis # memory | redis | database
       ttl: 86400
       redis:
         host: localhost
         port: 6379
 
   isolation:
-    strategy: container  # directory | container | process
+    strategy: container # directory | container | process
     base-path: /var/lib/code-server/users
     container:
       runtime: docker
@@ -443,16 +465,19 @@ CODE_SERVER_STORAGE_QUOTA_MB=10000
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 npm test
 ```
 
 ### Integration Tests
+
 ```bash
 npm run test:integration
 ```
 
 ### Load Tests
+
 ```bash
 # Using k6
 k6 run --vus 50 --duration 5m load-test.js
@@ -470,7 +495,7 @@ k6 run --vus 50 --duration 5m load-test.js
 ### Docker Compose (Development/Small Team)
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   gateway:
     image: code-server-gateway:latest
@@ -529,11 +554,13 @@ See [MULTI_USER_ARCHITECTURE_DESIGN.md](./MULTI_USER_ARCHITECTURE_DESIGN.md#142-
 ## 📞 Support
 
 ### Documentation
+
 - Architecture: [MULTI_USER_ARCHITECTURE_DESIGN.md](./MULTI_USER_ARCHITECTURE_DESIGN.md)
 - Implementation: [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)
 - Current System: [SERVER_ARCHITECTURE_ANALYSIS.md](./SERVER_ARCHITECTURE_ANALYSIS.md)
 
 ### Issues
+
 - GitHub Issues: https://github.com/your-org/vscode-web-main/issues
 
 ---

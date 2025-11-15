@@ -18,6 +18,7 @@ src/common/
 ## Files
 
 ### emitter.ts
+
 **Purpose:** Type-safe event emitter with async support
 
 **Location:** `src/common/emitter.ts`
@@ -25,9 +26,11 @@ src/common/
 **Key Classes:**
 
 #### `Emitter<T>`
+
 Generic event emitter for creating event systems.
 
 **Features:**
+
 - Type-safe events (TypeScript generics)
 - Async callback support
 - Automatic error handling
@@ -35,6 +38,7 @@ Generic event emitter for creating event systems.
 - Promise-based emission
 
 **Interface:**
+
 ```typescript
 class Emitter<T> {
   // Subscribe to events
@@ -49,9 +53,10 @@ class Emitter<T> {
 ```
 
 **Usage Example:**
+
 ```typescript
 // Create an emitter for user events
-const userEmitter = new Emitter<{ id: string, action: string }>()
+const userEmitter = new Emitter<{ id: string; action: string }>()
 
 // Subscribe to events
 const disposable = userEmitter.event(async (data) => {
@@ -59,7 +64,7 @@ const disposable = userEmitter.event(async (data) => {
 })
 
 // Emit events
-await userEmitter.emit({ id: '123', action: 'login' })
+await userEmitter.emit({ id: "123", action: "login" })
 
 // Cleanup
 disposable.dispose()
@@ -74,11 +79,13 @@ disposable.dispose()
 5. **Multiple Subscribers:** Supports multiple listeners per event
 
 **Error Handling:**
+
 - Callback errors are caught automatically
 - Errors are logged via logger
 - Other callbacks continue executing
 
 **Use Cases:**
+
 - Plugin lifecycle events
 - Request/response events
 - State change notifications
@@ -90,6 +97,7 @@ disposable.dispose()
 ---
 
 ### http.ts
+
 **Purpose:** HTTP constants, types, and error handling
 
 **Location:** `src/common/http.ts`
@@ -97,9 +105,11 @@ disposable.dispose()
 **Exports:**
 
 #### `HttpCode` Enum
+
 Standard HTTP status codes.
 
 **Common Codes:**
+
 ```typescript
 enum HttpCode {
   Ok = 200,
@@ -121,22 +131,26 @@ enum HttpCode {
 ```
 
 **Usage:**
+
 ```typescript
-res.status(HttpCode.NotFound).json({ error: 'Not found' })
+res.status(HttpCode.NotFound).json({ error: "Not found" })
 ```
 
 ---
 
 #### `HttpError` Class
+
 Custom error class for HTTP errors with status codes.
 
 **Features:**
+
 - Extends built-in `Error`
 - Includes HTTP status code
 - Optional error details
 - Stack trace support
 
 **Interface:**
+
 ```typescript
 class HttpError extends Error {
   constructor(
@@ -148,16 +162,13 @@ class HttpError extends Error {
 ```
 
 **Usage:**
+
 ```typescript
 // Throw HTTP error
-throw new HttpError('User not found', HttpCode.NotFound)
+throw new HttpError("User not found", HttpCode.NotFound)
 
 // With details
-throw new HttpError(
-  'Validation failed',
-  HttpCode.BadRequest,
-  { field: 'email', error: 'Invalid format' }
-)
+throw new HttpError("Validation failed", HttpCode.BadRequest, { field: "email", error: "Invalid format" })
 
 // Catch and handle
 try {
@@ -166,13 +177,14 @@ try {
   if (error instanceof HttpError) {
     res.status(error.statusCode).json({
       error: error.message,
-      details: error.details
+      details: error.details,
     })
   }
 }
 ```
 
 **Benefits:**
+
 - Consistent error handling
 - Type-safe status codes
 - Simplified error responses
@@ -181,23 +193,26 @@ try {
 ---
 
 #### Cookie Constants
+
 Standard cookie key names.
 
 **Constants:**
+
 ```typescript
 export enum CookieKeys {
-  Session = 'code-server-session',
-  CSRF = 'code-server-csrf'
+  Session = "code-server-session",
+  CSRF = "code-server-csrf",
 }
 ```
 
 **Usage:**
+
 ```typescript
 // Set session cookie
 res.cookie(CookieKeys.Session, sessionToken, {
   httpOnly: true,
   secure: true,
-  sameSite: 'lax'
+  sameSite: "lax",
 })
 
 // Read session cookie
@@ -205,6 +220,7 @@ const session = req.cookies[CookieKeys.Session]
 ```
 
 **Benefits:**
+
 - Centralized cookie naming
 - Prevents typos
 - Easy to change cookie names
@@ -212,6 +228,7 @@ const session = req.cookies[CookieKeys.Session]
 ---
 
 ### util.ts
+
 **Purpose:** General utility functions
 
 **Location:** `src/common/util.ts`
@@ -219,30 +236,35 @@ const session = req.cookies[CookieKeys.Session]
 **Functions:**
 
 #### `plural(count: number, singular: string, plural?: string): string`
+
 Returns singular or plural form based on count.
 
 **Signature:**
+
 ```typescript
 function plural(count: number, singular: string, plural?: string): string
 ```
 
 **Behavior:**
+
 - If count is 1, returns singular
 - Otherwise returns plural (or singular + 's' if not provided)
 
 **Usage:**
+
 ```typescript
-plural(1, 'file')          // 'file'
-plural(5, 'file')          // 'files'
-plural(2, 'box', 'boxes')  // 'boxes'
-plural(1, 'box', 'boxes')  // 'box'
+plural(1, "file") // 'file'
+plural(5, "file") // 'files'
+plural(2, "box", "boxes") // 'boxes'
+plural(1, "box", "boxes") // 'box'
 
 // In messages
-console.log(`Found ${count} ${plural(count, 'error')}`)
+console.log(`Found ${count} ${plural(count, "error")}`)
 // "Found 1 error" or "Found 5 errors"
 ```
 
 **Use Cases:**
+
 - Log messages
 - User-facing text
 - Error messages
@@ -251,9 +273,11 @@ console.log(`Found ${count} ${plural(count, 'error')}`)
 ---
 
 #### `generateUuid(): string`
+
 Generates a random UUID v4.
 
 **Signature:**
+
 ```typescript
 function generateUuid(): string
 ```
@@ -261,6 +285,7 @@ function generateUuid(): string
 **Returns:** UUID string in format `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`
 
 **Usage:**
+
 ```typescript
 const id = generateUuid()
 // "550e8400-e29b-41d4-a716-446655440000"
@@ -274,6 +299,7 @@ const userId = generateUuid()
 **Implementation:** Uses `crypto.randomUUID()` or fallback
 
 **Use Cases:**
+
 - Session IDs
 - Request tracking IDs
 - Unique resource identifiers
@@ -283,29 +309,34 @@ const userId = generateUuid()
 ---
 
 #### `normalize(path: string, keepTrailing = false): string`
+
 Normalizes URL paths.
 
 **Signature:**
+
 ```typescript
 function normalize(path: string, keepTrailing?: boolean): string
 ```
 
 **Behavior:**
+
 - Removes duplicate slashes
 - Ensures leading slash
 - Optionally keeps trailing slash
 - Handles empty paths
 
 **Usage:**
+
 ```typescript
-normalize('/path//to///file')       // '/path/to/file'
-normalize('path/to/file')           // '/path/to/file'
-normalize('/path/to/dir/', true)    // '/path/to/dir/'
-normalize('/path/to/dir/', false)   // '/path/to/dir'
-normalize('')                        // '/'
+normalize("/path//to///file") // '/path/to/file'
+normalize("path/to/file") // '/path/to/file'
+normalize("/path/to/dir/", true) // '/path/to/dir/'
+normalize("/path/to/dir/", false) // '/path/to/dir'
+normalize("") // '/'
 ```
 
 **Use Cases:**
+
 - URL path construction
 - Route normalization
 - Path comparison
@@ -314,20 +345,24 @@ normalize('')                        // '/'
 ---
 
 #### `logError(logger: Logger, error: Error | unknown): void`
+
 Logs errors consistently.
 
 **Signature:**
+
 ```typescript
 function logError(logger: Logger, error: Error | unknown): void
 ```
 
 **Behavior:**
+
 - Extracts error message
 - Logs stack trace if available
 - Handles non-Error objects
 - Consistent formatting
 
 **Usage:**
+
 ```typescript
 try {
   await riskyOperation()
@@ -337,6 +372,7 @@ try {
 ```
 
 **Benefits:**
+
 - Consistent error logging
 - Always includes stack trace
 - Handles any error type
@@ -358,7 +394,7 @@ class DataService {
 
   async updateData(data: any) {
     // ... update logic
-    await this.changeEmitter.emit({ type: 'update', data })
+    await this.changeEmitter.emit({ type: "update", data })
   }
 }
 
@@ -373,6 +409,7 @@ class CacheService {
 ```
 
 **Benefits:**
+
 - Loose coupling between components
 - Easy to add new listeners
 - Type-safe event data
@@ -386,15 +423,15 @@ Consistent error handling with `HttpError`:
 
 ```typescript
 // In route handler
-app.get('/api/user/:id', async (req, res, next) => {
+app.get("/api/user/:id", async (req, res, next) => {
   try {
     const user = await userService.getUser(req.params.id)
     if (!user) {
-      throw new HttpError('User not found', HttpCode.NotFound)
+      throw new HttpError("User not found", HttpCode.NotFound)
     }
     res.json(user)
   } catch (error) {
-    next(error)  // Pass to error handler
+    next(error) // Pass to error handler
   }
 })
 
@@ -403,11 +440,11 @@ app.use((error, req, res, next) => {
   if (error instanceof HttpError) {
     res.status(error.statusCode).json({
       error: error.message,
-      details: error.details
+      details: error.details,
     })
   } else {
     logError(logger, error)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: "Internal server error" })
   }
 })
 ```
@@ -417,6 +454,7 @@ app.use((error, req, res, next) => {
 ## Type Definitions
 
 ### Event<T>
+
 Function type for event subscriptions.
 
 ```typescript
@@ -430,6 +468,7 @@ interface Disposable {
 ```
 
 **Usage Pattern:**
+
 ```typescript
 const emitter = new Emitter<string>()
 const event: Event<string> = emitter.event
@@ -458,7 +497,7 @@ export class MyPlugin extends BasePlugin {
 
   async init(context: PluginContext): Promise<void> {
     // Expose event to other plugins
-    context.services.set('fileChangeEvent', this.onFileChange)
+    context.services.set("fileChangeEvent", this.onFileChange)
   }
 
   private async notifyFileChange(file: string): Promise<void> {
@@ -469,7 +508,7 @@ export class MyPlugin extends BasePlugin {
 // In another plugin
 export class CachePlugin extends BasePlugin {
   async init(context: PluginContext): Promise<void> {
-    const fileChangeEvent = context.services.get('fileChangeEvent')
+    const fileChangeEvent = context.services.get("fileChangeEvent")
 
     fileChangeEvent(async (change) => {
       await this.invalidateCache(change.file)
@@ -489,20 +528,20 @@ class ValidationError extends HttpError {
   constructor(field: string, message: string) {
     super(`Validation failed for ${field}`, HttpCode.BadRequest, {
       field,
-      message
+      message,
     })
   }
 }
 
 class AuthenticationError extends HttpError {
   constructor(reason: string) {
-    super('Authentication failed', HttpCode.Unauthorized, { reason })
+    super("Authentication failed", HttpCode.Unauthorized, { reason })
   }
 }
 
 // Usage
-if (!email.includes('@')) {
-  throw new ValidationError('email', 'Must be valid email')
+if (!email.includes("@")) {
+  throw new ValidationError("email", "Must be valid email")
 }
 ```
 
@@ -515,7 +554,7 @@ Add domain-specific utilities:
 ```typescript
 // In your plugin utilities
 export function formatFileSize(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const units = ["B", "KB", "MB", "GB", "TB"]
   let size = bytes
   let unitIndex = 0
 
@@ -527,10 +566,7 @@ export function formatFileSize(bytes: number): string {
   return `${size.toFixed(2)} ${units[unitIndex]}`
 }
 
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
+export function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout
 
   return (...args: Parameters<T>) => {
@@ -577,6 +613,7 @@ export function debounce<T extends (...args: any[]) => any>(
 Located in `test/unit/common/`
 
 **Test Coverage:**
+
 - Emitter subscription/emission
 - Error handling in callbacks
 - Disposable cleanup
@@ -584,9 +621,10 @@ Located in `test/unit/common/`
 - Utility functions (plural, normalize, etc.)
 
 **Example Test:**
+
 ```typescript
-describe('Emitter', () => {
-  it('should emit events to subscribers', async () => {
+describe("Emitter", () => {
+  it("should emit events to subscribers", async () => {
     const emitter = new Emitter<string>()
     let received: string | undefined
 
@@ -594,19 +632,19 @@ describe('Emitter', () => {
       received = value
     })
 
-    await emitter.emit('test')
-    expect(received).toBe('test')
+    await emitter.emit("test")
+    expect(received).toBe("test")
   })
 
-  it('should handle errors in callbacks', async () => {
+  it("should handle errors in callbacks", async () => {
     const emitter = new Emitter<string>()
 
     emitter.event(() => {
-      throw new Error('Test error')
+      throw new Error("Test error")
     })
 
     // Should not throw
-    await expect(emitter.emit('test')).resolves.toBeUndefined()
+    await expect(emitter.emit("test")).resolves.toBeUndefined()
   })
 })
 ```
@@ -616,11 +654,13 @@ describe('Emitter', () => {
 ## Related Files
 
 ### Server-Side Usage
+
 - **HTTP Module:** `src/node/http.ts` (extends common/http.ts)
 - **Route Handlers:** All routes use HttpError
 - **Services:** All services use Emitter for events
 
 ### Client-Side Usage
+
 - **Service Worker:** May use utilities
 - **Configuration:** Uses shared types
 

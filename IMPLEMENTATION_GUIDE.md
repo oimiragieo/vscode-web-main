@@ -1,4 +1,5 @@
 instrument# Multi-User Implementation Guide
+
 ## VSCode Web IDE - Step-by-Step Integration
 
 **Last Updated:** 2025-11-15
@@ -25,6 +26,7 @@ instrument# Multi-User Implementation Guide
 This guide shows how to integrate the multi-user system into the existing VSCode Web IDE codebase.
 
 **What we're building:**
+
 - ✅ Single-user mode (backward compatible, default)
 - ✅ Multi-user mode with session management
 - ✅ Directory-based user isolation
@@ -301,17 +303,12 @@ export class MultiUserService {
     })
 
     // Create auth service
-    const authService = new AuthService(
-      userRepo,
-      sessionStore,
-      auditLogger,
-      {
-        sessionTTL: config.auth.session.ttl,
-        maxSessionsPerUser: config.limits.maxSessionsPerUser,
-        passwordMinLength: 8,
-        requireStrongPassword: true,
-      },
-    )
+    const authService = new AuthService(userRepo, sessionStore, auditLogger, {
+      sessionTTL: config.auth.session.ttl,
+      maxSessionsPerUser: config.limits.maxSessionsPerUser,
+      passwordMinLength: 8,
+      requireStrongPassword: true,
+    })
 
     return new MultiUserService(authService, sessionStore, userRepo, isolationStrategy, auditLogger, db)
   }
@@ -384,10 +381,7 @@ Modify `src/node/app.ts`:
 ```typescript
 import { MultiUserService } from "./services/MultiUserService"
 
-export async function createApp(
-  args: DefaultedArgs,
-  multiUserService?: MultiUserService | null,
-): Promise<App> {
+export async function createApp(args: DefaultedArgs, multiUserService?: MultiUserService | null): Promise<App> {
   // ... existing code ...
 
   // Inject multi-user service into request
@@ -614,6 +608,7 @@ export async function register(app: App, args: DefaultedArgs): Promise<void> {
 The SQLite database schema is automatically created with these tables:
 
 ### Users Table
+
 ```sql
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
@@ -630,6 +625,7 @@ CREATE TABLE users (
 ```
 
 ### Sessions Table
+
 ```sql
 CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
@@ -647,6 +643,7 @@ CREATE TABLE sessions (
 ```
 
 ### Audit Events Table
+
 ```sql
 CREATE TABLE audit_events (
   id TEXT PRIMARY KEY,
@@ -672,7 +669,7 @@ Create `.code-server.yaml`:
 
 ```yaml
 # Deployment mode
-deployment-mode: multi  # single | multi
+deployment-mode: multi # single | multi
 
 # Multi-user configuration
 multi-user:
@@ -682,8 +679,8 @@ multi-user:
       type: sqlite
       path: /var/lib/code-server/users.db
     session:
-      store: memory  # memory | redis | database
-      ttl: 86400  # 24 hours
+      store: memory # memory | redis | database
+      ttl: 86400 # 24 hours
 
   isolation:
     strategy: directory
@@ -887,9 +884,11 @@ echo "  sudo cp -r ~/.local/share/code-server/* /var/lib/code-server/users/\$(ad
 ## 9. Troubleshooting
 
 ### Issue: "Database locked"
+
 **Solution:** SQLite doesn't handle concurrent writes well. Use PostgreSQL or ensure single-threaded access.
 
 ### Issue: "Permission denied" on user directories
+
 **Solution:** Check directory permissions and ownership.
 
 ```bash
@@ -898,9 +897,11 @@ sudo chmod 700 /var/lib/code-server/users/*
 ```
 
 ### Issue: "Session not found" after restart
+
 **Solution:** Sessions are stored in memory by default. Use Redis or database session store for persistence.
 
 ### Issue: "Storage quota exceeded"
+
 **Solution:** Increase quota in configuration or clean up user files.
 
 ```bash

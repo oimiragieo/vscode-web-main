@@ -4,37 +4,37 @@
 
 ### CRITICAL - Fix This Week
 
-| # | Issue | File | Lines | Risk | Est. Time |
-|---|-------|------|-------|------|-----------|
-| 1 | Unhandled Promise Rejections | `src/node/routes/index.ts` | 68-70 | Process crashes | 30 min |
-| 2 | Session Store Unbounded Growth | `src/node/services/session/SessionStore.ts` | 35-167 | OOM crashes | 2-3 hrs |
-| 3 | Audit Log Full File Reads | `src/node/services/audit/AuditLogger.ts` | 75-135 | OOM, slow | 4-5 hrs |
+| #   | Issue                          | File                                        | Lines  | Risk            | Est. Time |
+| --- | ------------------------------ | ------------------------------------------- | ------ | --------------- | --------- |
+| 1   | Unhandled Promise Rejections   | `src/node/routes/index.ts`                  | 68-70  | Process crashes | 30 min    |
+| 2   | Session Store Unbounded Growth | `src/node/services/session/SessionStore.ts` | 35-167 | OOM crashes     | 2-3 hrs   |
+| 3   | Audit Log Full File Reads      | `src/node/services/audit/AuditLogger.ts`    | 75-135 | OOM, slow       | 4-5 hrs   |
 
 ### HIGH - Fix This Sprint
 
-| # | Issue | File | Lines | Risk | Est. Time |
-|---|-------|------|-------|------|-----------|
-| 4 | Password Hashing CPU | `src/node/util.ts` | 143-175 | CPU maxes | 3-4 hrs |
-| 5 | File Descriptor Leaks | `src/node/wrapper.ts` | 227-254 | FD exhaustion | 1-2 hrs |
-| 6 | Redis Session O(n) Updates | `src/node/services/session/SessionStore.ts` | 200-216 | High latency | 2-3 hrs |
+| #   | Issue                      | File                                        | Lines   | Risk          | Est. Time |
+| --- | -------------------------- | ------------------------------------------- | ------- | ------------- | --------- |
+| 4   | Password Hashing CPU       | `src/node/util.ts`                          | 143-175 | CPU maxes     | 3-4 hrs   |
+| 5   | File Descriptor Leaks      | `src/node/wrapper.ts`                       | 227-254 | FD exhaustion | 1-2 hrs   |
+| 6   | Redis Session O(n) Updates | `src/node/services/session/SessionStore.ts` | 200-216 | High latency  | 2-3 hrs   |
 
 ### MEDIUM - Fix Next 2 Sprints
 
-| # | Issue | File | Lines | Risk | Est. Time |
-|---|-------|------|-------|------|-----------|
-| 7 | Event Listener Cleanup | `src/common/emitter.ts` | 41-56 | Memory bloat | 2 hrs |
-| 8 | Child Process Cleanup | `src/node/wrapper.ts` | 154-173 | Hanging processes | 1-2 hrs |
-| 9 | Idle Timeout Listener Leak | `src/node/main.ts` | 170-189 | Memory leak | 1 hr |
-| 10 | Static File Caching | `src/node/routes/index.ts` | 95-105 | Unnecessary I/O | 1-2 hrs |
+| #   | Issue                      | File                       | Lines   | Risk              | Est. Time |
+| --- | -------------------------- | -------------------------- | ------- | ----------------- | --------- |
+| 7   | Event Listener Cleanup     | `src/common/emitter.ts`    | 41-56   | Memory bloat      | 2 hrs     |
+| 8   | Child Process Cleanup      | `src/node/wrapper.ts`      | 154-173 | Hanging processes | 1-2 hrs   |
+| 9   | Idle Timeout Listener Leak | `src/node/main.ts`         | 170-189 | Memory leak       | 1 hr      |
+| 10  | Static File Caching        | `src/node/routes/index.ts` | 95-105  | Unnecessary I/O   | 1-2 hrs   |
 
 ### LOW - Fix Later
 
-| # | Issue | File | Lines | Risk | Est. Time |
-|---|-------|------|-------|------|-----------|
-| 11 | HTTP Socket Disposer | `src/node/http.ts` | 250-295 | Minor | 2 hrs |
-| 12 | Buffer Concatenation | `src/node/update.ts` | 84-98 | Minor | 1 hr |
-| 13 | JSON Parsing Efficiency | `src/node/vscodeSocket.ts` | 155-183 | Minor | 1 hr |
-| 14 | Regex ReDoS Protection | `src/node/util.ts` | 20-24 | DoS | 1-2 hrs |
+| #   | Issue                   | File                       | Lines   | Risk  | Est. Time |
+| --- | ----------------------- | -------------------------- | ------- | ----- | --------- |
+| 11  | HTTP Socket Disposer    | `src/node/http.ts`         | 250-295 | Minor | 2 hrs     |
+| 12  | Buffer Concatenation    | `src/node/update.ts`       | 84-98   | Minor | 1 hr      |
+| 13  | JSON Parsing Efficiency | `src/node/vscodeSocket.ts` | 155-183 | Minor | 1 hr      |
+| 14  | Regex ReDoS Protection  | `src/node/util.ts`         | 20-24   | DoS   | 1-2 hrs   |
 
 ---
 
@@ -47,13 +47,15 @@
 **Category**: Process Management
 
 **Problem**:
+
 ```typescript
-heart.beat()  // Promise rejection unhandled!
+heart.beat() // Promise rejection unhandled!
 ```
 
 **Impact**: Process crashes on file write errors
 
 **Fix**:
+
 ```typescript
 heart.beat().catch((err) => {
   logger.warn("Failed to beat heart:", err.message)
@@ -69,6 +71,7 @@ heart.beat().catch((err) => {
 **Category**: Memory Management
 
 **Problem**:
+
 ```typescript
 this.cleanupInterval = setInterval(() => {
   this.deleteExpiredSessions().catch((err) => {
@@ -78,6 +81,7 @@ this.cleanupInterval = setInterval(() => {
 ```
 
 **Issues**:
+
 - No memory pressure monitoring
 - Cleanup can silently fail
 - User sessions map unbounded
@@ -95,9 +99,10 @@ this.cleanupInterval = setInterval(() => {
 **Category**: I/O Optimization
 
 **Problem**:
+
 ```typescript
-const content = await fs.readFile(logFile, "utf-8")  // Entire file in memory
-const lines = content.split("\n")  // Copy + split
+const content = await fs.readFile(logFile, "utf-8") // Entire file in memory
+const lines = content.split("\n") // Copy + split
 for (const line of lines) {
   // Filter in app code
   if (filter.userId && event.userId !== filter.userId) continue
@@ -105,6 +110,7 @@ for (const line of lines) {
 ```
 
 **Issues**:
+
 - Entire files in memory
 - String copies and splits
 - No early termination
@@ -122,6 +128,7 @@ for (const line of lines) {
 **Category**: CPU Optimization
 
 **Problem**:
+
 ```typescript
 case "PLAIN_TEXT": {
   const isValid = safeCompare(passwordFromRequestBody, passwordFromArgs) : false
@@ -131,6 +138,7 @@ case "PLAIN_TEXT": {
 ```
 
 **Issues**:
+
 - Argon2 hashing in main thread
 - Blocks all requests during hash
 - No worker pool
@@ -148,14 +156,16 @@ case "PLAIN_TEXT": {
 **Category**: Process Management
 
 **Problem**:
+
 ```typescript
 this.logStdoutStream = rfs.createStream("code-server-stdout.log", opts)
 this.logStderrStream = rfs.createStream("code-server-stderr.log", opts)
 // Never closed!
-this.onDispose(() => this.disposeChild())  // Child disposed, not streams
+this.onDispose(() => this.disposeChild()) // Child disposed, not streams
 ```
 
 **Issues**:
+
 - Streams never closed
 - FDs never released
 - Data might not flush
@@ -173,6 +183,7 @@ this.onDispose(() => this.disposeChild())  // Child disposed, not streams
 **Category**: I/O Optimization
 
 **Problem**:
+
 ```typescript
 async set(sessionId: string, session: Session, ttl?: number): Promise<void> {
   // ...
@@ -184,6 +195,7 @@ async set(sessionId: string, session: Session, ttl?: number): Promise<void> {
 ```
 
 **Issues**:
+
 - O(n) fetch on every session creation
 - JSON stringify on every operation
 - No atomic operations
@@ -201,11 +213,12 @@ async set(sessionId: string, session: Session, ttl?: number): Promise<void> {
 **Category**: Memory Management
 
 **Problem**:
+
 ```typescript
 public async emit(value: T): Promise<void> {
   let resolve: () => void
   const promise = new Promise<void>((r) => (resolve = r))
-  
+
   await Promise.all(
     this.listeners.map(async (cb) => {
       try {
@@ -221,6 +234,7 @@ public async emit(value: T): Promise<void> {
 ```
 
 **Issues**:
+
 - No timeout for hanging listeners
 - Silent error handling
 - Non-null assertion can fail
@@ -238,6 +252,7 @@ public async emit(value: T): Promise<void> {
 **Category**: Process Management
 
 **Problem**:
+
 ```typescript
 setInterval(() => {
   try {
@@ -246,10 +261,11 @@ setInterval(() => {
     this.logger.error(`parent process ${parentPid} died`)
     this._onDispose.emit(undefined)
   }
-}, 5000)  // No handle to clear!
+}, 5000) // No handle to clear!
 ```
 
 **Issues**:
+
 - Interval never cleared
 - Continues after disposal
 - No graceful shutdown
@@ -267,16 +283,18 @@ setInterval(() => {
 **Category**: Memory Management
 
 **Problem**:
+
 ```typescript
 heart.onChange((state) => {
   clearTimeout(idleShutdownTimer)
   if (state === "expired") {
     startIdleShutdownTimer()
   }
-})  // Listener never removed!
+}) // Listener never removed!
 ```
 
 **Issues**:
+
 - Listener never disposed
 - Continues after heart disposed
 - No unsubscribe mechanism
@@ -294,15 +312,17 @@ heart.onChange((state) => {
 **Category**: I/O Optimization
 
 **Problem**:
+
 ```typescript
 app.router.get(["/security.txt", "/.well-known/security.txt"], async (_, res) => {
   const resourcePath = path.resolve(rootPath, "src/browser/security.txt")
   res.set("Content-Type", getMediaMime(resourcePath))
-  res.send(await fs.readFile(resourcePath))  // Read every request!
+  res.send(await fs.readFile(resourcePath)) // Read every request!
 })
 ```
 
 **Issues**:
+
 - Static files read from disk every request
 - No caching
 - No etag headers
@@ -320,6 +340,7 @@ app.router.get(["/security.txt", "/.well-known/security.txt"], async (_, res) =>
 **Category**: Memory Management
 
 **Problem**:
+
 ```typescript
 export function disposer(server: http.Server): Disposable["dispose"] {
   const sockets = new Set<net.Socket>()
@@ -334,6 +355,7 @@ export function disposer(server: http.Server): Disposable["dispose"] {
 ```
 
 **Issues**:
+
 - Listener closure memory accumulation
 - No socket timeout
 - Hanging sockets not destroyed
@@ -350,17 +372,19 @@ export function disposer(server: http.Server): Disposable["dispose"] {
 **Category**: Memory Management
 
 **Problem**:
+
 ```typescript
 response.on("data", (chunk) => {
   bufferLength += chunk.length
   chunks.push(chunk)
 })
 response.on("end", () => {
-  resolve(Buffer.concat(chunks, bufferLength))  // Large concat
+  resolve(Buffer.concat(chunks, bufferLength)) // Large concat
 })
 ```
 
 **Issues**:
+
 - No size limits
 - Large memory allocation
 - No streaming
@@ -377,10 +401,11 @@ response.on("end", () => {
 **Category**: I/O Optimization
 
 **Problem**:
+
 ```typescript
 let rawData = ""
 res.on("data", (chunk) => {
-  rawData += chunk  // String concatenation!
+  rawData += chunk // String concatenation!
 })
 res.on("end", () => {
   const obj = JSON.parse(rawData)
@@ -388,6 +413,7 @@ res.on("end", () => {
 ```
 
 **Issues**:
+
 - String accumulation (many copies)
 - Full buffer in memory
 - No streaming parser
@@ -404,18 +430,20 @@ res.on("end", () => {
 **Category**: Security/CPU
 
 **Problem**:
+
 ```typescript
 const pattern = [
-  "[\\u001B\\u009B][[\\]()#;?]*...",  // Complex pattern
-  "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?...)"
+  "[\\u001B\\u009B][[\\]()#;?]*...", // Complex pattern
+  "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?...)",
 ].join("|")
 const re = new RegExp(pattern, "g")
 
 // Used in hot path:
-callback(split[i].replace(re, ""), split[i])  // Every log line
+callback(split[i].replace(re, ""), split[i]) // Every log line
 ```
 
 **Issues**:
+
 - Complex regex (ReDoS vulnerability)
 - Called on every line
 - No max line length check
@@ -434,6 +462,7 @@ callback(split[i].replace(re, ""), split[i])  // Every log line
 - [ ] #3: Implement streaming audit logs
 
 **Validation**:
+
 - [ ] Process no longer crashes on heartbeat failures
 - [ ] Heap usage stays below 80% with load test
 - [ ] Audit queries complete in < 1 second
@@ -446,6 +475,7 @@ callback(split[i].replace(re, ""), split[i])  // Every log line
 - [ ] #10: Cache static files
 
 **Validation**:
+
 - [ ] Login latency < 500ms under load
 - [ ] No FD exhaustion warnings
 - [ ] Session operations O(1) complexity
@@ -459,6 +489,7 @@ callback(split[i].replace(re, ""), split[i])  // Every log line
 - [ ] #11-14: Additional optimizations
 
 **Validation**:
+
 - [ ] No listener leaks on load test
 - [ ] Clean shutdown with no hanging processes
 - [ ] Memory graph flat over time
@@ -496,4 +527,3 @@ grep -r "await.*\." src/node --include="*.ts" | grep -v "\.catch" | head -20
 - Node.js Best Practices: https://nodejs.org/en/docs/guides/
 - Memory Profiling: https://nodejs.org/en/docs/guides/simple-profiling/
 - Worker Threads: https://nodejs.org/api/worker_threads.html
-

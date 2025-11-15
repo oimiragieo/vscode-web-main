@@ -20,9 +20,11 @@ src/browser/
 ## Files
 
 ### serviceWorker.ts
+
 **Purpose:** Progressive Web App (PWA) service worker implementation
 
 **Functionality:**
+
 - Enables offline functionality
 - Caches static assets
 - Handles background sync
@@ -30,6 +32,7 @@ src/browser/
 - Improves load performance through caching
 
 **Key Features:**
+
 - Cache-first strategy for static assets
 - Network-first for API calls
 - Automatic cache invalidation
@@ -40,9 +43,11 @@ src/browser/
 ---
 
 ### robots.txt
+
 **Purpose:** Search engine crawler directives
 
 **Content:**
+
 - Disallow rules for sensitive paths
 - Sitemap location (if applicable)
 - Crawl delay settings
@@ -52,9 +57,11 @@ src/browser/
 ---
 
 ### security.txt
+
 **Purpose:** Security disclosure and vulnerability reporting information
 
 **Content:**
+
 - Contact information for security issues
 - PGP key for encrypted communications
 - Preferred languages
@@ -67,9 +74,11 @@ src/browser/
 ## pages/ Subdirectory
 
 ### login.html
+
 **Purpose:** Legacy login page (original design)
 
 **Features:**
+
 - Simple, functional login form
 - Password input field
 - CSRF token support
@@ -77,6 +86,7 @@ src/browser/
 - Redirect on successful authentication
 
 **Template Variables:**
+
 - `{{BASE}}` - Base path for assets
 - `{{CS_STATIC_BASE}}` - Static asset base path
 - `{{ERROR}}` - Error message to display
@@ -87,9 +97,11 @@ src/browser/
 ---
 
 ### login.css
+
 **Purpose:** Stylesheet for legacy login page
 
 **Styling:**
+
 - Basic form styling
 - Responsive layout
 - Error message styling
@@ -98,9 +110,11 @@ src/browser/
 ---
 
 ### modern-login.html
+
 **Purpose:** Modern redesigned login page with enhanced UX
 
 **Features:**
+
 - Card-based design
 - Animated gradient background
 - Password visibility toggle
@@ -111,6 +125,7 @@ src/browser/
 - Modern UI/UX patterns
 
 **Accessibility:**
+
 - WCAG 2.1 AA compliant
 - Keyboard navigation support
 - Screen reader friendly
@@ -118,6 +133,7 @@ src/browser/
 - Semantic HTML5
 
 **Template Variables:**
+
 - `{{BASE}}` - Base path
 - `{{CS_STATIC_BASE}}` - Static assets
 - `{{ERROR}}` - Error message
@@ -132,9 +148,11 @@ src/browser/
 ---
 
 ### modern-login.css
+
 **Purpose:** Stylesheet for modern login page
 
 **Features:**
+
 - CSS Grid/Flexbox layout
 - Animated gradients
 - Smooth transitions
@@ -148,9 +166,11 @@ src/browser/
 ---
 
 ### design-system.css
+
 **Purpose:** Central design system with CSS custom properties
 
 **Variables Defined:**
+
 - **Colors:** Primary, secondary, neutral palettes
 - **Typography:** Font families, sizes, weights, line heights
 - **Spacing:** Consistent spacing scale (4px grid)
@@ -160,6 +180,7 @@ src/browser/
 - **Z-index:** Layering scale
 
 **Benefits:**
+
 - Consistent styling across pages
 - Easy theme customization
 - Dark mode support
@@ -170,9 +191,11 @@ src/browser/
 ---
 
 ### global.css
+
 **Purpose:** Global styles applied to all pages
 
 **Includes:**
+
 - CSS reset/normalization
 - Base typography
 - Utility classes
@@ -185,9 +208,11 @@ src/browser/
 ---
 
 ### error.html
+
 **Purpose:** Error page template for HTTP errors
 
 **Use Cases:**
+
 - 404 Not Found
 - 500 Internal Server Error
 - 403 Forbidden
@@ -195,6 +220,7 @@ src/browser/
 - Custom error messages
 
 **Features:**
+
 - Error code display
 - Error message
 - Navigation back to home
@@ -202,6 +228,7 @@ src/browser/
 - Consistent branding
 
 **Template Variables:**
+
 - `{{BASE}}` - Base path
 - `{{CS_STATIC_BASE}}` - Static assets
 - `{{ERROR_CODE}}` - HTTP status code
@@ -211,9 +238,11 @@ src/browser/
 ---
 
 ### error.css
+
 **Purpose:** Stylesheet for error pages
 
 **Styling:**
+
 - Centered error message
 - Large error code display
 - Helpful messaging
@@ -227,26 +256,32 @@ src/browser/
 ### Favicons
 
 #### favicon.ico
+
 **Purpose:** Legacy favicon format for older browsers
 
 **Specs:**
+
 - ICO format
 - Multiple sizes embedded (16x16, 32x32, 48x48)
 - Fallback for non-SVG browsers
 
 #### favicon.svg
+
 **Purpose:** Modern SVG favicon
 
 **Benefits:**
+
 - Scalable vector graphics
 - Smaller file size
 - Sharp at any size
 - Easy to customize
 
 #### favicon-dark-support.svg
+
 **Purpose:** SVG favicon with dark mode support
 
 **Features:**
+
 - Adapts to system theme
 - Different colors for light/dark modes
 - Uses `prefers-color-scheme` media query
@@ -259,36 +294,44 @@ src/browser/
 ### PWA Icons
 
 #### pwa-icon-192.png
+
 **Purpose:** Small PWA icon for app installations
 
 **Specs:**
+
 - Size: 192x192 pixels
 - PNG format
 - Used in app manifests
 - Displayed when adding to home screen
 
 #### pwa-icon-512.png
+
 **Purpose:** Large PWA icon for splash screens
 
 **Specs:**
+
 - Size: 512x512 pixels
 - PNG format
 - High quality for various screen sizes
 - Used in splash screens
 
 #### pwa-icon-maskable-192.png
+
 **Purpose:** Small maskable PWA icon
 
 **Specs:**
+
 - Size: 192x192 pixels
 - Follows maskable icon spec
 - Safe zone in center
 - Works with circular, rounded, or square masks
 
 #### pwa-icon-maskable-512.png
+
 **Purpose:** Large maskable PWA icon
 
 **Specs:**
+
 - Size: 512x512 pixels
 - Maskable icon format
 - Adaptive to different platform icon shapes
@@ -299,6 +342,7 @@ src/browser/
 ---
 
 ### templates.png
+
 **Purpose:** Template placeholder or example image
 
 **Usage:** May be used for documentation or example templates
@@ -312,18 +356,20 @@ src/browser/
 **Use Case:** Add OAuth login, SSO, or custom authentication
 
 **Approach:**
+
 1. Create new HTML file in `pages/`
 2. Add corresponding CSS file
 3. Register route in `src/node/routes/login.ts`
 4. Add template variable substitution
 
 **Example:**
+
 ```typescript
 // In login route
-app.get('/login/oauth', (req, res) => {
-  const html = fs.readFileSync('src/browser/pages/oauth-login.html')
+app.get("/login/oauth", (req, res) => {
+  const html = fs.readFileSync("src/browser/pages/oauth-login.html")
   const rendered = replaceTemplates(html, {
-    oauth_providers: ['github', 'google', 'microsoft']
+    oauth_providers: ["github", "google", "microsoft"],
   })
   res.send(rendered)
 })
@@ -336,6 +382,7 @@ app.get('/login/oauth', (req, res) => {
 **Use Case:** Brand-specific error handling
 
 **Approach:**
+
 1. Create custom error.html template
 2. Modify error handler in `src/node/routes/errors.ts`
 3. Add custom styling
@@ -347,6 +394,7 @@ app.get('/login/oauth', (req, res) => {
 **Use Case:** Branded progressive web app
 
 **Steps:**
+
 1. Replace PWA icons in `media/`
 2. Update `manifest.json` generation in `src/node/routes/vscode.ts`
 3. Customize service worker caching strategy
@@ -359,18 +407,20 @@ app.get('/login/oauth', (req, res) => {
 **Use Case:** White-label IDE with custom branding
 
 **Approach:**
+
 1. Modify `design-system.css` color variables
 2. Update favicon and PWA icons
 3. Customize login page branding
 4. Add company logo to pages
 
 **Example:**
+
 ```css
 /* In design-system.css */
 :root {
   --color-primary: #your-brand-color;
   --color-secondary: #your-secondary-color;
-  --font-family-base: 'Your Font', sans-serif;
+  --font-family-base: "Your Font", sans-serif;
 }
 ```
 
@@ -385,13 +435,17 @@ Static files are served via Express static middleware:
 **Configuration:** In `src/node/routes/index.ts`
 
 ```typescript
-app.router.use('/_static', express.static(rootPath, {
-  cacheControl: commit !== "development",
-  maxAge: '1y'
-}))
+app.router.use(
+  "/_static",
+  express.static(rootPath, {
+    cacheControl: commit !== "development",
+    maxAge: "1y",
+  }),
+)
 ```
 
 **Caching:**
+
 - Production: Aggressive caching (1 year)
 - Development: No caching
 
@@ -402,6 +456,7 @@ app.router.use('/_static', express.static(rootPath, {
 Templates use `{{VARIABLE}}` syntax for dynamic content.
 
 **Common Variables:**
+
 - `{{BASE}}` - Base path for routing
 - `{{CS_STATIC_BASE}}` - Static asset base path
 - `{{ERROR}}` - Error messages
@@ -418,6 +473,7 @@ Templates use `{{VARIABLE}}` syntax for dynamic content.
 Login pages support multiple languages via i18next.
 
 **Supported Languages:**
+
 - English (en)
 - Spanish (es)
 - French (fr)
@@ -440,9 +496,7 @@ All pages should be served with appropriate CSP headers:
 
 ```typescript
 // From src/core/security.ts
-res.setHeader('Content-Security-Policy',
-  "default-src 'self'; script-src 'self' 'unsafe-inline'; ..."
-)
+res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; ...")
 ```
 
 ### CSRF Protection
@@ -450,7 +504,7 @@ res.setHeader('Content-Security-Policy',
 Forms include CSRF tokens:
 
 ```html
-<input type="hidden" name="_csrf" value="{{CSRF_TOKEN}}">
+<input type="hidden" name="_csrf" value="{{CSRF_TOKEN}}" />
 ```
 
 ### XSS Prevention

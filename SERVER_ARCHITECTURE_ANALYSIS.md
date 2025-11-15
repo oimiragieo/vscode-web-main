@@ -1,4 +1,5 @@
 # VSCode Web IDE - Server Architecture Analysis
+
 ## Multi-User Session Management Design Reference
 
 **Analysis Date:** 2025-11-15  
@@ -9,6 +10,7 @@
 ## 1. EXECUTIVE SUMMARY
 
 The VSCode Web IDE is a single-instance, single-user remote IDE server with:
+
 - **No native multi-user support** (single password-based auth)
 - **No distributed/clustered deployment** (single process model)
 - **Parent-child process model** for hot reloading
@@ -65,9 +67,10 @@ runCodeServer(args: DefaultedArgs)
 ### 2.3 Key Startup Configuration
 
 **Recognized via `src/node/cli.ts`:**
+
 - `--host` / `--port` (HTTP binding)
 - `--socket` / `--socket-mode` (Unix socket)
-- `--auth` (none | password) 
+- `--auth` (none | password)
 - `--password` / `--hashed-password` (single password)
 - `--session-socket` (separate session manager socket)
 - `--user-data-dir` (workspace + settings storage)
@@ -89,7 +92,7 @@ Manages multiple VS Code editor instances for different workspaces:
 ```typescript
 class EditorSessionManager {
   private entries = new Map<string, EditorSessionEntry>()
-  
+
   addSession(entry: EditorSessionEntry): void
   deleteSession(socketPath: string): void
   getCandidatesForFile(filePath: string): EditorSessionEntry[]
@@ -101,13 +104,14 @@ interface EditorSessionEntry {
     id: string
     folders: { uri: { path: string } }[]
   }
-  socketPath: string  // IPC socket for this workspace's editor
+  socketPath: string // IPC socket for this workspace's editor
 }
 ```
 
 **Purpose:** Route file operations to the correct workspace's editor instance.
 
 **Limitations:**
+
 - ❌ No user isolation (single user can have multiple workspaces)
 - ❌ No persistence across restarts
 - ❌ In-memory Map only
@@ -130,6 +134,7 @@ This allows multiple code-server instances to coordinate workspace sessions.
 **File: `/src/node/http.ts` & `/src/node/routes/login.ts`**
 
 **Current Model:**
+
 - ✅ Single password for all users
 - ✅ Cookie-based sessions (`CookieKeys.Session`)
 - ✅ Argon2 password hashing
@@ -139,6 +144,7 @@ This allows multiple code-server instances to coordinate workspace sessions.
 - ❌ **NO token-based auth** (only cookies)
 
 **Auth Flow:**
+
 ```
 POST /login { password }
   ↓ validatePassword()
@@ -147,6 +153,7 @@ POST /login { password }
 ```
 
 **Checking Auth:**
+
 ```typescript
 authenticated(req: Request): Promise<boolean>
   ├─ Get cookie from req.cookies["coder.sid"]
@@ -160,13 +167,14 @@ authenticated(req: Request): Promise<boolean>
 
 ```typescript
 class SettingsProvider<T> {
-  async read(): Promise<T>      // Read from JSON file
-  async write(settings: Partial<T>): Promise<void>  // Write + merge
+  async read(): Promise<T> // Read from JSON file
+  async write(settings: Partial<T>): Promise<void> // Write + merge
 }
 
 interface CoderSettings {
-  query?: ParsedQs            // Last opened workspace/folder
-  update?: {                  // Update check cache
+  query?: ParsedQs // Last opened workspace/folder
+  update?: {
+    // Update check cache
     checked: number
     version: string
   }
@@ -176,21 +184,22 @@ interface CoderSettings {
 **Storage:** `<user-data-dir>/coder.json`
 
 **⚠️ Current Limitations:**
+
 - Single global settings file (not per-user)
 - Last opened workspace shared across sessions
 - No fine-grained per-user settings
 
 ### 3.5 State Management Summary
 
-| Component | Type | Storage | Scope |
-|-----------|------|---------|-------|
-| Password | Memory | Env/Config | App-wide (single password) |
-| User session | Cookie | Browser | Per-connection |
-| Workspace sessions | Memory Map | EditorSessionManager | Current instance only |
-| Editor settings | File | `coder.json` | App-wide |
-| Heartbeat | File | `heartbeat` | Idle detection |
-| Certificates | File | `data/` | HTTPS certs |
-| Extensions | Directory | `extensions-dir/` | VS Code extensions |
+| Component          | Type       | Storage              | Scope                      |
+| ------------------ | ---------- | -------------------- | -------------------------- |
+| Password           | Memory     | Env/Config           | App-wide (single password) |
+| User session       | Cookie     | Browser              | Per-connection             |
+| Workspace sessions | Memory Map | EditorSessionManager | Current instance only      |
+| Editor settings    | File       | `coder.json`         | App-wide                   |
+| Heartbeat          | File       | `heartbeat`          | Idle detection             |
+| Certificates       | File       | `data/`              | HTTPS certs                |
+| Extensions         | Directory  | `extensions-dir/`    | VS Code extensions         |
 
 ---
 
@@ -219,15 +228,13 @@ ChildProcess (actual server)
 ```
 
 **Message Protocol:**
+
 ```typescript
 // Child to Parent
-type ChildMessage = 
-  | { type: "handshake" }
-  | { type: "relaunch"; version: string }
+type ChildMessage = { type: "handshake" } | { type: "relaunch"; version: string }
 
 // Parent to Child
-type ParentMessage = 
-  { type: "handshake"; args: DefaultedArgs }
+type ParentMessage = { type: "handshake"; args: DefaultedArgs }
 ```
 
 ### 4.2 CLI Process Spawning
@@ -240,16 +247,17 @@ For VS Code CLI operations (install extensions, etc.):
 runCodeCli(args) {
   // 1. Set CODE_SERVER_PARENT_PID env var
   process.env.CODE_SERVER_PARENT_PID = process.pid.toString()
-  
+
   // 2. Import VS Code server module dynamically
   const mod = await eval(`import("/path/to/vscode/out/server-main.js")`)
-  
+
   // 3. Call spawnCli() which exits on its own
   await mod.spawnCli(args)
 }
 ```
 
 **Spawning Patterns:**
+
 - ❌ `cp.spawn()` for opening browser (see `/src/node/util.ts`)
 - ❌ No background worker processes
 - ❌ No job queue
@@ -262,8 +270,8 @@ runCodeCli(args) {
 ```typescript
 class SocketProxyProvider {
   async createProxy(socket: TLSSocket | Duplex): Promise<Socket>
-    // Spawns proxy server on demand for TLS socket forwarding
-    // Allows passing TLS sockets to child processes
+  // Spawns proxy server on demand for TLS socket forwarding
+  // Allows passing TLS sockets to child processes
 }
 ```
 
@@ -286,7 +294,7 @@ server.on("upgrade", (req, socket, head) => {
 // WebSocket Router (custom Express integration)
 class WebsocketRouter {
   ws(route, ...handlers): void
-    // Registers WebSocket handler
+  // Registers WebSocket handler
 }
 ```
 
@@ -307,23 +315,24 @@ socket.resume() - start piping data
 ```
 
 **VS Code Integration:**
+
 ```typescript
 vscodeServer.handleUpgrade(req, wrappedSocket)
-  // VS Code's native WebSocket handling for:
-  // - Terminal I/O
-  // - File operations
-  // - Extension communication
+// VS Code's native WebSocket handling for:
+// - Terminal I/O
+// - File operations
+// - Extension communication
 ```
 
 ### 5.3 IPC Mechanisms
 
-| Mechanism | Purpose | Files |
-|-----------|---------|-------|
-| `process.send()` / `on("message")` | Parent-child handshake & relaunch | `wrapper.ts` |
-| Unix sockets (IPC path) | Session manager coordination | `vscodeSocket.ts` |
-| WebSocket (HTTP upgrade) | Client-server real-time data | `wsRouter.ts`, `routes/vscode.ts` |
-| HTTP (path proxy) | Forwarding requests | `routes/pathProxy.ts` |
-| HTTP (domain proxy) | Multi-tenant domain forwarding | `routes/domainProxy.ts` |
+| Mechanism                          | Purpose                           | Files                             |
+| ---------------------------------- | --------------------------------- | --------------------------------- |
+| `process.send()` / `on("message")` | Parent-child handshake & relaunch | `wrapper.ts`                      |
+| Unix sockets (IPC path)            | Session manager coordination      | `vscodeSocket.ts`                 |
+| WebSocket (HTTP upgrade)           | Client-server real-time data      | `wsRouter.ts`, `routes/vscode.ts` |
+| HTTP (path proxy)                  | Forwarding requests               | `routes/pathProxy.ts`             |
+| HTTP (domain proxy)                | Multi-tenant domain forwarding    | `routes/domainProxy.ts`           |
 
 ---
 
@@ -355,6 +364,7 @@ $HOME/.local/share/code-server/          (data dir)
 ### 6.2 File Access Control
 
 **Current Model:**
+
 - ✅ Process user owns all files
 - ✅ No per-user file isolation
 - ✅ All authenticated users access same files
@@ -365,13 +375,11 @@ $HOME/.local/share/code-server/          (data dir)
 
 ```typescript
 // Async file operations used throughout
-const settings = new SettingsProvider<CoderSettings>(
-  path.join(args["user-data-dir"], "coder.json")
-)
+const settings = new SettingsProvider<CoderSettings>(path.join(args["user-data-dir"], "coder.json"))
 
 // Shallow merge semantics
 await settings.write({ query: { folder: "/path" } })
-  // Reads current → merges → writes back
+// Reads current → merges → writes back
 ```
 
 ---
@@ -386,16 +394,17 @@ await settings.write({ query: { folder: "/path" } })
 // Config: password, hashed-password, or auth=none
 switch (args.auth) {
   case AuthType.Password:
-    // Validate password on login
-    // Compare with hashed-password from args
-    // Set cookie
-    
+  // Validate password on login
+  // Compare with hashed-password from args
+  // Set cookie
+
   case AuthType.None:
-    // Skip auth entirely
+  // Skip auth entirely
 }
 ```
 
 **Password Methods:**
+
 1. **PLAIN_TEXT** - Plaintext password in config (legacy)
 2. **ARGON2** - Modern Argon2 hashing
 3. **SHA256** - Legacy SHA256 (deprecated)
@@ -411,6 +420,7 @@ ensureAuthenticated(req, res, next) {
 ```
 
 **Applied to:**
+
 - All `/vscode` routes (IDE access)
 - All WebSocket routes
 - Most API endpoints (except `/login`, `/health`)
@@ -418,6 +428,7 @@ ensureAuthenticated(req, res, next) {
 ### 7.3 Missing Authorization Features
 
 ❌ **NO per-user features:**
+
 - User identification in logs
 - Per-user file isolation
 - Per-user extensions
@@ -426,11 +437,13 @@ ensureAuthenticated(req, res, next) {
 - Per-resource permissions
 
 ❌ **NO token-based auth:**
+
 - No JWT / bearer tokens
 - No API keys for programmatic access
 - No session expiration (only idle timeout)
 
 ❌ **NO audit trail:**
+
 - No login/logout event logging
 - No action audit logs
 - No failed attempt tracking (except rate limit)
@@ -438,6 +451,7 @@ ensureAuthenticated(req, res, next) {
 ### 7.4 Security Measures
 
 ✅ **Implemented:**
+
 - Argon2 password hashing (strong)
 - Rate limiting on login (2/min, 12/hour)
 - Timing-safe password comparison
@@ -448,10 +462,12 @@ ensureAuthenticated(req, res, next) {
 - HttpOnly flag on session cookie
 
 ⚠️ **Partially Implemented:**
+
 - Content Security Policy (basic)
 - Security headers (missing some)
 
 ❌ **NOT Implemented:**
+
 - CSRF tokens (relies only on origin header)
 - Explicit session timeout
 - Concurrent session limiting
@@ -472,15 +488,14 @@ async function loadVSCode(req): Promise<IVSCodeServerAPI> {
   // Dynamically import VS Code's server module
   const modPath = path.join(vsRootPath, "out/server-main.js")
   const mod = await eval(`import("${modPath}")`)
-  
+
   // Call VS Code's createServer()
-  return mod.loadCodeWithNls().then(m => 
-    m.createServer(null, { ...args, "without-connection-token": true })
-  )
+  return mod.loadCodeWithNls().then((m) => m.createServer(null, { ...args, "without-connection-token": true }))
 }
 ```
 
 **Global Cache:**
+
 ```typescript
 let vscodeServerPromise: Promise<IVSCodeServerAPI> | undefined
 let vscodeServer: IVSCodeServerAPI | undefined
@@ -500,6 +515,7 @@ interface IVSCodeServerAPI {
 ```
 
 **Routing:**
+
 - HTTP requests → `vscodeServer.handleRequest()`
 - WebSocket upgrades → `vscodeServer.handleUpgrade()`
 - Shutdown → `vscodeServer.dispose()`
@@ -507,8 +523,9 @@ interface IVSCodeServerAPI {
 ### 8.3 Current Limitations
 
 ❌ **One VS Code instance per server**
+
 - Cannot run multiple workspaces in parallel
-- Session manager routes to multiple *sockets* not processes
+- Session manager routes to multiple _sockets_ not processes
 - All workspace processing serialized
 
 ---
@@ -588,24 +605,24 @@ interface IVSCodeServerAPI {
 createApp(args): Promise<App> {
   const router = express()
   router.use(compression())
-  
+
   // Create HTTP or HTTPS server
-  const server = args.cert 
+  const server = args.cert
     ? httpolyglot.createServer({ cert, key }, router)
     : http.createServer(router)
-  
+
   // Listen on port or Unix socket
   await listen(server, args)
-  
+
   // Create WebSocket router
   const wsRouter = express()
   handleUpgrade(wsRouter, server)
-  
+
   // Create separate session manager server
   const editorSessionManager = new EditorSessionManager()
-  const editorSessionManagerServer = 
+  const editorSessionManagerServer =
     await makeEditorSessionManagerServer(args["session-socket"], editorSessionManager)
-  
+
   return { router, wsRouter, server, editorSessionManagerServer, dispose }
 }
 ```
@@ -644,7 +661,7 @@ createApp(args): Promise<App> {
 ### 10.3 Middleware Chain
 
 ```
-Request → compression() 
+Request → compression()
   → cookieParser()
   → common middleware (inject req.args, req.heart, req.settings)
   → authentication (if needed)
@@ -659,14 +676,14 @@ Request → compression()
 ```typescript
 class Heart {
   public async beat(): Promise<void>
-    // Call on every request (except /healthz)
-    // Check if any active connections exist
-    // Update heartbeat file
-    // Emit state change if idle
+  // Call on every request (except /healthz)
+  // Check if any active connections exist
+  // Update heartbeat file
+  // Emit state change if idle
 
   onChange(listener: (state) => void)
-    // Listen for state changes: "alive" | "expired" | "unknown"
-    
+  // Listen for state changes: "alive" | "expired" | "unknown"
+
   // Used for idle-timeout: if no connections for 60s + idle-timeout-seconds
   // → trigger wrapper.exit()
 }
@@ -717,7 +734,7 @@ EditorSessionManagerClient.getConnectedSocketPath(filePath)
   ↓ EditorSessionManager.getCandidatesForFile()
   ↓ Try connecting to each candidate socket
   ↓ Return first connected socket path
-  
+
 // Allows same user to:
 // - Have IDE window 1 → workspace A
 // - Have IDE window 2 → workspace B
@@ -731,12 +748,13 @@ EditorSessionManagerClient.getConnectedSocketPath(filePath)
 ### 12.1 Minimum Viable Multi-User Architecture
 
 **Layer 1: User Authentication**
+
 ```typescript
 interface User {
   id: string
   username: string
   email: string
-  passwordHash: string  // Argon2
+  passwordHash: string // Argon2
   createdAt: Date
   lastLogin: Date
 }
@@ -745,6 +763,7 @@ interface User {
 ```
 
 **Layer 2: Session Management**
+
 ```typescript
 interface Session {
   id: string (token)
@@ -759,16 +778,18 @@ interface Session {
 ```
 
 **Layer 3: Request Context**
+
 ```typescript
 // In Express middleware:
 interface AuthenticatedRequest extends Request {
   user: User
   session: Session
-  permissions: string[]  // ["read", "write", "admin"]
+  permissions: string[] // ["read", "write", "admin"]
 }
 ```
 
 **Layer 4: File Isolation**
+
 ```
 --user-data-dir/
 ├── users/
@@ -787,7 +808,7 @@ Load Balancer (sticky sessions by user ID)
   ├─ Instance 1: user1, user3
   ├─ Instance 2: user2, user5
   └─ Instance 3: user4
-  
+
 // Each user's requests always route to same instance
 // Maintains in-memory state per user
 ```
@@ -822,22 +843,22 @@ if (userSessions.length >= quota.maxSessions) {
 
 ## 13. KEY FILES REFERENCE
 
-| File | Purpose | LOC |
-|------|---------|-----|
-| `src/node/entry.ts` | Process entry point | 67 |
-| `src/node/main.ts` | Server startup | 245 |
-| `src/node/app.ts` | Express app setup | 135 |
-| `src/node/wrapper.ts` | Parent-child process model | 398 |
-| `src/node/cli.ts` | CLI argument parsing | 600+ |
-| `src/node/http.ts` | Auth middleware | 420 |
-| `src/node/wsRouter.ts` | WebSocket routing | 69 |
-| `src/node/socket.ts` | TLS socket proxy | 107 |
-| `src/node/vscodeSocket.ts` | Session manager | 206 |
-| `src/node/heart.ts` | Heartbeat/idle detection | 82 |
-| `src/node/settings.ts` | Settings persistence | 57 |
-| `src/node/routes/index.ts` | Route registration | 186 |
-| `src/node/routes/vscode.ts` | VS Code integration | 260 |
-| `src/node/routes/login.ts` | Auth routes | 124 |
+| File                        | Purpose                    | LOC  |
+| --------------------------- | -------------------------- | ---- |
+| `src/node/entry.ts`         | Process entry point        | 67   |
+| `src/node/main.ts`          | Server startup             | 245  |
+| `src/node/app.ts`           | Express app setup          | 135  |
+| `src/node/wrapper.ts`       | Parent-child process model | 398  |
+| `src/node/cli.ts`           | CLI argument parsing       | 600+ |
+| `src/node/http.ts`          | Auth middleware            | 420  |
+| `src/node/wsRouter.ts`      | WebSocket routing          | 69   |
+| `src/node/socket.ts`        | TLS socket proxy           | 107  |
+| `src/node/vscodeSocket.ts`  | Session manager            | 206  |
+| `src/node/heart.ts`         | Heartbeat/idle detection   | 82   |
+| `src/node/settings.ts`      | Settings persistence       | 57   |
+| `src/node/routes/index.ts`  | Route registration         | 186  |
+| `src/node/routes/vscode.ts` | VS Code integration        | 260  |
+| `src/node/routes/login.ts`  | Auth routes                | 124  |
 
 **Total Backend LOC:** ~4,360 TypeScript lines
 
@@ -876,7 +897,7 @@ Ingress → Service →
   ├─ Pod (code-server)
   ├─ Pod (code-server)
   └─ Pod (code-server)
-  
+
 Shared: ConfigMap (users), Secret (passwords), PVC (files)
 ```
 
@@ -894,21 +915,25 @@ Shared: ConfigMap (users), Secret (passwords), PVC (files)
 ### For Multi-User Implementation
 
 **Priority 1 (Authentication):**
+
 - Replace single password with user database
 - Implement token-based sessions (JWT or session store)
 - Add per-user credentials
 
 **Priority 2 (State):**
+
 - Store sessions in Redis/database (not in-memory)
 - Create per-user data directories
 - Implement user-specific settings
 
 **Priority 3 (Authorization):**
+
 - Add role-based access control
 - Implement resource-level permissions
 - Add audit logging
 
 **Priority 4 (Scalability):**
+
 - Design for session affinity (load balancer sticky sessions)
 - Or implement shared session store for stateless deployment
 - Consider per-user process pools for heavy workloads
@@ -922,4 +947,3 @@ Shared: ConfigMap (users), Secret (passwords), PVC (files)
 - **Testing & hardening:** 2-3 days
 
 **Total:** ~10-14 days for production-ready multi-user system
-

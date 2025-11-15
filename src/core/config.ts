@@ -108,9 +108,7 @@ export class ConfigManager<T extends Record<string, any>> {
       // Validate type
       const actualType = Array.isArray(value) ? "array" : typeof value
       if (actualType !== schemaEntry.type) {
-        throw new Error(
-          `Invalid type for ${String(key)}: expected ${schemaEntry.type}, got ${actualType}`,
-        )
+        throw new Error(`Invalid type for ${String(key)}: expected ${schemaEntry.type}, got ${actualType}`)
       }
 
       // Custom validation
