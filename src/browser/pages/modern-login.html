@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; manifest-src 'self'; img-src 'self' data:; font-src 'self' data:;"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="Secure access to your code-server instance" />
+
+    <title>{{I18N_LOGIN_TITLE}}</title>
+
+    <!-- Icons -->
+    <link rel="icon" href="{{CS_STATIC_BASE}}/src/browser/media/favicon-dark-support.svg" />
+    <link rel="alternate icon" href="{{CS_STATIC_BASE}}/src/browser/media/favicon.ico" />
+    <link rel="manifest" href="{{BASE}}/manifest.json" crossorigin="use-credentials" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{{CS_STATIC_BASE}}/src/browser/media/pwa-icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="{{CS_STATIC_BASE}}/src/browser/media/pwa-icon-512.png" />
+
+    <!-- Stylesheets -->
+    <link href="{{CS_STATIC_BASE}}/src/browser/pages/design-system.css" rel="stylesheet" />
+    <link href="{{CS_STATIC_BASE}}/src/browser/pages/modern-login.css" rel="stylesheet" />
+
+    <!-- Metadata -->
+    <meta id="coder-options" data-settings="{{OPTIONS}}" />
+  </head>
+  <body>
+    <!-- Background decoration -->
+    <div class="background-decoration">
+      <div class="gradient-blob blob-1"></div>
+      <div class="gradient-blob blob-2"></div>
+      <div class="gradient-blob blob-3"></div>
+    </div>
+
+    <!-- Main container -->
+    <main class="login-container" role="main">
+      <div class="login-card">
+        <!-- Header -->
+        <header class="login-header">
+          <div class="logo-container">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 3h18v18H3V3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h1 class="login-title">{{WELCOME_TEXT}}</h1>
+          <p class="login-subtitle">{{I18N_LOGIN_BELOW}} {{PASSWORD_MSG}}</p>
+        </header>
+
+        <!-- Login form -->
+        <form class="login-form" method="post" novalidate aria-labelledby="login-title">
+          <!-- Hidden fields -->
+          <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+          <input id="base" type="hidden" name="base" value="{{BASE}}" />
+          <input id="href" type="hidden" name="href" value="" />
+
+          <!-- Password field -->
+          <div class="form-group">
+            <label for="password" class="form-label">
+              {{I18N_PASSWORD_PLACEHOLDER}}
+              <span class="required-indicator" aria-label="required">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input
+                id="password"
+                class="form-input"
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+                autofocus
+                aria-required="true"
+                aria-describedby="password-error"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                aria-label="Toggle password visibility"
+                data-toggle-password
+              >
+                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
+            {{ERROR}}
+          </div>
+
+          <!-- Submit button -->
+          <button type="submit" class="submit-button">
+            <span class="button-text">{{I18N_SUBMIT}}</span>
+            <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+        </form>
+
+        <!-- Footer -->
+        <footer class="login-footer">
+          <p class="footer-text">
+            Secured with end-to-end encryption
+          </p>
+        </footer>
+      </div>
+
+      <!-- Help text -->
+      <aside class="help-text" role="complementary">
+        <p>
+          <strong>Need help?</strong> Contact your system administrator if you've forgotten your password.
+        </p>
+      </aside>
+    </main>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite" aria-hidden="true">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p class="loading-text">Authenticating...</p>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        'use strict';
+
+        // Set href for cookie path
+        const hrefInput = document.getElementById('href');
+        if (hrefInput) {
+          hrefInput.value = location.href;
+        }
+
+        // Password toggle
+        const toggleButtons = document.querySelectorAll('[data-toggle-password]');
+        toggleButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            const input = button.closest('.input-wrapper').querySelector('input');
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            button.setAttribute('aria-label',
+              type === 'password' ? 'Show password' : 'Hide password'
+            );
+          });
+        });
+
+        // Form submission
+        const form = document.querySelector('.login-form');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            const password = document.getElementById('password').value;
+
+            if (!password) {
+              e.preventDefault();
+              showError('Please enter your password');
+              return;
+            }
+
+            // Show loading
+            if (loadingOverlay) {
+              loadingOverlay.setAttribute('aria-hidden', 'false');
+              loadingOverlay.style.display = 'flex';
+            }
+          });
+        }
+
+        // Error display
+        function showError(message) {
+          const passwordField = document.getElementById('password');
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-message';
+          errorDiv.id = 'password-error';
+          errorDiv.textContent = message;
+          errorDiv.setAttribute('role', 'alert');
+
+          // Remove existing error
+          const existingError = document.getElementById('password-error');
+          if (existingError) {
+            existingError.remove();
+          }
+
+          passwordField.parentElement.appendChild(errorDiv);
+          passwordField.setAttribute('aria-invalid', 'true');
+          passwordField.focus();
+        }
+
+        // Auto-hide loading on error
+        if (document.querySelector('.error-message')) {
+          if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+          }
+        }
+
+        // Keyboard navigation enhancements
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && loadingOverlay && loadingOverlay.style.display !== 'none') {
+            loadingOverlay.style.display = 'none';
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,122 @@
+# Docker Compose Configuration for VSCode Web IDE
+# Production-ready setup with best practices
+
+version: '3.8'
+
+services:
+  # Main application service
+  vscode-web-ide:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_VERSION=22
+    image: vscode-web-ide:latest
+    container_name: vscode-web-ide
+    restart: unless-stopped
+
+    # Environment variables
+    environment:
+      # Server configuration
+      - NODE_ENV=production
+      - PORT=8080
+      - HOST=0.0.0.0
+
+      # Authentication (use Docker secrets in production)
+      - PASSWORD=${IDE_PASSWORD:-changeme}
+      # - HASHED_PASSWORD=${IDE_HASHED_PASSWORD}
+
+      # Security
+      - DISABLE_TELEMETRY=true
+      - DISABLE_UPDATE_CHECK=false
+
+      # Optional: Custom app name
+      - APP_NAME=${APP_NAME:-VSCode Web IDE}
+
+      # Optional: Locale
+      - LOCALE=en
+
+    # Ports
+    ports:
+      - "${IDE_PORT:-8080}:8080"
+
+    # Volumes
+    volumes:
+      # Persistent data
+      - vscode-data:/home/coder/.local/share/code-server
+      - vscode-config:/home/coder/.config/code-server
+
+      # Optional: Mount your project directory
+      - ${PROJECT_DIR:-./workspace}:/home/coder/project
+
+      # Optional: Mount SSH keys
+      # - ~/.ssh:/home/coder/.ssh:ro
+
+      # Optional: Mount Git config
+      # - ~/.gitconfig:/home/coder/.gitconfig:ro
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Networks
+    networks:
+      - ide-network
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # User (run as non-root)
+    user: "1000:1000"
+
+    # Labels
+    labels:
+      - "com.example.description=VSCode Web IDE"
+      - "com.example.version=1.0.0"
+      - "traefik.enable=true"
+      - "traefik.http.routers.vscode.rule=Host(`ide.example.com`)"
+      - "traefik.http.routers.vscode.entrypoints=websecure"
+      - "traefik.http.routers.vscode.tls.certresolver=letsencrypt"
+
+  # Optional: Reverse proxy (Nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: vscode-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - ide-network
+    depends_on:
+      - vscode-web-ide
+    profiles:
+      - with-proxy
+
+networks:
+  ide-network:
+    driver: bridge
+
+volumes:
+  vscode-data:
+    driver: local
+  vscode-config:
+    driver: local

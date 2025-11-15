@@ -1,0 +1,115 @@
+# Multi-stage Dockerfile for VSCode Web IDE
+# Optimized for production deployment
+
+# =============================================================================
+# Stage 1: Build Stage
+# =============================================================================
+FROM node:22-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache \
+    git \
+    python3 \
+    make \
+    g++ \
+    bash
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Copy source code
+COPY src ./src
+COPY ci ./ci
+COPY lib ./lib
+
+# Build application
+ENV NODE_ENV=production
+ENV VERSION=1.0.0
+RUN npm run build:vscode && \
+    npm run build
+
+# =============================================================================
+# Stage 2: Runtime Stage
+# =============================================================================
+FROM node:22-alpine
+
+# Metadata
+LABEL maintainer="your-email@example.com" \
+      description="VSCode Web IDE - Run VS Code in your browser" \
+      version="1.0.0"
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    git \
+    git-lfs \
+    gnupg \
+    openssh-client \
+    sudo \
+    bash \
+    nano \
+    vim \
+    ca-certificates \
+    && git lfs install
+
+# Create non-root user
+ARG USER=coder
+ARG UID=1000
+ARG GID=1000
+
+RUN addgroup -g ${GID} ${USER} && \
+    adduser -D -u ${UID} -G ${USER} -h /home/${USER} -s /bin/bash ${USER} && \
+    echo "${USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${USER}
+
+# Set working directory
+WORKDIR /app
+
+# Copy built application from builder
+COPY --from=builder --chown=${USER}:${USER} /app/out ./out
+COPY --from=builder --chown=${USER}:${USER} /app/lib ./lib
+COPY --from=builder --chown=${USER}:${USER} /app/node_modules ./node_modules
+COPY --from=builder --chown=${USER}:${USER} /app/package.json ./
+
+# Copy additional resources
+COPY --chown=${USER}:${USER} src/browser ./src/browser
+
+# Create directories for data
+RUN mkdir -p /home/${USER}/.local/share/code-server && \
+    mkdir -p /home/${USER}/.config/code-server && \
+    mkdir -p /home/${USER}/project && \
+    chown -R ${USER}:${USER} /home/${USER}
+
+# Switch to non-root user
+USER ${USER}
+
+# Environment variables
+ENV NODE_ENV=production \
+    PORT=8080 \
+    HOST=0.0.0.0 \
+    USER_DATA_DIR=/home/${USER}/.local/share/code-server \
+    EXTENSIONS_DIR=/home/${USER}/.local/share/code-server/extensions
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/healthz || exit 1
+
+# Volume for persistent data
+VOLUME ["/home/${USER}/.local/share/code-server", "/home/${USER}/.config/code-server", "/home/${USER}/project"]
+
+# Entrypoint script
+COPY --chown=${USER}:${USER} docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "out/node/entry.js", "--bind-addr", "0.0.0.0:8080"]
