@@ -37,7 +37,15 @@ export class MemorySessionStore implements SessionStore {
   private userSessions: Map<string, Set<string>> = new Map()
   private cleanupInterval: NodeJS.Timeout | null = null
 
-  constructor(cleanupIntervalSeconds = 60) {
+  // LRU IMPLEMENTATION: Prevent unbounded memory growth
+  private accessOrder: Map<string, number> = new Map() // sessionId -> timestamp
+  private readonly maxSessions: number
+  private readonly evictionThreshold: number
+
+  constructor(cleanupIntervalSeconds = 60, maxSessions = 10000, evictionThreshold = 0.9) {
+    this.maxSessions = maxSessions
+    this.evictionThreshold = evictionThreshold
+
     // Periodic cleanup of expired sessions
     this.cleanupInterval = setInterval(() => {
       this.deleteExpiredSessions().catch((err) => {
@@ -46,8 +54,45 @@ export class MemorySessionStore implements SessionStore {
     }, cleanupIntervalSeconds * 1000)
   }
 
+  /**
+   * Evict least recently used sessions when approaching memory limit
+   * MEMORY LEAK FIX: Prevents OOM crashes from unbounded session growth
+   */
+  private async evictLRUSessions(): Promise<void> {
+    const threshold = Math.floor(this.maxSessions * this.evictionThreshold)
+
+    if (this.sessions.size >= threshold) {
+      // Sort sessions by access time (oldest first)
+      const sessionsByAccess = Array.from(this.accessOrder.entries()).sort((a, b) => a[1] - b[1])
+
+      // Calculate how many to evict (25% of max to avoid frequent evictions)
+      const toEvict = Math.floor(this.maxSessions * 0.25)
+
+      // Evict oldest sessions
+      for (let i = 0; i < toEvict && i < sessionsByAccess.length; i++) {
+        const [sessionId] = sessionsByAccess[i]
+        await this.delete(sessionId)
+      }
+
+      console.log(
+        `[SessionStore] Evicted ${toEvict} LRU sessions. ` + `Current: ${this.sessions.size}/${this.maxSessions}`,
+      )
+    }
+  }
+
+  /**
+   * Update access time for LRU tracking
+   */
+  private updateAccessTime(sessionId: string): void {
+    this.accessOrder.set(sessionId, Date.now())
+  }
+
   async set(sessionId: string, session: Session, ttl?: number): Promise<void> {
+    // LRU: Evict old sessions if approaching limit
+    await this.evictLRUSessions()
+
     this.sessions.set(sessionId, session)
+    this.updateAccessTime(sessionId)
 
     // Track user → sessions mapping
     if (!this.userSessions.has(session.userId)) {
@@ -68,6 +113,9 @@ export class MemorySessionStore implements SessionStore {
       return null
     }
 
+    // LRU: Update access time on read
+    this.updateAccessTime(sessionId)
+
     return session
   }
 
@@ -75,6 +123,7 @@ export class MemorySessionStore implements SessionStore {
     const session = this.sessions.get(sessionId)
     if (session) {
       this.sessions.delete(sessionId)
+      this.accessOrder.delete(sessionId) // LRU: Clean up access tracking
 
       // Remove from user → sessions mapping
       const userSessionSet = this.userSessions.get(session.userId)
@@ -163,6 +212,7 @@ export class MemorySessionStore implements SessionStore {
     }
     this.sessions.clear()
     this.userSessions.clear()
+    this.accessOrder.clear() // LRU: Clean up access tracking
   }
 }
 

@@ -58,15 +58,43 @@ export class SocketProxyProvider {
           if (!socket.destroyed && !proxy.destroyed && data.toString() === id) {
             clearTimeout(timeout)
             listener.dispose()
+
+            // MEMORY LEAK FIX: Track pipes and event listeners for proper cleanup
+            const pipes: stream.Duplex[] = []
+            const cleanup = () => {
+              // Unpipe all streams to prevent memory leaks
+              pipes.forEach((pipe) => {
+                pipe.unpipe()
+              })
+              // Remove all event listeners we added
+              ;[proxy, socket, connection].forEach((s) => {
+                s.removeAllListeners("error")
+                s.removeAllListeners("close")
+                s.removeAllListeners("end")
+              })
+            }
+
             ;[
               [proxy, socket],
               [socket, proxy],
             ].forEach(([a, b]) => {
-              a.pipe(b)
-              a.on("error", () => b.destroy())
-              a.on("close", () => b.destroy())
-              a.on("end", () => b.end())
+              const piped = a.pipe(b)
+              pipes.push(piped)
+
+              a.on("error", () => {
+                cleanup()
+                b.destroy()
+              })
+              a.on("close", () => {
+                cleanup()
+                b.destroy()
+              })
+              a.on("end", () => {
+                cleanup()
+                b.end()
+              })
             })
+
             resolve(connection)
           }
         })
