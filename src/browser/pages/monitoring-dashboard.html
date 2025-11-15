@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitoring Dashboard - VSCode Web</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: white;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .metric:last-child {
+        border-bottom: none;
+      }
+
+      .metric-label {
+        font-weight: 500;
+        color: #666;
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .metric-value.good {
+        color: #10b981;
+      }
+
+      .metric-value.warning {
+        color: #f59e0b;
+      }
+
+      .metric-value.critical {
+        color: #ef4444;
+      }
+
+      .chart {
+        margin-top: 1rem;
+        height: 150px;
+        background: #f9fafb;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+      }
+
+      .status-healthy {
+        background: #10b981;
+        box-shadow: 0 0 8px #10b981;
+      }
+
+      .status-warning {
+        background: #f59e0b;
+        box-shadow: 0 0 8px #f59e0b;
+      }
+
+      .status-critical {
+        background: #ef4444;
+        box-shadow: 0 0 8px #ef4444;
+      }
+
+      .refresh-info {
+        text-align: center;
+        color: white;
+        margin-top: 1rem;
+        opacity: 0.9;
+      }
+
+      .btn {
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 0.5rem;
+      }
+
+      .btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .controls {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .loading {
+        text-align: center;
+        color: white;
+        font-size: 1.2rem;
+        margin: 2rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📊 Monitoring Dashboard</h1>
+
+      <div class="controls">
+        <button class="btn" onclick="refreshData()">🔄 Refresh Now</button>
+        <button class="btn" onclick="toggleAutoRefresh()">
+          <span id="autoRefreshText">⏸️ Pause Auto-Refresh</span>
+        </button>
+      </div>
+
+      <div id="loading" class="loading" style="display: none">Loading metrics...</div>
+
+      <div class="grid" id="metricsGrid">
+        <!-- Metrics will be populated here -->
+      </div>
+
+      <div class="refresh-info">
+        Auto-refreshing every <span id="refreshInterval">10</span> seconds | Last updated:
+        <span id="lastUpdate">Never</span>
+      </div>
+    </div>
+
+    <script>
+      let autoRefresh = true
+      let refreshTimer = null
+
+      const metrics = {
+        http: {
+          title: "HTTP Metrics",
+          icon: "🌐",
+          data: {},
+        },
+        system: {
+          title: "System Resources",
+          icon: "💻",
+          data: {},
+        },
+        performance: {
+          title: "Performance",
+          icon: "⚡",
+          data: {},
+        },
+        security: {
+          title: "Security",
+          icon: "🔒",
+          data: {},
+        },
+      }
+
+      async function fetchMetrics() {
+        try {
+          document.getElementById("loading").style.display = "block"
+
+          const response = await fetch("/metrics")
+          const text = await response.text()
+
+          // Parse Prometheus metrics
+          const parsed = parsePrometheusMetrics(text)
+
+          // Update metrics object
+          updateMetrics(parsed)
+
+          // Render dashboard
+          renderDashboard()
+
+          document.getElementById("lastUpdate").textContent = new Date().toLocaleTimeString()
+          document.getElementById("loading").style.display = "none"
+        } catch (error) {
+          console.error("Failed to fetch metrics:", error)
+          document.getElementById("loading").textContent = "Error loading metrics"
+        }
+      }
+
+      function parsePrometheusMetrics(text) {
+        const lines = text.split("\n")
+        const metrics = {}
+
+        for (const line of lines) {
+          if (line.startsWith("#") || !line.trim()) continue
+
+          const match = line.match(/^([a-z_]+)(\{[^}]*\})?\s+(.+)$/)
+          if (match) {
+            const [, name, labels, value] = match
+            if (!metrics[name]) metrics[name] = []
+            metrics[name].push({ labels: labels || "", value: parseFloat(value) })
+          }
+        }
+
+        return metrics
+      }
+
+      function updateMetrics(parsed) {
+        // HTTP Metrics
+        const totalRequests = sumMetric(parsed["http_requests_total"])
+        const totalResponses = sumMetric(parsed["http_responses_total"])
+        const avgLatency = averageHistogram(
+          parsed["http_request_duration_ms_sum"],
+          parsed["http_request_duration_ms_count"],
+        )
+
+        metrics.http.data = {
+          "Total Requests": formatNumber(totalRequests),
+          "Total Responses": formatNumber(totalResponses),
+          "Avg Latency": `${avgLatency.toFixed(2)} ms`,
+          Status: getStatus(avgLatency, 200, 500),
+        }
+
+        // System Metrics
+        const cpuUsage = getLatestValue(parsed["process_cpu_usage_percent"])
+        const memoryUsed = getLatestValue(parsed["process_memory_bytes"], '{type="heap_used"}')
+        const memoryTotal = getLatestValue(parsed["process_memory_bytes"], '{type="heap_total"}')
+
+        metrics.system.data = {
+          "CPU Usage": `${cpuUsage.toFixed(2)}%`,
+          "Memory Used": formatBytes(memoryUsed),
+          "Memory Total": formatBytes(memoryTotal),
+          Status: getStatus(cpuUsage, 50, 80),
+        }
+
+        // Performance
+        const cacheHits = sumMetric(parsed["cache_hits_total"])
+        const cacheMisses = sumMetric(parsed["cache_misses_total"])
+        const hitRate = cacheHits + cacheMisses > 0 ? (cacheHits / (cacheHits + cacheMisses)) * 100 : 0
+
+        metrics.performance.data = {
+          "Cache Hits": formatNumber(cacheHits),
+          "Cache Misses": formatNumber(cacheMisses),
+          "Hit Rate": `${hitRate.toFixed(1)}%`,
+          Status: getStatus(hitRate, 60, 40, true),
+        }
+
+        // Security
+        const sessions = getLatestValue(parsed["session_count"])
+        const activeConnections = getLatestValue(parsed["active_connections"])
+
+        metrics.security.data = {
+          "Active Sessions": formatNumber(sessions),
+          "Active Connections": formatNumber(activeConnections),
+          "Rate Limit Status": "Healthy",
+          Status: "good",
+        }
+      }
+
+      function renderDashboard() {
+        const grid = document.getElementById("metricsGrid")
+        grid.innerHTML = ""
+
+        for (const [key, metric] of Object.entries(metrics)) {
+          const card = document.createElement("div")
+          card.className = "card"
+
+          let html = `<div class="card-title">${metric.icon} ${metric.title}</div>`
+
+          for (const [label, value] of Object.entries(metric.data)) {
+            if (label === "Status") {
+              const statusClass =
+                value === "good" ? "status-healthy" : value === "warning" ? "status-warning" : "status-critical"
+              html += `
+                <div class="metric">
+                  <span class="metric-label">${label}</span>
+                  <span><span class="${statusClass} status-indicator"></span></span>
+                </div>
+              `
+            } else {
+              const valueClass =
+                typeof value === "string" && value.includes("ms") ? getLatencyClass(parseFloat(value)) : ""
+              html += `
+                <div class="metric">
+                  <span class="metric-label">${label}</span>
+                  <span class="metric-value ${valueClass}">${value}</span>
+                </div>
+              `
+            }
+          }
+
+          card.innerHTML = html
+          grid.appendChild(card)
+        }
+      }
+
+      function sumMetric(values) {
+        if (!values) return 0
+        return values.reduce((sum, v) => sum + v.value, 0)
+      }
+
+      function getLatestValue(values, labelFilter = "") {
+        if (!values) return 0
+        const filtered = labelFilter ? values.filter((v) => v.labels.includes(labelFilter)) : values
+        return filtered.length > 0 ? filtered[0].value : 0
+      }
+
+      function averageHistogram(sumValues, countValues) {
+        if (!sumValues || !countValues) return 0
+        const sum = sumMetric(sumValues)
+        const count = sumMetric(countValues)
+        return count > 0 ? sum / count : 0
+      }
+
+      function formatNumber(num) {
+        if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`
+        if (num >= 1000) return `${(num / 1000).toFixed(2)}K`
+        return num.toString()
+      }
+
+      function formatBytes(bytes) {
+        if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(2)} GB`
+        if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(2)} MB`
+        if (bytes >= 1024) return `${(bytes / 1024).toFixed(2)} KB`
+        return `${bytes} B`
+      }
+
+      function getStatus(value, warningThreshold, criticalThreshold, reverse = false) {
+        if (reverse) {
+          if (value >= warningThreshold) return "good"
+          if (value >= criticalThreshold) return "warning"
+          return "critical"
+        } else {
+          if (value < warningThreshold) return "good"
+          if (value < criticalThreshold) return "warning"
+          return "critical"
+        }
+      }
+
+      function getLatencyClass(latency) {
+        if (latency < 100) return "good"
+        if (latency < 500) return "warning"
+        return "critical"
+      }
+
+      function refreshData() {
+        fetchMetrics()
+      }
+
+      function toggleAutoRefresh() {
+        autoRefresh = !autoRefresh
+        document.getElementById("autoRefreshText").textContent = autoRefresh
+          ? "⏸️ Pause Auto-Refresh"
+          : "▶️ Resume Auto-Refresh"
+
+        if (autoRefresh) {
+          startAutoRefresh()
+        } else {
+          stopAutoRefresh()
+        }
+      }
+
+      function startAutoRefresh() {
+        const interval = 10000 // 10 seconds
+        refreshTimer = setInterval(fetchMetrics, interval)
+      }
+
+      function stopAutoRefresh() {
+        if (refreshTimer) {
+          clearInterval(refreshTimer)
+          refreshTimer = null
+        }
+      }
+
+      // Initialize
+      fetchMetrics()
+      startAutoRefresh()
+    </script>
+  </body>
+</html>
