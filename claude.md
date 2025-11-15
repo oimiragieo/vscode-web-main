@@ -10,6 +10,25 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 - **Communication:** HTTP + WebSocket for bidirectional real-time communication
 - **Deployment:** Standalone binary, Docker container, or NPM package
 
+### Deployment Modes
+
+**Single-User Mode (Default):**
+- Lightweight, simple deployment for personal use
+- Single password authentication
+- Shared resources (settings, extensions)
+- Zero overhead, backward compatible
+
+**Multi-User Mode (New):**
+- Enterprise-ready deployment for multiple concurrent users
+- Complete user isolation (processes, filesystems, state)
+- User authentication with database-backed sessions
+- Role-based access control (Admin, User, Viewer)
+- Resource quotas and limits per user
+- Comprehensive audit logging
+- Horizontal scaling support
+
+**See:** [MULTI_USER_README.md](MULTI_USER_README.md) for complete multi-user documentation
+
 ---
 
 ## Extension Integration Strategy
@@ -69,12 +88,26 @@ vscode-web-main/
 │   ├── common/              # Shared utilities (client + server)
 │   ├── core/                # Plugin system, security, config
 │   └── node/                # Backend server code
+│       ├── routes/          # HTTP route handlers
+│       └── services/        # Multi-user services (NEW)
+│           ├── auth/        # Authentication & user management
+│           ├── session/     # Session storage (Memory, Redis, Database)
+│           ├── isolation/   # User environment isolation
+│           ├── audit/       # Security audit logging
+│           ├── config/      # Multi-user configuration loader
+│           └── types.ts     # TypeScript type definitions
 ├── test/                     # Test suites (unit, integration, e2e)
 ├── ci/                       # Build scripts and CI/CD
 ├── lib/                      # External libraries (VSCode source)
 ├── docs/                     # Documentation
 ├── patches/                  # NPM package patches
-└── typings/                  # TypeScript type definitions
+├── typings/                  # TypeScript type definitions
+│
+├── MULTI_USER_README.md                 # Multi-user overview & quick start
+├── MULTI_USER_ARCHITECTURE_DESIGN.md   # Complete architecture (70+ pages)
+├── IMPLEMENTATION_GUIDE.md              # Step-by-step integration guide
+├── SERVER_ARCHITECTURE_ANALYSIS.md     # Current system analysis
+└── ARCHITECTURE_DIAGRAMS.md            # Visual architecture diagrams
 ```
 
 ---
@@ -141,6 +174,18 @@ Express application factory:
 | **EditorSessionManager** | `src/node/vscodeSocket.ts` | Editor session lifecycle |
 | **SocketProxyProvider** | `src/node/socket.ts` | TLS socket proxying |
 
+### Multi-User Services (NEW)
+
+| Service | Location | Purpose |
+|---------|----------|---------|
+| **AuthService** | `src/node/services/auth/AuthService.ts` | User authentication, session management, login/logout |
+| **UserRepository** | `src/node/services/auth/UserRepository.ts` | User data persistence (Memory, SQLite, PostgreSQL) |
+| **SessionStore** | `src/node/services/session/SessionStore.ts` | Session storage (Memory, Redis, Database) |
+| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas |
+| **AuditLogger** | `src/node/services/audit/AuditLogger.ts` | Security audit logging (File, Database) |
+| **MultiUserConfig** | `src/node/services/config/MultiUserConfig.ts` | Multi-user configuration loader |
+| **MultiUserService** | `src/node/services/MultiUserService.ts` | Service container & orchestration |
+
 ### Request Flow
 
 ```
@@ -176,6 +221,21 @@ Response to Client
 | `/_static/*` | GET | No | Static assets |
 
 *Redirects to `/login` if not authenticated
+
+### Multi-User API Endpoints (NEW)
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/users/me` | GET | Yes | Get current user info |
+| `/api/users` | GET | Admin | List all users |
+| `/api/users` | POST | Admin | Create new user |
+| `/api/users/:userId` | PUT | Admin | Update user |
+| `/api/users/:userId` | DELETE | Admin | Delete user |
+| `/api/users/me/sessions` | GET | Yes | List active sessions |
+| `/api/users/me/sessions/:sessionId` | DELETE | Yes | Revoke session |
+| `/api/users/me/usage` | GET | Yes | Get resource usage |
+
+**Note:** Multi-user endpoints are only available when `deployment-mode: multi` is configured.
 
 ### WebSocket Endpoints
 
@@ -315,6 +375,8 @@ export class MyPlugin extends BasePlugin {
 - `--user-data-dir` - User data directory
 - `--extensions-dir` - Extensions directory
 - `--disable-telemetry` - Privacy mode
+- `--deployment-mode` - Deployment mode (single|multi) **NEW**
+- `--multi-user-config` - Multi-user configuration file path **NEW**
 
 ### Environment Variables (.env)
 
@@ -326,6 +388,81 @@ See `.env.example` for complete configuration options:
 - Application settings
 - Docker configuration
 - Logging levels
+
+### Multi-User Configuration (NEW)
+
+Multi-user mode is configured via YAML/JSON configuration files.
+
+**Example `.code-server.yaml`:**
+
+```yaml
+deployment-mode: multi  # single | multi
+
+multi-user:
+  auth:
+    provider: database  # database | ldap | oauth | saml
+    database:
+      type: sqlite  # sqlite | postgres | mysql
+      path: /var/lib/code-server/users.db
+    session:
+      store: redis  # memory | redis | database
+      ttl: 86400
+      redis:
+        host: localhost
+        port: 6379
+
+  isolation:
+    strategy: directory  # directory | container | process
+    base-path: /var/lib/code-server/users
+
+  limits:
+    max-sessions-per-user: 5
+    max-concurrent-connections: 100
+    storage-quota-mb: 5000
+    memory-limit-mb: 2048
+
+  features:
+    audit-logging: true
+    usage-analytics: false
+    admin-dashboard: true
+```
+
+**Environment Variable Overrides:**
+
+```bash
+# Deployment mode
+CODE_SERVER_DEPLOYMENT_MODE=multi
+
+# Database
+CODE_SERVER_DB_TYPE=postgres
+CODE_SERVER_DB_HOST=localhost
+CODE_SERVER_DB_NAME=code_server
+
+# Session store
+CODE_SERVER_SESSION_STORE=redis
+CODE_SERVER_REDIS_HOST=localhost
+
+# Admin user (created on first start)
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=SecurePassword123!
+```
+
+**Quick Start:**
+
+```bash
+# Single-user mode (default - no changes needed)
+code-server
+
+# Multi-user mode with config file
+code-server --multi-user-config=.code-server.yaml
+
+# Multi-user mode with environment variables
+export CODE_SERVER_DEPLOYMENT_MODE=multi
+code-server
+```
+
+**See:** [MULTI_USER_ARCHITECTURE_DESIGN.md](MULTI_USER_ARCHITECTURE_DESIGN.md) for complete configuration reference
 
 ---
 
@@ -430,6 +567,44 @@ code-server
 curl -fsSL https://code-server.dev/install.sh | sh
 code-server
 ```
+
+### Multi-User Deployment (NEW)
+
+**Phase 1: Directory-Based Isolation**
+```bash
+# Create configuration
+cat > .code-server.yaml <<EOF
+deployment-mode: multi
+multi-user:
+  auth:
+    provider: database
+    database:
+      type: sqlite
+      path: /var/lib/code-server/users.db
+  isolation:
+    strategy: directory
+    base-path: /var/lib/code-server/users
+EOF
+
+# Start server
+code-server --multi-user-config=.code-server.yaml
+```
+
+**Phase 2: Container-Based Isolation**
+```bash
+# Docker Compose with multi-user support
+docker-compose -f docker-compose.multi-user.yml up -d
+```
+
+**Phase 3: Kubernetes Deployment**
+```bash
+# Helm chart with multi-user support
+helm install code-server ./helm-chart --values multi-user-values.yaml
+```
+
+**See:**
+- [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) - Step-by-step setup instructions
+- [MULTI_USER_ARCHITECTURE_DESIGN.md](MULTI_USER_ARCHITECTURE_DESIGN.md) - Complete deployment configs
 
 ---
 
@@ -657,6 +832,299 @@ code-server --list-extensions --show-versions
 - [VSCode](https://github.com/microsoft/vscode)
 - [Monaco Editor](https://microsoft.github.io/monaco-editor/)
 - [code-server](https://github.com/coder/code-server)
+
+---
+
+## Multi-User Architecture Documentation (NEW)
+
+### Complete Multi-User System
+
+The VSCode Web IDE now supports two deployment modes: **single-user** (default) and **multi-user** (enterprise-ready). The multi-user architecture provides complete isolation, authentication, and resource management for multiple concurrent users.
+
+### Key Documentation Files
+
+#### [MULTI_USER_README.md](MULTI_USER_README.md) - Executive Summary & Quick Start
+**Contains:** Project overview, quick start guides, feature summary
+
+**Key Sections:**
+- Executive summary
+- Quick start (single-user and multi-user modes)
+- Architecture overview diagrams
+- Security features
+- Performance & scalability targets
+- Implementation phases
+- Configuration examples
+- Deployment options
+
+**Best For:** Product managers, decision makers, quick overview
+
+---
+
+#### [MULTI_USER_ARCHITECTURE_DESIGN.md](MULTI_USER_ARCHITECTURE_DESIGN.md) - Complete Architecture (70+ pages)
+**Contains:** Comprehensive technical specification for multi-user system
+
+**Key Sections:**
+1. Executive Summary
+2. Design Goals (single-user vs multi-user)
+3. Deployment Modes (comparison table)
+4. **Architecture Options Analysis:**
+   - Session-Based Isolation (single process)
+   - Container-Per-User (recommended for production)
+   - Process Pool (hybrid)
+   - Serverless (future)
+5. **Recommended Architecture** (phased approach)
+6. **Implementation Phases:**
+   - Phase 1: Directory-based (2-3 weeks)
+   - Phase 2: Container-based (4-6 weeks)
+   - Phase 3: Enterprise (6-8 weeks)
+7. **Detailed Component Design:**
+   - AuthService (authentication & session management)
+   - SessionStore (Memory, Redis, Database)
+   - UserRepository (user persistence)
+   - UserIsolationManager (environment isolation)
+   - AuditLogger (security logging)
+   - MultiUserConfig (configuration loader)
+8. Security Considerations
+9. Scalability & Performance
+10. Migration Paths
+11. Configuration Examples (YAML, environment variables)
+12. Monitoring & Observability
+13. Testing Strategy
+14. Deployment Examples (Docker Compose, Kubernetes)
+
+**Best For:** Architects, senior developers, technical design review
+
+---
+
+#### [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) - Step-by-Step Integration
+**Contains:** Developer-focused integration instructions
+
+**Key Sections:**
+1. Overview
+2. Prerequisites (dependencies)
+3. **7-Step Integration Process:**
+   - Step 1: Create Database Helper (SQLite)
+   - Step 2: Create Multi-User Service Container
+   - Step 3: Modify Main Entry Point
+   - Step 4: Update App Creation
+   - Step 5: Update Login Route
+   - Step 6: Add User Management API
+   - Step 7: Register Routes
+4. **Database Schema:**
+   - Users table
+   - Sessions table
+   - Audit events table
+   - Indexes
+5. Example Usage (CLI, API examples with curl)
+6. Testing (unit tests, integration tests)
+7. Migration (single-user → multi-user)
+8. Troubleshooting
+
+**Best For:** Developers implementing the multi-user system
+
+---
+
+#### [SERVER_ARCHITECTURE_ANALYSIS.md](SERVER_ARCHITECTURE_ANALYSIS.md) - Current System Analysis
+**Contains:** Deep dive into current architecture and limitations
+
+**Key Sections:**
+1. Executive Summary
+2. Server Entry Points & Startup
+3. Existing Session/State Management
+4. Process Management (parent-child model)
+5. WebSocket & IPC Communication
+6. File System Access Patterns
+7. Authentication & Authorization (detailed)
+8. VS Code Module Integration
+9. **Architecture Constraints for Multi-User Design**
+10. Structural Changes Needed
+11. Detailed Component Breakdown
+12. Communication Flow Examples
+13. Design Recommendations
+14. Deployment Topology Options
+15. Key Files Reference
+
+**Best For:** Understanding current system, identifying constraints
+
+---
+
+#### [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) - Visual Diagrams
+**Contains:** Visual architecture diagrams
+
+**Diagrams:**
+1. Process Architecture
+2. Request Flow (HTTP)
+3. WebSocket Upgrade Flow
+4. Session Management (EditorSessionManager)
+5. Authentication & Authorization Flow
+6. File System Structure
+7. State Persistence Model
+8. Communication Mechanisms
+9. Multi-User Architecture (proposed)
+10. Startup Sequence
+11. Request Timing & Order
+
+**Best For:** Visual learners, presentations, onboarding
+
+---
+
+### Multi-User Services Implementation
+
+All multi-user services are fully implemented in TypeScript and ready for integration:
+
+#### Type System - `src/node/services/types.ts` (400+ lines)
+- Complete type definitions for all services
+- User, Session, Environment, Container types
+- Resource limits and quotas
+- Configuration interfaces
+- Audit events and metrics
+- API response types
+
+#### Authentication - `src/node/services/auth/AuthService.ts` (350+ lines)
+- User authentication with Argon2 password hashing
+- Session creation and management
+- Login/logout with audit logging
+- Password strength validation
+- Token generation (JWT-ready)
+- Session limits per user
+
+#### User Persistence - `src/node/services/auth/UserRepository.ts` (200+ lines)
+- Memory and Database implementations
+- User CRUD operations
+- SQLite, PostgreSQL, MySQL support
+- Username/email uniqueness validation
+
+#### Session Storage - `src/node/services/session/SessionStore.ts` (400+ lines)
+- **Three storage backends:**
+  - MemorySessionStore (development/single instance)
+  - RedisSessionStore (production/distributed)
+  - DatabaseSessionStore (persistent storage)
+- Session expiration and cleanup
+- User session tracking
+- Factory pattern for easy switching
+
+#### User Isolation - `src/node/services/isolation/UserIsolationManager.ts` (300+ lines)
+- DirectoryIsolationStrategy (Phase 1 ready)
+- Per-user directory structure
+- Storage quota enforcement
+- Resource usage tracking
+- ContainerIsolationStrategy (Phase 2 placeholder)
+
+#### Audit Logging - `src/node/services/audit/AuditLogger.ts` (300+ lines)
+- FileAuditLogger (rotating daily logs)
+- DatabaseAuditLogger (queryable audit trail)
+- CompositeAuditLogger (multiple backends)
+- Security event tracking
+- Queryable audit trail
+
+#### Configuration - `src/node/services/config/MultiUserConfig.ts` (250+ lines)
+- YAML/JSON configuration loader
+- Environment variable overrides
+- Configuration validation
+- Initial admin user creation
+- Default configuration values
+
+---
+
+### Multi-User Use Cases
+
+#### Single-User Mode (Default)
+```bash
+# No changes needed - works exactly as before
+code-server
+```
+
+**Use Case:** Personal development, single developer, simple deployment
+
+#### Multi-User Mode - Small Team (5-20 users)
+```bash
+# Directory-based isolation with SQLite
+code-server --multi-user-config=.code-server.yaml
+```
+
+**Features:**
+- User authentication with database
+- Directory-based isolation
+- In-memory session store
+- Audit logging
+- Admin API
+
+**Use Case:** Small teams, internal deployments, development/staging environments
+
+#### Multi-User Mode - Production (20+ users)
+```bash
+# Container-based isolation with Redis + PostgreSQL
+docker-compose -f docker-compose.multi-user.yml up -d
+```
+
+**Features:**
+- Container-per-user isolation
+- Redis session store (distributed)
+- PostgreSQL user database
+- Load balancing support
+- Horizontal scaling
+- Container pool management
+
+**Use Case:** Production SaaS, cloud deployments, large teams
+
+#### Multi-User Mode - Enterprise (100+ users)
+```bash
+# Kubernetes deployment with OAuth/SAML
+helm install code-server ./helm-chart --values enterprise-values.yaml
+```
+
+**Features:**
+- Kubernetes orchestration
+- OAuth/SAML integration
+- Advanced RBAC
+- Usage analytics
+- Admin dashboard UI
+- Multi-region support
+- Auto-scaling
+
+**Use Case:** Enterprise, 100+ users, multi-region deployments
+
+---
+
+### Migration Path
+
+#### From Single-User to Multi-User
+
+1. **Backup existing data**
+   ```bash
+   cp -r ~/.local/share/code-server ~/.local/share/code-server.backup
+   ```
+
+2. **Create multi-user configuration**
+   ```bash
+   cat > .code-server.yaml <<EOF
+   deployment-mode: multi
+   multi-user:
+     auth:
+       provider: database
+       database:
+         type: sqlite
+         path: /var/lib/code-server/users.db
+   EOF
+   ```
+
+3. **Set admin credentials**
+   ```bash
+   export ADMIN_USERNAME=admin
+   export ADMIN_PASSWORD=SecurePassword123!
+   ```
+
+4. **Start server**
+   ```bash
+   code-server --multi-user-config=.code-server.yaml
+   ```
+
+5. **Migrate existing data to admin user** (optional)
+   ```bash
+   sudo cp -r ~/.local/share/code-server/* /var/lib/code-server/users/$(admin-user-id)/data/
+   ```
+
+**See:** [IMPLEMENTATION_GUIDE.md#8-migration](IMPLEMENTATION_GUIDE.md#8-migration) for complete migration guide
 
 ---
 
