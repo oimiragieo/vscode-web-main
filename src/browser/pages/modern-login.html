@@ -169,24 +169,29 @@
           });
         }
 
-        // Error display
+        // Error display - optimized to prevent layout thrashing
         function showError(message) {
           const passwordField = document.getElementById('password');
+
+          // Remove existing error first (batch DOM reads)
+          const existingError = document.getElementById('password-error');
+          if (existingError) {
+            existingError.remove();
+          }
+
+          // Create error element
           const errorDiv = document.createElement('div');
           errorDiv.className = 'error-message';
           errorDiv.id = 'password-error';
           errorDiv.textContent = message;
           errorDiv.setAttribute('role', 'alert');
 
-          // Remove existing error
-          const existingError = document.getElementById('password-error');
-          if (existingError) {
-            existingError.remove();
-          }
-
-          passwordField.parentElement.appendChild(errorDiv);
-          passwordField.setAttribute('aria-invalid', 'true');
-          passwordField.focus();
+          // Batch all DOM writes together
+          requestAnimationFrame(() => {
+            passwordField.setAttribute('aria-invalid', 'true');
+            passwordField.parentElement.appendChild(errorDiv);
+            passwordField.focus();
+          });
         }
 
         // Auto-hide loading on error
