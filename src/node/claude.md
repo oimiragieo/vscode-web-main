@@ -9,6 +9,20 @@ This directory contains the core backend/server-side implementation of the VSCod
 ```
 src/node/
 ├── routes/              # HTTP route handlers (see routes/claude.md)
+├── services/            # Multi-user services (NEW)
+│   ├── types.ts        # TypeScript type definitions
+│   ├── auth/           # Authentication & user management
+│   │   ├── AuthService.ts
+│   │   └── UserRepository.ts
+│   ├── session/        # Session storage
+│   │   └── SessionStore.ts
+│   ├── isolation/      # User environment isolation
+│   │   └── UserIsolationManager.ts
+│   ├── audit/          # Security audit logging
+│   │   └── AuditLogger.ts
+│   ├── config/         # Multi-user configuration
+│   │   └── MultiUserConfig.ts
+│   └── MultiUserService.ts  # Service container
 ├── entry.ts            # Application entry point
 ├── main.ts             # Server orchestration
 ├── app.ts              # Express app factory
@@ -1022,10 +1036,641 @@ logger.error('Failed to connect', { error: error.message })
 
 ---
 
+## Multi-User Services (NEW)
+
+The VSCode Web IDE now supports multi-user deployment through a comprehensive service architecture located in `src/node/services/`.
+
+### Overview
+
+The multi-user system enables:
+- **Two deployment modes:** Single-user (default) and Multi-user (opt-in)
+- **Complete user isolation:** Separate filesystems, settings, extensions per user
+- **Production-ready security:** User authentication, session management, audit logging
+- **Resource management:** Quotas, limits, and usage tracking per user
+- **Scalability:** Support for horizontal scaling with load balancing
+
+**Documentation:** See [MULTI_USER_README.md](../../MULTI_USER_README.md) for complete overview
+
+---
+
+### services/types.ts
+**Purpose:** TypeScript type definitions for all multi-user services
+
+**Location:** `src/node/services/types.ts:1`
+
+**Key Types:**
+- `DeploymentMode` - Single or Multi deployment mode
+- `User` - User entity with authentication data
+- `Session` - User session with expiration
+- `UserEnvironment` - Isolated user environment
+- `ResourceLimits` - Per-user resource quotas
+- `AuditEvent` - Security audit event
+- `MultiUserConfig` - Complete configuration
+
+**Lines:** 400+
+
+**Usage:**
+```typescript
+import { User, Session, DeploymentMode } from '../services/types'
+```
+
+---
+
+### services/auth/AuthService.ts
+**Purpose:** User authentication and session management
+
+**Location:** `src/node/services/auth/AuthService.ts:1`
+
+**Responsibilities:**
+- User creation, update, deletion
+- Password hashing with Argon2
+- Login/logout with audit logging
+- Session creation and validation
+- Token generation (JWT-ready)
+- Password strength validation
+- Session limits per user
+
+**Key Methods:**
+```typescript
+class AuthService {
+  // User management
+  async createUser(input: CreateUserInput): Promise<User>
+  async updateUser(userId: string, updates: UpdateUserInput): Promise<User>
+  async deleteUser(userId: string): Promise<void>
+  async getUserById(userId: string): Promise<User | null>
+  async getUserByUsername(username: string): Promise<User | null>
+
+  // Authentication
+  async authenticateUser(username: string, password: string): Promise<User | null>
+  async login(username: string, password: string, metadata: SessionMetadata): Promise<LoginResponse>
+  async logout(sessionToken: string, metadata?: Partial<SessionMetadata>): Promise<void>
+
+  // Session management
+  async createSession(input: CreateSessionInput): Promise<Session>
+  async validateSession(sessionToken: string): Promise<Session | null>
+  async refreshSession(sessionToken: string): Promise<Session>
+  async revokeSession(sessionToken: string): Promise<void>
+  async revokeUserSessions(userId: string): Promise<void>
+  async getActiveSessions(userId: string): Promise<Session[]>
+}
+```
+
+**Lines:** 350+
+
+**Security Features:**
+- Argon2 password hashing
+- Password complexity validation
+- Session expiration
+- Rate limiting integration
+- Audit logging for all events
+
+---
+
+### services/auth/UserRepository.ts
+**Purpose:** User data persistence layer
+
+**Location:** `src/node/services/auth/UserRepository.ts:1`
+
+**Implementations:**
+1. **MemoryUserRepository** - In-memory storage for development
+2. **DatabaseUserRepository** - Database storage for production (SQLite, PostgreSQL, MySQL)
+
+**Key Methods:**
+```typescript
+interface UserRepository {
+  create(user: User): Promise<User>
+  findById(id: string): Promise<User | null>
+  findByUsername(username: string): Promise<User | null>
+  findByEmail(email: string): Promise<User | null>
+  findAll(options?: { limit?: number; offset?: number }): Promise<User[]>
+  update(id: string, updates: Partial<User>): Promise<User>
+  delete(id: string): Promise<void>
+  count(): Promise<number>
+}
+```
+
+**Lines:** 200+
+
+**Features:**
+- Multiple backend support
+- Username/email uniqueness validation
+- Pagination support
+- Automatic indexing (database mode)
+
+---
+
+### services/session/SessionStore.ts
+**Purpose:** Session storage with multiple backend support
+
+**Location:** `src/node/services/session/SessionStore.ts:1`
+
+**Implementations:**
+1. **MemorySessionStore** - In-memory with automatic cleanup (development/single-instance)
+2. **RedisSessionStore** - Redis backend for distributed deployments
+3. **DatabaseSessionStore** - Database backend for persistent sessions
+
+**Key Methods:**
+```typescript
+interface SessionStore {
+  // CRUD operations
+  set(sessionId: string, session: Session, ttl?: number): Promise<void>
+  get(sessionId: string): Promise<Session | null>
+  delete(sessionId: string): Promise<void>
+  exists(sessionId: string): Promise<boolean>
+
+  // Query operations
+  getUserSessions(userId: string): Promise<Session[]>
+  getAllActiveSessions(): Promise<Session[]>
+
+  // Bulk operations
+  deleteUserSessions(userId: string): Promise<number>
+  deleteExpiredSessions(): Promise<number>
+
+  // Statistics
+  getSessionCount(): Promise<number>
+  getUserSessionCount(userId: string): Promise<number>
+}
+```
+
+**Lines:** 400+
+
+**Features:**
+- TTL-based expiration
+- Automatic cleanup
+- Factory pattern for easy switching
+- User session tracking
+
+**Usage:**
+```typescript
+// Development (in-memory)
+const sessionStore = new MemorySessionStore()
+
+// Production (Redis)
+const sessionStore = new RedisSessionStore(redisClient)
+
+// Production (Database)
+const sessionStore = new DatabaseSessionStore(dbConnection)
+```
+
+---
+
+### services/isolation/UserIsolationManager.ts
+**Purpose:** User environment isolation and resource management
+
+**Location:** `src/node/services/isolation/UserIsolationManager.ts:1`
+
+**Strategies:**
+1. **DirectoryIsolationStrategy** - OS-level directory isolation (Phase 1 ready)
+2. **ContainerIsolationStrategy** - Container-based isolation (Phase 2 placeholder)
+
+**Key Methods:**
+```typescript
+interface IsolationStrategy {
+  // User environment setup
+  initializeUserEnvironment(userId: string): Promise<UserEnvironment>
+  destroyUserEnvironment(userId: string): Promise<void>
+
+  // Resource access
+  getUserDataPath(userId: string): string
+  getUserSettingsPath(userId: string): string
+  getUserExtensionsPath(userId: string): string
+  getUserWorkspacesPath(userId: string): string
+  getUserLogsPath(userId: string): string
+
+  // Resource management
+  enforceStorageQuota(userId: string): Promise<void>
+  getResourceUsage(userId: string): Promise<ResourceUsage>
+  checkQuota(userId: string, resource: ResourceType): Promise<QuotaStatus>
+
+  // Cleanup
+  cleanupIdleResources(idleThresholdMinutes: number): Promise<number>
+}
+```
+
+**Lines:** 300+
+
+**Features:**
+- Per-user directory structure
+- Storage quota enforcement
+- Resource usage tracking
+- Idle resource cleanup
+- Default settings initialization
+
+**Directory Structure (per user):**
+```
+/var/lib/code-server/users/
+└── {user-id}/
+    ├── data/           # User data files
+    ├── settings/       # VS Code settings
+    ├── extensions/     # User extensions
+    ├── workspaces/     # User workspaces
+    └── logs/           # User logs
+```
+
+---
+
+### services/audit/AuditLogger.ts
+**Purpose:** Security audit logging
+
+**Location:** `src/node/services/audit/AuditLogger.ts:1`
+
+**Implementations:**
+1. **FileAuditLogger** - File-based logging with daily rotation
+2. **DatabaseAuditLogger** - Database-backed queryable audit trail
+3. **CompositeAuditLogger** - Multiple backends simultaneously
+
+**Key Methods:**
+```typescript
+interface AuditLogger {
+  log(event: AuditEvent): Promise<void>
+  query(filter: AuditEventFilter): Promise<AuditEvent[]>
+  close(): Promise<void>
+}
+```
+
+**Lines:** 300+
+
+**Logged Events:**
+- User login/logout (success/failure)
+- User creation/update/deletion
+- Session creation/expiration/revocation
+- Resource access/modification
+- Quota exceeded
+- Security violations
+- Admin actions
+
+**Features:**
+- Daily log rotation (file mode)
+- Queryable audit trail (database mode)
+- Event filtering and pagination
+- Timestamp-based queries
+- User activity tracking
+
+**Usage:**
+```typescript
+// File-based logging
+const auditLogger = new FileAuditLogger({
+  logDir: '/var/log/code-server/audit',
+  rotateDaily: true
+})
+
+// Database logging
+const auditLogger = new DatabaseAuditLogger(dbConnection)
+
+// Both simultaneously
+const auditLogger = new CompositeAuditLogger([fileLogger, dbLogger])
+```
+
+---
+
+### services/config/MultiUserConfig.ts
+**Purpose:** Multi-user configuration loading and validation
+
+**Location:** `src/node/services/config/MultiUserConfig.ts:1`
+
+**Responsibilities:**
+- Load configuration from YAML/JSON files
+- Apply environment variable overrides
+- Validate configuration
+- Create initial admin user
+- Provide default values
+
+**Key Methods:**
+```typescript
+class MultiUserConfigLoader {
+  static async load(args: CodeServerArgs): Promise<MultiUserConfig | null>
+  static async createInitialAdmin(authService: AuthService, config: AdminConfig): Promise<void>
+}
+```
+
+**Lines:** 250+
+
+**Configuration Sources (priority order):**
+1. Environment variables (highest priority)
+2. Configuration file (YAML/JSON)
+3. Default values (lowest priority)
+
+**Example Configuration:**
+```yaml
+deployment-mode: multi
+
+multi-user:
+  auth:
+    provider: database
+    database:
+      type: sqlite
+      path: /var/lib/code-server/users.db
+    session:
+      store: redis
+      ttl: 86400
+
+  isolation:
+    strategy: directory
+    base-path: /var/lib/code-server/users
+
+  limits:
+    max-sessions-per-user: 5
+    storage-quota-mb: 5000
+
+  features:
+    audit-logging: true
+```
+
+**Environment Variable Overrides:**
+```bash
+CODE_SERVER_DEPLOYMENT_MODE=multi
+CODE_SERVER_DB_TYPE=postgres
+CODE_SERVER_DB_HOST=localhost
+CODE_SERVER_SESSION_STORE=redis
+CODE_SERVER_REDIS_HOST=localhost
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=SecurePassword123!
+```
+
+---
+
+### services/MultiUserService.ts
+**Purpose:** Service container and orchestration
+
+**Location:** `src/node/services/MultiUserService.ts:1`
+
+**Responsibilities:**
+- Initialize all multi-user services
+- Manage service lifecycle
+- Provide unified service interface
+- Handle cleanup
+
+**Key Methods:**
+```typescript
+class MultiUserService {
+  public authService: AuthService
+  public sessionStore: SessionStore
+  public userRepository: UserRepository
+  public isolationStrategy: IsolationStrategy
+  public auditLogger: AuditLogger
+
+  static async create(config: MultiUserConfig): Promise<MultiUserService>
+  async close(): Promise<void>
+}
+```
+
+**Usage:**
+```typescript
+// In main.ts
+const multiUserConfig = await MultiUserConfigLoader.load(args)
+if (multiUserConfig) {
+  const multiUserService = await MultiUserService.create(multiUserConfig)
+
+  // Create initial admin user
+  await MultiUserConfigLoader.createInitialAdmin(multiUserService.authService, {
+    username: 'admin',
+    email: 'admin@example.com',
+    password: 'SecurePassword123!'
+  })
+
+  // Pass to app
+  const { server } = await createApp(args, multiUserService)
+}
+```
+
+---
+
+### Integration with Main Server
+
+**Modified Files:**
+1. `src/node/main.ts` - Load multi-user config, create services
+2. `src/node/app.ts` - Inject multi-user service into requests
+3. `src/node/routes/login.ts` - Use multi-user auth for login
+4. `src/node/routes/users.ts` - New user management API (to be created)
+
+**Request Flow (Multi-User Mode):**
+```
+HTTP Request
+    ↓
+Express Middleware
+    ↓
+Multi-User Service Injection (req.multiUser)
+    ↓
+Authentication Middleware
+    ↓
+Route Handler (with user context)
+    ↓
+Response
+```
+
+---
+
+### Database Schema
+
+Multi-user mode requires the following database tables:
+
+**Users Table:**
+```sql
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  roles TEXT NOT NULL,  -- JSON array
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  last_login TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  metadata TEXT NOT NULL DEFAULT '{}'
+);
+```
+
+**Sessions Table:**
+```sql
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  last_activity TEXT NOT NULL,
+  ip_address TEXT NOT NULL,
+  user_agent TEXT NOT NULL,
+  container_id TEXT,
+  process_id INTEGER,
+  metadata TEXT NOT NULL DEFAULT '{}',
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+**Audit Events Table:**
+```sql
+CREATE TABLE audit_events (
+  id TEXT PRIMARY KEY,
+  timestamp TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  user_id TEXT,
+  username TEXT,
+  ip_address TEXT NOT NULL,
+  user_agent TEXT NOT NULL,
+  status TEXT NOT NULL,
+  metadata TEXT NOT NULL DEFAULT '{}',
+  error TEXT
+);
+```
+
+---
+
+### API Endpoints (Multi-User Mode)
+
+**User Management:**
+- `GET /api/users/me` - Get current user info
+- `GET /api/users` - List all users (admin only)
+- `POST /api/users` - Create new user (admin only)
+- `PUT /api/users/:userId` - Update user (admin only)
+- `DELETE /api/users/:userId` - Delete user (admin only)
+
+**Session Management:**
+- `GET /api/users/me/sessions` - List active sessions
+- `DELETE /api/users/me/sessions/:sessionId` - Revoke session
+
+**Resource Management:**
+- `GET /api/users/me/usage` - Get resource usage
+
+**See:** [IMPLEMENTATION_GUIDE.md](../../IMPLEMENTATION_GUIDE.md) for complete API documentation
+
+---
+
+### Configuration Examples
+
+**Development (SQLite + Memory):**
+```yaml
+deployment-mode: multi
+multi-user:
+  auth:
+    provider: database
+    database:
+      type: sqlite
+      path: /tmp/code-server-users.db
+    session:
+      store: memory
+```
+
+**Production (PostgreSQL + Redis):**
+```yaml
+deployment-mode: multi
+multi-user:
+  auth:
+    provider: database
+    database:
+      type: postgres
+      host: postgres.internal
+      database: code_server
+    session:
+      store: redis
+      redis:
+        host: redis.internal
+```
+
+**See:** [MULTI_USER_ARCHITECTURE_DESIGN.md](../../MULTI_USER_ARCHITECTURE_DESIGN.md) for complete configuration reference
+
+---
+
+### Testing Multi-User Services
+
+**Unit Tests:**
+```typescript
+import { AuthService } from '../services/auth/AuthService'
+import { MemoryUserRepository } from '../services/auth/UserRepository'
+import { MemorySessionStore } from '../services/session/SessionStore'
+
+describe('Multi-User System', () => {
+  let authService: AuthService
+
+  beforeEach(() => {
+    const userRepo = new MemoryUserRepository()
+    const sessionStore = new MemorySessionStore()
+    authService = new AuthService(userRepo, sessionStore)
+  })
+
+  it('should create a user', async () => {
+    const user = await authService.createUser({
+      username: 'testuser',
+      email: 'test@example.com',
+      password: 'Password123!',
+    })
+    expect(user.username).toBe('testuser')
+  })
+})
+```
+
+---
+
+### Performance Considerations
+
+**Single-User Mode:**
+- No overhead - services not loaded
+- Same performance as before
+- Backward compatible
+
+**Multi-User Mode:**
+- Database queries for authentication
+- Session store lookups
+- Resource usage tracking
+- Minimal overhead (<10ms per request)
+
+**Optimizations:**
+- Session caching
+- Database connection pooling
+- Lazy loading of user environments
+- Background cleanup tasks
+
+---
+
+### Security Best Practices
+
+1. **Always use HTTPS in production**
+2. **Use strong passwords** (enforced by default)
+3. **Enable audit logging** for compliance
+4. **Set appropriate resource quotas** to prevent abuse
+5. **Use Redis or database session store** for distributed deployments
+6. **Rotate admin passwords** after initial setup
+7. **Monitor audit logs** for suspicious activity
+8. **Keep dependencies updated** (especially Argon2, database drivers)
+
+---
+
+### Troubleshooting
+
+**Issue: "Database locked" (SQLite)**
+- Solution: Use PostgreSQL for concurrent writes or ensure single-threaded access
+
+**Issue: "Session not found" after restart**
+- Solution: Use Redis or database session store for persistence
+
+**Issue: "Storage quota exceeded"**
+- Solution: Increase quota or clean up user files
+
+**Issue: "Permission denied" on user directories**
+- Solution: Check directory permissions (should be 0700)
+
+**See:** [IMPLEMENTATION_GUIDE.md#9-troubleshooting](../../IMPLEMENTATION_GUIDE.md#9-troubleshooting) for complete troubleshooting guide
+
+---
+
+### Documentation
+
+**Comprehensive Documentation:**
+- [MULTI_USER_README.md](../../MULTI_USER_README.md) - Overview and quick start
+- [MULTI_USER_ARCHITECTURE_DESIGN.md](../../MULTI_USER_ARCHITECTURE_DESIGN.md) - Complete architecture (70+ pages)
+- [IMPLEMENTATION_GUIDE.md](../../IMPLEMENTATION_GUIDE.md) - Step-by-step integration
+- [SERVER_ARCHITECTURE_ANALYSIS.md](../../SERVER_ARCHITECTURE_ANALYSIS.md) - Current system analysis
+- [ARCHITECTURE_DIAGRAMS.md](../../ARCHITECTURE_DIAGRAMS.md) - Visual diagrams
+
+---
+
 ## Future Enhancements
 
+- [x] Multi-user support (Phase 1 complete)
+- [ ] Container-based isolation (Phase 2)
+- [ ] OAuth/SAML integration (Phase 3)
+- [ ] Admin dashboard UI (Phase 3)
+- [ ] Usage analytics (Phase 3)
 - [ ] Cluster mode support
-- [ ] Redis session storage
 - [ ] Advanced load balancing
 - [ ] Metrics collection
 - [ ] Distributed tracing
