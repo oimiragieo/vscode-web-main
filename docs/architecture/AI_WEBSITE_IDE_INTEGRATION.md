@@ -111,12 +111,14 @@ src/
 ```
 
 **Pros:**
+
 - ✅ Simpler deployment
 - ✅ Shared authentication & session management
 - ✅ Easier to start
 - ✅ Lower operational complexity
 
 **Cons:**
+
 - ❌ Harder to scale independently
 - ❌ Single point of failure
 - ❌ Resource contention between chat and IDE
@@ -135,12 +137,14 @@ Gateway (nginx/API Gateway)
 ```
 
 **Pros:**
+
 - ✅ Independent scaling
 - ✅ Technology flexibility
 - ✅ Better fault isolation
 - ✅ Team autonomy
 
 **Cons:**
+
 - ❌ More complex deployment
 - ❌ Distributed session management required
 - ❌ Network overhead
@@ -154,6 +158,7 @@ Gateway (nginx/API Gateway)
 ### Critical Requirement: User Isolation
 
 Each user MUST have:
+
 - ✅ Isolated filesystem workspace
 - ✅ Isolated process/container
 - ✅ Separate settings & extensions
@@ -177,6 +182,7 @@ Each user MUST have:
 ```
 
 **Implementation:**
+
 - OS-level permissions (chmod 700)
 - Disk quotas (quota, setquota)
 - chroot jails (optional)
@@ -202,7 +208,7 @@ services:
       - user-123-settings:/home/coder/.config
     resources:
       limits:
-        cpus: '2'
+        cpus: "2"
         memory: 4G
       reservations:
         memory: 1G
@@ -211,12 +217,14 @@ services:
 ```
 
 **Pros:**
+
 - ✅ Complete isolation
 - ✅ Resource limits enforced
 - ✅ Network isolation
 - ✅ Easy cleanup
 
 **Cons:**
+
 - ❌ Container startup overhead (2-5 seconds)
 - ❌ More complex orchestration
 - ❌ Higher resource usage
@@ -347,32 +355,32 @@ CREATE INDEX idx_audit_log_event_type ON audit_log(event_type);
 ```typescript
 // Shared authentication middleware
 async function authenticateUser(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies['session_token'] || req.headers['authorization']?.replace('Bearer ', '');
+  const token = req.cookies["session_token"] || req.headers["authorization"]?.replace("Bearer ", "")
 
   if (!token) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: "Not authenticated" })
   }
 
-  const session = await SessionService.validate(token);
+  const session = await SessionService.validate(token)
 
   if (!session || session.expiresAt < new Date()) {
-    return res.status(401).json({ error: 'Session expired' });
+    return res.status(401).json({ error: "Session expired" })
   }
 
-  const user = await UserService.findById(session.userId);
+  const user = await UserService.findById(session.userId)
 
   if (!user || !user.isActive) {
-    return res.status(401).json({ error: 'User not found or inactive' });
+    return res.status(401).json({ error: "User not found or inactive" })
   }
 
   // Update last activity
-  await SessionService.updateActivity(session.id);
+  await SessionService.updateActivity(session.id)
 
   // Attach to request
-  req.user = user;
-  req.session = session;
+  req.user = user
+  req.session = session
 
-  next();
+  next()
 }
 ```
 
@@ -387,67 +395,62 @@ Both chat and IDE can use the same AI infrastructure:
 ```typescript
 // Shared AI service
 class AIService {
-  private client: Anthropic;
+  private client: Anthropic
 
   constructor(apiKey: string) {
-    this.client = new Anthropic({ apiKey });
+    this.client = new Anthropic({ apiKey })
   }
 
   // For chat
   async chat(messages: Message[], options?: ChatOptions): Promise<ChatResponse> {
     const response = await this.client.messages.create({
-      model: options?.model || 'claude-sonnet-4-5-20250929',
+      model: options?.model || "claude-sonnet-4-5-20250929",
       max_tokens: options?.maxTokens || 4096,
-      messages: messages.map(m => ({
+      messages: messages.map((m) => ({
         role: m.role,
-        content: m.content
-      }))
-    });
+        content: m.content,
+      })),
+    })
 
     return {
       content: response.content[0].text,
-      usage: response.usage
-    };
+      usage: response.usage,
+    }
   }
 
   // For IDE code completion
   async complete(code: string, context: CodeContext): Promise<string> {
-    const prompt = this.buildCompletionPrompt(code, context);
-    const response = await this.chat([
-      { role: 'user', content: prompt }
-    ], { model: 'claude-sonnet-4-5-20250929', maxTokens: 2048 });
+    const prompt = this.buildCompletionPrompt(code, context)
+    const response = await this.chat([{ role: "user", content: prompt }], {
+      model: "claude-sonnet-4-5-20250929",
+      maxTokens: 2048,
+    })
 
-    return response.content;
+    return response.content
   }
 
   // For IDE code explanation
   async explain(code: string, language: string): Promise<string> {
-    const prompt = `Explain this ${language} code:\n\n${code}`;
-    const response = await this.chat([
-      { role: 'user', content: prompt }
-    ]);
+    const prompt = `Explain this ${language} code:\n\n${code}`
+    const response = await this.chat([{ role: "user", content: prompt }])
 
-    return response.content;
+    return response.content
   }
 
   // For IDE debugging
   async debug(error: Error, code: string, context: CodeContext): Promise<DebugSuggestion> {
-    const prompt = this.buildDebugPrompt(error, code, context);
-    const response = await this.chat([
-      { role: 'user', content: prompt }
-    ], { model: 'claude-sonnet-4-5-20250929' });
+    const prompt = this.buildDebugPrompt(error, code, context)
+    const response = await this.chat([{ role: "user", content: prompt }], { model: "claude-sonnet-4-5-20250929" })
 
-    return this.parseDebugResponse(response.content);
+    return this.parseDebugResponse(response.content)
   }
 
   // For IDE refactoring
   async refactor(code: string, instruction: string): Promise<string> {
-    const prompt = `Refactor this code: ${instruction}\n\n${code}`;
-    const response = await this.chat([
-      { role: 'user', content: prompt }
-    ]);
+    const prompt = `Refactor this code: ${instruction}\n\n${code}`
+    const response = await this.chat([{ role: "user", content: prompt }])
 
-    return response.content;
+    return response.content
   }
 }
 ```
@@ -456,49 +459,49 @@ class AIService {
 
 ```typescript
 // IDE-specific AI routes
-router.post('/api/ide/ai/complete', authenticateUser, async (req, res) => {
-  const { code, cursor, language, context } = req.body;
+router.post("/api/ide/ai/complete", authenticateUser, async (req, res) => {
+  const { code, cursor, language, context } = req.body
 
   const completion = await aiService.complete(code, {
     cursor,
     language,
-    ...context
-  });
+    ...context,
+  })
 
   await AuditLog.create({
     userId: req.user.id,
-    eventType: 'ai.code.complete',
-    resourceType: 'code',
-    action: 'generate',
-    status: 'success'
-  });
+    eventType: "ai.code.complete",
+    resourceType: "code",
+    action: "generate",
+    status: "success",
+  })
 
-  res.json({ completion });
-});
+  res.json({ completion })
+})
 
-router.post('/api/ide/ai/explain', authenticateUser, async (req, res) => {
-  const { code, language } = req.body;
+router.post("/api/ide/ai/explain", authenticateUser, async (req, res) => {
+  const { code, language } = req.body
 
-  const explanation = await aiService.explain(code, language);
+  const explanation = await aiService.explain(code, language)
 
-  res.json({ explanation });
-});
+  res.json({ explanation })
+})
 
-router.post('/api/ide/ai/debug', authenticateUser, async (req, res) => {
-  const { error, code, context } = req.body;
+router.post("/api/ide/ai/debug", authenticateUser, async (req, res) => {
+  const { error, code, context } = req.body
 
-  const suggestion = await aiService.debug(error, code, context);
+  const suggestion = await aiService.debug(error, code, context)
 
-  res.json({ suggestion });
-});
+  res.json({ suggestion })
+})
 
-router.post('/api/ide/ai/refactor', authenticateUser, async (req, res) => {
-  const { code, instruction } = req.body;
+router.post("/api/ide/ai/refactor", authenticateUser, async (req, res) => {
+  const { code, instruction } = req.body
 
-  const refactoredCode = await aiService.refactor(code, instruction);
+  const refactoredCode = await aiService.refactor(code, instruction)
 
-  res.json({ code: refactoredCode });
-});
+  res.json({ code: refactoredCode })
+})
 ```
 
 ---
@@ -511,72 +514,72 @@ router.post('/api/ide/ai/refactor', authenticateUser, async (req, res) => {
 // React Router or Next.js routes
 const routes = [
   {
-    path: '/',
-    component: HomePage
+    path: "/",
+    component: HomePage,
   },
   {
-    path: '/login',
-    component: LoginPage
+    path: "/login",
+    component: LoginPage,
   },
   {
-    path: '/register',
-    component: RegisterPage
+    path: "/register",
+    component: RegisterPage,
   },
   {
-    path: '/chat',
+    path: "/chat",
     component: ChatPage,
-    requireAuth: true
+    requireAuth: true,
   },
   {
-    path: '/chat/:conversationId',
+    path: "/chat/:conversationId",
     component: ChatPage,
-    requireAuth: true
+    requireAuth: true,
   },
   {
-    path: '/ide',
+    path: "/ide",
     component: IDEPage,
-    requireAuth: true
+    requireAuth: true,
   },
   {
-    path: '/ide/workspace/:workspaceId',
+    path: "/ide/workspace/:workspaceId",
     component: IDEPage,
-    requireAuth: true
+    requireAuth: true,
   },
   {
-    path: '/settings',
+    path: "/settings",
     component: SettingsPage,
-    requireAuth: true
+    requireAuth: true,
   },
   {
-    path: '/admin',
+    path: "/admin",
     component: AdminDashboard,
     requireAuth: true,
-    requireRole: 'admin'
-  }
-];
+    requireRole: "admin",
+  },
+]
 ```
 
 ### Backend API Routes
 
 ```typescript
 // Express routes
-app.use('/api/auth', authRoutes);           // Authentication
-app.use('/api/users', userRoutes);          // User management
-app.use('/api/chat', chatRoutes);           // Chat features
-app.use('/api/ide', ideRoutes);             // IDE features
-app.use('/api/admin', adminRoutes);         // Admin features
-app.use('/api/ai', aiRoutes);               // Shared AI features
+app.use("/api/auth", authRoutes) // Authentication
+app.use("/api/users", userRoutes) // User management
+app.use("/api/chat", chatRoutes) // Chat features
+app.use("/api/ide", ideRoutes) // IDE features
+app.use("/api/admin", adminRoutes) // Admin features
+app.use("/api/ai", aiRoutes) // Shared AI features
 
 // WebSocket routes
-wss.on('connection', (ws, req) => {
-  const url = new URL(req.url, 'ws://localhost');
+wss.on("connection", (ws, req) => {
+  const url = new URL(req.url, "ws://localhost")
 
-  if (url.pathname.startsWith('/chat/')) {
-    handleChatWebSocket(ws, req);
-  } else if (url.pathname.startsWith('/ide/')) {
-    handleIDEWebSocket(ws, req);
+  if (url.pathname.startsWith("/chat/")) {
+    handleChatWebSocket(ws, req)
+  } else if (url.pathname.startsWith("/ide/")) {
+    handleIDEWebSocket(ws, req)
   }
-});
+})
 ```
 
 ---
@@ -586,7 +589,7 @@ wss.on('connection', (ws, req) => {
 ### Development (Docker Compose)
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   # Main application
@@ -602,7 +605,7 @@ services:
     volumes:
       - ./src:/app/src
       - user-workspaces:/var/lib/ai-website/users
-      - /var/run/docker.sock:/var/run/docker.sock  # For container-based isolation
+      - /var/run/docker.sock:/var/run/docker.sock # For container-based isolation
     depends_on:
       - postgres
       - redis
@@ -663,42 +666,42 @@ spec:
         app: ai-website
     spec:
       containers:
-      - name: app
-        image: your-registry/ai-website:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: url
-        - name: REDIS_URL
-          value: redis://redis-service:6379
-        - name: ANTHROPIC_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: api-keys
-              key: anthropic
-        resources:
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-        volumeMounts:
-        - name: user-workspaces
-          mountPath: /var/lib/ai-website/users
-        - name: docker-sock
-          mountPath: /var/run/docker.sock
+        - name: app
+          image: your-registry/ai-website:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: url
+            - name: REDIS_URL
+              value: redis://redis-service:6379
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: anthropic
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: user-workspaces
+              mountPath: /var/lib/ai-website/users
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
       volumes:
-      - name: user-workspaces
-        persistentVolumeClaim:
-          claimName: user-workspaces-pvc
-      - name: docker-sock
-        hostPath:
-          path: /var/run/docker.sock
+        - name: user-workspaces
+          persistentVolumeClaim:
+            claimName: user-workspaces-pvc
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
 ```
 
 ---
@@ -706,6 +709,7 @@ spec:
 ## Security Considerations
 
 ### 1. Authentication & Authorization
+
 - ✅ JWT tokens or secure session cookies
 - ✅ Password hashing (Argon2)
 - ✅ Rate limiting on auth endpoints
@@ -713,6 +717,7 @@ spec:
 - ✅ Role-based access control (RBAC)
 
 ### 2. IDE Session Isolation
+
 - ✅ User workspaces isolated by containers/directories
 - ✅ File system permissions (chmod 700)
 - ✅ Process isolation (containers)
@@ -720,6 +725,7 @@ spec:
 - ✅ Resource quotas enforced
 
 ### 3. Code Execution Security
+
 - ✅ Sandboxed execution environments
 - ✅ Limited network access from user containers
 - ✅ No access to host system
@@ -727,12 +733,14 @@ spec:
 - ✅ Resource limits (CPU, memory, disk)
 
 ### 4. AI API Security
+
 - ✅ API keys stored in environment variables
 - ✅ Rate limiting on AI endpoints
 - ✅ Usage tracking per user
 - ✅ Cost monitoring and alerts
 
 ### 5. Data Privacy
+
 - ✅ User data encrypted at rest
 - ✅ HTTPS for all connections
 - ✅ Session tokens httpOnly and secure
@@ -749,28 +757,28 @@ Pre-warm containers for faster startup:
 
 ```typescript
 class ContainerPoolManager {
-  private warmPool: Map<string, string[]> = new Map();
+  private warmPool: Map<string, string[]> = new Map()
 
   async initializeWarmPool(size: number = 5): Promise<void> {
     for (let i = 0; i < size; i++) {
       const containerId = await this.createContainer({
-        image: 'ai-website-ide:latest',
-        warmPool: true
-      });
-      this.warmPool.get('default')?.push(containerId);
+        image: "ai-website-ide:latest",
+        warmPool: true,
+      })
+      this.warmPool.get("default")?.push(containerId)
     }
   }
 
   async assignToUser(userId: string): Promise<string> {
-    const containers = this.warmPool.get('default');
+    const containers = this.warmPool.get("default")
     if (containers && containers.length > 0) {
-      const containerId = containers.pop()!;
-      await this.configureForUser(containerId, userId);
-      return containerId;
+      const containerId = containers.pop()!
+      await this.configureForUser(containerId, userId)
+      return containerId
     }
 
     // Create new container if pool is empty
-    return this.createContainer({ userId });
+    return this.createContainer({ userId })
   }
 }
 ```
@@ -781,20 +789,20 @@ class ContainerPoolManager {
 // Cache user workspaces
 const workspaceCache = new LRUCache({
   max: 1000,
-  ttl: 1000 * 60 * 30 // 30 minutes
-});
+  ttl: 1000 * 60 * 30, // 30 minutes
+})
 
 // Cache IDE state
 const ideStateCache = new LRUCache({
   max: 500,
-  ttl: 1000 * 60 * 15 // 15 minutes
-});
+  ttl: 1000 * 60 * 15, // 15 minutes
+})
 
 // Cache AI responses (optional)
 const aiResponseCache = new LRUCache({
   max: 10000,
-  ttl: 1000 * 60 * 60 // 1 hour
-});
+  ttl: 1000 * 60 * 60, // 1 hour
+})
 ```
 
 ### 3. Database Optimization
@@ -822,26 +830,26 @@ const aiResponseCache = new LRUCache({
 // Prometheus metrics
 const metrics = {
   // User metrics
-  activeUsers: new Gauge({ name: 'active_users_total' }),
-  newRegistrations: new Counter({ name: 'user_registrations_total' }),
+  activeUsers: new Gauge({ name: "active_users_total" }),
+  newRegistrations: new Counter({ name: "user_registrations_total" }),
 
   // Chat metrics
-  chatMessages: new Counter({ name: 'chat_messages_total' }),
-  chatConversations: new Gauge({ name: 'chat_conversations_active' }),
-  aiRequestLatency: new Histogram({ name: 'ai_request_duration_seconds' }),
+  chatMessages: new Counter({ name: "chat_messages_total" }),
+  chatConversations: new Gauge({ name: "chat_conversations_active" }),
+  aiRequestLatency: new Histogram({ name: "ai_request_duration_seconds" }),
 
   // IDE metrics
-  ideSessionsActive: new Gauge({ name: 'ide_sessions_active' }),
-  ideContainerStartup: new Histogram({ name: 'ide_container_startup_seconds' }),
-  ideFilesOpen: new Gauge({ name: 'ide_files_open_total' }),
-  ideCPUUsage: new Gauge({ name: 'ide_cpu_usage_percent' }),
-  ideMemoryUsage: new Gauge({ name: 'ide_memory_usage_bytes' }),
+  ideSessionsActive: new Gauge({ name: "ide_sessions_active" }),
+  ideContainerStartup: new Histogram({ name: "ide_container_startup_seconds" }),
+  ideFilesOpen: new Gauge({ name: "ide_files_open_total" }),
+  ideCPUUsage: new Gauge({ name: "ide_cpu_usage_percent" }),
+  ideMemoryUsage: new Gauge({ name: "ide_memory_usage_bytes" }),
 
   // System metrics
-  httpRequests: new Counter({ name: 'http_requests_total' }),
-  httpErrors: new Counter({ name: 'http_errors_total' }),
-  databaseQueries: new Histogram({ name: 'database_query_duration_seconds' })
-};
+  httpRequests: new Counter({ name: "http_requests_total" }),
+  httpErrors: new Counter({ name: "http_errors_total" }),
+  databaseQueries: new Histogram({ name: "database_query_duration_seconds" }),
+}
 ```
 
 ### Logging
@@ -849,22 +857,19 @@ const metrics = {
 ```typescript
 // Structured logging with Winston
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
+  level: process.env.LOG_LEVEL || "info",
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
-});
+    new winston.transports.File({ filename: "error.log", level: "error" }),
+    new winston.transports.File({ filename: "combined.log" }),
+  ],
+})
 
 // Log examples
-logger.info('User logged in', { userId, ipAddress });
-logger.warn('Rate limit exceeded', { userId, endpoint });
-logger.error('AI request failed', { userId, error });
+logger.info("User logged in", { userId, ipAddress })
+logger.warn("Rate limit exceeded", { userId, endpoint })
+logger.error("AI request failed", { userId, error })
 ```
 
 ---
@@ -876,20 +881,24 @@ logger.error('AI request failed', { userId, error });
 ```typescript
 class AIUsageTracker {
   async trackUsage(userId: string, request: AIRequest, response: AIResponse): Promise<void> {
-    await db.query(`
+    await db.query(
+      `
       INSERT INTO ai_usage (user_id, model, input_tokens, output_tokens, cost_usd)
       VALUES ($1, $2, $3, $4, $5)
-    `, [
-      userId,
-      request.model,
-      response.usage.input_tokens,
-      response.usage.output_tokens,
-      this.calculateCost(request.model, response.usage)
-    ]);
+    `,
+      [
+        userId,
+        request.model,
+        response.usage.input_tokens,
+        response.usage.output_tokens,
+        this.calculateCost(request.model, response.usage),
+      ],
+    )
   }
 
-  async getUserUsage(userId: string, period: 'day' | 'month'): Promise<UsageStats> {
-    const result = await db.query(`
+  async getUserUsage(userId: string, period: "day" | "month"): Promise<UsageStats> {
+    const result = await db.query(
+      `
       SELECT
         SUM(input_tokens) as total_input_tokens,
         SUM(output_tokens) as total_output_tokens,
@@ -897,16 +906,18 @@ class AIUsageTracker {
       FROM ai_usage
       WHERE user_id = $1
         AND created_at > NOW() - INTERVAL '1 ${period}'
-    `, [userId]);
+    `,
+      [userId],
+    )
 
-    return result.rows[0];
+    return result.rows[0]
   }
 
   async enforceQuota(userId: string): Promise<boolean> {
-    const usage = await this.getUserUsage(userId, 'month');
-    const userPlan = await this.getUserPlan(userId);
+    const usage = await this.getUserUsage(userId, "month")
+    const userPlan = await this.getUserPlan(userId)
 
-    return usage.total_cost < userPlan.monthlyLimit;
+    return usage.total_cost < userPlan.monthlyLimit
   }
 }
 ```
@@ -952,6 +963,7 @@ This architecture provides:
 ✅ **Production Ready**: Monitoring, logging, error handling
 
 **Recommended Implementation Path:**
+
 1. Start with Monolithic + Directory Isolation (MVP)
 2. Add Container Isolation (Production v1)
 3. Split to Microservices if needed (Scale)

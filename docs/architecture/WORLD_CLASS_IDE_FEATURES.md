@@ -26,6 +26,7 @@
 **Goal:** GitHub Copilot-style code completion
 
 **Technical Stack:**
+
 - Monaco Editor API (built into VSCode)
 - Claude API (streaming)
 - WebSocket for real-time updates
@@ -36,15 +37,15 @@
 ```typescript
 // AI Code Completion Service
 class AICodeCompletionService {
-  private anthropic: Anthropic;
-  private contextExtractor: CodeContextExtractor;
-  private cache: LRUCache;
+  private anthropic: Anthropic
+  private contextExtractor: CodeContextExtractor
+  private cache: LRUCache
 
   async getSuggestion(
     code: string,
     cursor: Position,
     language: string,
-    context: FileContext
+    context: FileContext,
   ): Promise<CompletionSuggestion> {
     // Extract context
     const codeContext = await this.contextExtractor.extract({
@@ -53,25 +54,27 @@ class AICodeCompletionService {
       language,
       openFiles: context.openFiles,
       recentEdits: context.recentEdits,
-      imports: context.imports
-    });
+      imports: context.imports,
+    })
 
     // Build prompt
-    const prompt = this.buildCompletionPrompt(codeContext);
+    const prompt = this.buildCompletionPrompt(codeContext)
 
     // Call Claude API with streaming
     const stream = await this.anthropic.messages.stream({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 500,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }],
-      temperature: 0.3 // Lower temperature for more predictable completions
-    });
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.3, // Lower temperature for more predictable completions
+    })
 
     // Stream results back to editor
-    return this.processStream(stream);
+    return this.processStream(stream)
   }
 
   private buildCompletionPrompt(context: CodeContext): string {
@@ -92,13 +95,13 @@ ${context.codeAfter}
 \`\`\`
 
 Relevant imports:
-${context.imports.join('\n')}
+${context.imports.join("\n")}
 
 Context from other files:
 ${context.relatedCode}
 
 Complete the code at the cursor. Provide ONLY the completion, no explanations.
-    `.trim();
+    `.trim()
   }
 }
 
@@ -108,33 +111,30 @@ class MonacoAIProvider implements languages.InlineCompletionsProvider {
     model: editor.ITextModel,
     position: Position,
     context: languages.InlineCompletionContext,
-    token: CancellationToken
+    token: CancellationToken,
   ): Promise<languages.InlineCompletions> {
-    const code = model.getValue();
-    const language = model.getLanguageId();
+    const code = model.getValue()
+    const language = model.getLanguageId()
 
-    const suggestion = await aiService.getSuggestion(
-      code,
-      position,
-      language,
-      {
-        openFiles: this.getOpenFiles(),
-        recentEdits: this.getRecentEdits(),
-        imports: this.extractImports(code, language)
-      }
-    );
+    const suggestion = await aiService.getSuggestion(code, position, language, {
+      openFiles: this.getOpenFiles(),
+      recentEdits: this.getRecentEdits(),
+      imports: this.extractImports(code, language),
+    })
 
     return {
-      items: [{
-        insertText: suggestion.text,
-        range: suggestion.range,
-        command: {
-          id: 'ai.completion.accepted',
-          title: 'Log AI completion'
-        }
-      }],
-      enableForwardStability: true
-    };
+      items: [
+        {
+          insertText: suggestion.text,
+          range: suggestion.range,
+          command: {
+            id: "ai.completion.accepted",
+            title: "Log AI completion",
+          },
+        },
+      ],
+      enableForwardStability: true,
+    }
   }
 
   freeInlineCompletions() {
@@ -143,7 +143,7 @@ class MonacoAIProvider implements languages.InlineCompletionsProvider {
 }
 
 // Register provider
-languages.registerInlineCompletionsProvider('*', new MonacoAIProvider());
+languages.registerInlineCompletionsProvider("*", new MonacoAIProvider())
 ```
 
 **VSCode Extension API:**
@@ -153,37 +153,31 @@ languages.registerInlineCompletionsProvider('*', new MonacoAIProvider());
 export function activate(context: vscode.ExtensionContext) {
   // Register inline completion provider
   const provider = vscode.languages.registerInlineCompletionItemProvider(
-    { pattern: '**' },
+    { pattern: "**" },
     {
       async provideInlineCompletionItems(document, position, context, token) {
-        const suggestion = await aiService.getCompletion(
-          document.getText(),
-          position,
-          document.languageId
-        );
+        const suggestion = await aiService.getCompletion(document.getText(), position, document.languageId)
 
-        return suggestion ? [
-          new vscode.InlineCompletionItem(
-            suggestion.text,
-            new vscode.Range(position, position)
-          )
-        ] : [];
-      }
-    }
-  );
+        return suggestion
+          ? [new vscode.InlineCompletionItem(suggestion.text, new vscode.Range(position, position))]
+          : []
+      },
+    },
+  )
 
-  context.subscriptions.push(provider);
+  context.subscriptions.push(provider)
 
   // Register command for manual trigger
   context.subscriptions.push(
-    vscode.commands.registerCommand('ai.triggerCompletion', async () => {
-      await vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
-    })
-  );
+    vscode.commands.registerCommand("ai.triggerCompletion", async () => {
+      await vscode.commands.executeCommand("editor.action.inlineSuggest.trigger")
+    }),
+  )
 }
 ```
 
 **Keybindings:**
+
 - `Tab` - Accept suggestion
 - `Ctrl+Space` - Trigger manually
 - `Esc` - Dismiss suggestion
@@ -230,59 +224,59 @@ export function activate(context: vscode.ExtensionContext) {
 ```typescript
 // AI Chat Panel Service
 class IDEChatService {
-  private codebaseIndex: CodebaseIndex;
-  private conversationHistory: Message[] = [];
+  private codebaseIndex: CodebaseIndex
+  private conversationHistory: Message[] = []
 
   async ask(question: string, options?: ChatOptions): Promise<ChatResponse> {
     // Index codebase if not already done
     if (!this.codebaseIndex.isReady()) {
-      await this.codebaseIndex.build();
+      await this.codebaseIndex.build()
     }
 
     // Extract relevant context from codebase
-    const relevantCode = await this.codebaseIndex.search(question);
+    const relevantCode = await this.codebaseIndex.search(question)
 
     // Get currently open files
-    const openFiles = await this.getOpenFiles();
+    const openFiles = await this.getOpenFiles()
 
     // Get selected code
-    const selectedCode = await this.getSelectedCode();
+    const selectedCode = await this.getSelectedCode()
 
     // Build context-aware prompt
     const messages = [
       ...this.conversationHistory,
       {
-        role: 'user',
+        role: "user",
         content: this.buildContextualPrompt(question, {
           relevantCode,
           openFiles,
           selectedCode,
-          projectStructure: this.codebaseIndex.getStructure()
-        })
-      }
-    ];
+          projectStructure: this.codebaseIndex.getStructure(),
+        }),
+      },
+    ]
 
     // Call Claude API
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 4096,
-      messages
-    });
+      messages,
+    })
 
     // Add to history
     this.conversationHistory.push(
-      { role: 'user', content: question },
-      { role: 'assistant', content: response.content[0].text }
-    );
+      { role: "user", content: question },
+      { role: "assistant", content: response.content[0].text },
+    )
 
     // Parse response for file references
-    const fileReferences = this.extractFileReferences(response.content[0].text);
+    const fileReferences = this.extractFileReferences(response.content[0].text)
 
     return {
       text: response.content[0].text,
       fileReferences,
-      codeBlocks: this.extractCodeBlocks(response.content[0].text)
-    };
+      codeBlocks: this.extractCodeBlocks(response.content[0].text),
+    }
   }
 
   private buildContextualPrompt(question: string, context: Context): string {
@@ -293,79 +287,82 @@ Project Structure:
 ${JSON.stringify(context.projectStructure, null, 2)}
 
 Currently Open Files:
-${context.openFiles.map(f => `- ${f.path}`).join('\n')}
+${context.openFiles.map((f) => `- ${f.path}`).join("\n")}
 
 Currently Selected Code:
-${context.selectedCode ? `
+${
+  context.selectedCode
+    ? `
 File: ${context.selectedCode.file}
 \`\`\`${context.selectedCode.language}
 ${context.selectedCode.content}
 \`\`\`
-` : 'None'}
+`
+    : "None"
+}
 
 Relevant Code:
-${context.relevantCode.map(c => `
+${context.relevantCode
+  .map(
+    (c) => `
 File: ${c.file}:${c.line}
 \`\`\`${c.language}
 ${c.content}
 \`\`\`
-`).join('\n')}
+`,
+  )
+  .join("\n")}
 
 User Question: ${question}
 
 Please provide a helpful answer with specific file and line references.
-    `.trim();
+    `.trim()
   }
 }
 
 // VSCode Webview Panel
 class AIChatPanel {
-  private panel: vscode.WebviewPanel;
+  private panel: vscode.WebviewPanel
 
   constructor(private context: vscode.ExtensionContext) {
-    this.panel = vscode.window.createWebviewPanel(
-      'aiChat',
-      'AI Assistant',
-      vscode.ViewColumn.Two,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true
-      }
-    );
+    this.panel = vscode.window.createWebviewPanel("aiChat", "AI Assistant", vscode.ViewColumn.Two, {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+    })
 
-    this.panel.webview.html = this.getHtmlContent();
+    this.panel.webview.html = this.getHtmlContent()
 
     // Handle messages from webview
     this.panel.webview.onDidReceiveMessage(async (message) => {
       switch (message.type) {
-        case 'ask':
-          const response = await chatService.ask(message.question);
+        case "ask":
+          const response = await chatService.ask(message.question)
           this.panel.webview.postMessage({
-            type: 'response',
-            data: response
-          });
-          break;
+            type: "response",
+            data: response,
+          })
+          break
 
-        case 'openFile':
-          const doc = await vscode.workspace.openTextDocument(message.file);
+        case "openFile":
+          const doc = await vscode.workspace.openTextDocument(message.file)
           await vscode.window.showTextDocument(doc, {
-            selection: new vscode.Range(message.line, 0, message.line, 0)
-          });
-          break;
+            selection: new vscode.Range(message.line, 0, message.line, 0),
+          })
+          break
 
-        case 'explainCode':
-          const editor = vscode.window.activeTextEditor;
+        case "explainCode":
+          const editor = vscode.window.activeTextEditor
           if (editor && editor.selection) {
-            const code = editor.document.getText(editor.selection);
-            const explanation = await aiService.explain(code, editor.document.languageId);
+            const code = editor.document.getText(editor.selection)
+            const explanation = await aiService.explain(code, editor.document.languageId)
             this.panel.webview.postMessage({
-              type: 'response',
-              data: { text: explanation }
-            });
+              type: "response",
+              data: { text: explanation },
+            })
           }
-          break;
+          break
       }
-    });
+    })
   }
 
   private getHtmlContent(): string {
@@ -482,12 +479,13 @@ class AIChatPanel {
   </script>
 </body>
 </html>
-    `;
+    `
   }
 }
 ```
 
 **Features:**
+
 - ✅ Understand codebase context
 - ✅ Answer questions about code
 - ✅ Explain selected code
@@ -657,6 +655,7 @@ vscode.commands.registerCommand('ai.debug.analyzeError', async (diagnostic, docu
 ```
 
 **Features:**
+
 - ✅ Analyze runtime errors
 - ✅ Analyze compiler errors
 - ✅ Suggest specific fixes
@@ -692,15 +691,15 @@ Provide:
 1. Optimized code
 2. Explanation of changes
 3. Performance improvements expected
-    `.trim();
+    `.trim()
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }]
-    });
+      messages: [{ role: "user", content: prompt }],
+    })
 
-    return this.parseRefactoringResponse(response.content[0].text);
+    return this.parseRefactoringResponse(response.content[0].text)
   }
 
   async convertLanguage(code: string, from: string, to: string): Promise<string> {
@@ -713,15 +712,15 @@ ${code}
 \`\`\`
 
 Provide ONLY the converted ${to} code, no explanations.
-    `.trim();
+    `.trim()
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }]
-    });
+      messages: [{ role: "user", content: prompt }],
+    })
 
-    return this.extractCodeBlock(response.content[0].text);
+    return this.extractCodeBlock(response.content[0].text)
   }
 
   async modernizeCode(code: string, language: string): Promise<RefactoringSuggestion> {
@@ -737,15 +736,15 @@ Provide:
 1. Modernized code
 2. List of modernizations applied
 3. Benefits of each change
-    `.trim();
+    `.trim()
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }]
-    });
+      messages: [{ role: "user", content: prompt }],
+    })
 
-    return this.parseRefactoringResponse(response.content[0].text);
+    return this.parseRefactoringResponse(response.content[0].text)
   }
 
   async extractFunction(code: string, selection: string, language: string): Promise<ExtractionSuggestion> {
@@ -766,116 +765,101 @@ Provide:
 1. Extracted function with good name
 2. Updated original code calling the function
 3. Explanation of parameters and return value
-    `.trim();
+    `.trim()
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }]
-    });
+      messages: [{ role: "user", content: prompt }],
+    })
 
-    return this.parseExtractionResponse(response.content[0].text);
+    return this.parseExtractionResponse(response.content[0].text)
   }
 }
 
 // VSCode Commands
 const refactoringCommands = [
   {
-    id: 'ai.refactor.optimize',
-    title: 'AI: Optimize Code',
+    id: "ai.refactor.optimize",
+    title: "AI: Optimize Code",
     async handler() {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) return;
+      const editor = vscode.window.activeTextEditor
+      if (!editor) return
 
-      const selection = editor.selection;
-      const code = editor.document.getText(selection);
+      const selection = editor.selection
+      const code = editor.document.getText(selection)
 
-      const suggestion = await refactoringService.optimizeCode(
-        code,
-        editor.document.languageId
-      );
+      const suggestion = await refactoringService.optimizeCode(code, editor.document.languageId)
 
-      showRefactoringSuggestion(suggestion, editor, selection);
-    }
+      showRefactoringSuggestion(suggestion, editor, selection)
+    },
   },
   {
-    id: 'ai.refactor.modernize',
-    title: 'AI: Modernize Code',
+    id: "ai.refactor.modernize",
+    title: "AI: Modernize Code",
     async handler() {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) return;
+      const editor = vscode.window.activeTextEditor
+      if (!editor) return
 
-      const selection = editor.selection;
-      const code = editor.document.getText(selection);
+      const selection = editor.selection
+      const code = editor.document.getText(selection)
 
-      const suggestion = await refactoringService.modernizeCode(
-        code,
-        editor.document.languageId
-      );
+      const suggestion = await refactoringService.modernizeCode(code, editor.document.languageId)
 
-      showRefactoringSuggestion(suggestion, editor, selection);
-    }
+      showRefactoringSuggestion(suggestion, editor, selection)
+    },
   },
   {
-    id: 'ai.refactor.convert',
-    title: 'AI: Convert to Another Language',
+    id: "ai.refactor.convert",
+    title: "AI: Convert to Another Language",
     async handler() {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) return;
+      const editor = vscode.window.activeTextEditor
+      if (!editor) return
 
       const targetLanguage = await vscode.window.showQuickPick(
-        ['javascript', 'typescript', 'python', 'go', 'rust', 'java'],
-        { placeHolder: 'Select target language' }
-      );
+        ["javascript", "typescript", "python", "go", "rust", "java"],
+        { placeHolder: "Select target language" },
+      )
 
-      if (!targetLanguage) return;
+      if (!targetLanguage) return
 
-      const code = editor.document.getText();
-      const converted = await refactoringService.convertLanguage(
-        code,
-        editor.document.languageId,
-        targetLanguage
-      );
+      const code = editor.document.getText()
+      const converted = await refactoringService.convertLanguage(code, editor.document.languageId, targetLanguage)
 
       // Create new file with converted code
       const newDoc = await vscode.workspace.openTextDocument({
         content: converted,
-        language: targetLanguage
-      });
+        language: targetLanguage,
+      })
 
-      await vscode.window.showTextDocument(newDoc);
-    }
+      await vscode.window.showTextDocument(newDoc)
+    },
   },
   {
-    id: 'ai.refactor.extractFunction',
-    title: 'AI: Extract Function',
+    id: "ai.refactor.extractFunction",
+    title: "AI: Extract Function",
     async handler() {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) return;
+      const editor = vscode.window.activeTextEditor
+      if (!editor) return
 
-      const selection = editor.selection;
-      const selectedCode = editor.document.getText(selection);
-      const fullCode = editor.document.getText();
+      const selection = editor.selection
+      const selectedCode = editor.document.getText(selection)
+      const fullCode = editor.document.getText()
 
-      const suggestion = await refactoringService.extractFunction(
-        fullCode,
-        selectedCode,
-        editor.document.languageId
-      );
+      const suggestion = await refactoringService.extractFunction(fullCode, selectedCode, editor.document.languageId)
 
-      showExtractionSuggestion(suggestion, editor, selection);
-    }
-  }
-];
+      showExtractionSuggestion(suggestion, editor, selection)
+    },
+  },
+]
 
-refactoringCommands.forEach(cmd => {
-  context.subscriptions.push(
-    vscode.commands.registerCommand(cmd.id, cmd.handler)
-  );
-});
+refactoringCommands.forEach((cmd) => {
+  context.subscriptions.push(vscode.commands.registerCommand(cmd.id, cmd.handler))
+})
 ```
 
 **Features:**
+
 - ✅ Optimize code performance
 - ✅ Improve readability
 - ✅ Modernize legacy code
@@ -898,11 +882,7 @@ refactoringCommands.forEach(cmd => {
 ```typescript
 // AI Documentation Service
 class AIDocumentationService {
-  async generateDocstring(
-    code: string,
-    language: string,
-    type: 'function' | 'class' | 'method'
-  ): Promise<string> {
+  async generateDocstring(code: string, language: string, type: "function" | "class" | "method"): Promise<string> {
     const prompt = `
 Generate a comprehensive docstring for this ${language} ${type}.
 
@@ -915,142 +895,127 @@ Follow ${language} documentation conventions:
 - ${this.getDocConventions(language)}
 
 Provide ONLY the docstring, no other text.
-    `.trim();
+    `.trim()
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-haiku-20250304', // Faster model for simpler task
+      model: "claude-haiku-20250304", // Faster model for simpler task
       max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }]
-    });
+      messages: [{ role: "user", content: prompt }],
+    })
 
-    return response.content[0].text.trim();
+    return response.content[0].text.trim()
   }
 
   private getDocConventions(language: string): string {
     const conventions = {
-      python: 'PEP 257 (triple quotes, summary line, detailed description, Args, Returns, Raises)',
-      javascript: 'JSDoc (@param, @returns, @throws)',
-      typescript: 'TSDoc (@param, @returns, @throws)',
-      java: 'Javadoc (@param, @return, @throws)',
-      go: 'GoDoc (simple comment before declaration)',
-      rust: '/// for outer doc comments, //! for inner'
-    };
+      python: "PEP 257 (triple quotes, summary line, detailed description, Args, Returns, Raises)",
+      javascript: "JSDoc (@param, @returns, @throws)",
+      typescript: "TSDoc (@param, @returns, @throws)",
+      java: "Javadoc (@param, @return, @throws)",
+      go: "GoDoc (simple comment before declaration)",
+      rust: "/// for outer doc comments, //! for inner",
+    }
 
-    return conventions[language] || 'Standard documentation format';
+    return conventions[language] || "Standard documentation format"
   }
 
   async documentFile(filePath: string): Promise<DocumentedFile> {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const language = this.detectLanguage(filePath);
+    const content = await fs.readFile(filePath, "utf-8")
+    const language = this.detectLanguage(filePath)
 
     // Parse file to extract functions/classes
-    const ast = await this.parseCode(content, language);
-    const elements = this.extractDocumentableElements(ast);
+    const ast = await this.parseCode(content, language)
+    const elements = this.extractDocumentableElements(ast)
 
-    const documented: DocumentedElement[] = [];
+    const documented: DocumentedElement[] = []
 
     for (const element of elements) {
       if (!element.hasDocstring) {
-        const docstring = await this.generateDocstring(
-          element.code,
-          language,
-          element.type
-        );
+        const docstring = await this.generateDocstring(element.code, language, element.type)
 
         documented.push({
           ...element,
           docstring,
-          location: element.location
-        });
+          location: element.location,
+        })
       }
     }
 
     return {
       file: filePath,
-      elements: documented
-    };
+      elements: documented,
+    }
   }
 }
 
 // VSCode Integration
 class DocumentationProvider implements vscode.CodeActionProvider {
-  async provideCodeActions(
-    document: vscode.TextDocument,
-    range: vscode.Range
-  ): Promise<vscode.CodeAction[]> {
-    const actions: vscode.CodeAction[] = [];
+  async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[]> {
+    const actions: vscode.CodeAction[] = []
 
     // Check if cursor is on a function/class without docstring
-    const symbol = await this.getSymbolAtPosition(document, range.start);
+    const symbol = await this.getSymbolAtPosition(document, range.start)
 
     if (symbol && !this.hasDocstring(document, symbol)) {
-      const action = new vscode.CodeAction(
-        'Generate documentation',
-        vscode.CodeActionKind.RefactorRewrite
-      );
+      const action = new vscode.CodeAction("Generate documentation", vscode.CodeActionKind.RefactorRewrite)
 
       action.command = {
-        title: 'Generate Documentation',
-        command: 'ai.generateDocstring',
-        arguments: [document, symbol]
-      };
+        title: "Generate Documentation",
+        command: "ai.generateDocstring",
+        arguments: [document, symbol],
+      }
 
-      actions.push(action);
+      actions.push(action)
     }
 
-    return actions;
+    return actions
   }
 }
 
-vscode.commands.registerCommand('ai.generateDocstring', async (document, symbol) => {
-  const code = document.getText(symbol.range);
-  const docstring = await documentationService.generateDocstring(
-    code,
-    document.languageId,
-    symbol.kind
-  );
+vscode.commands.registerCommand("ai.generateDocstring", async (document, symbol) => {
+  const code = document.getText(symbol.range)
+  const docstring = await documentationService.generateDocstring(code, document.languageId, symbol.kind)
 
   // Insert docstring
-  const edit = new vscode.WorkspaceEdit();
-  const insertPosition = new vscode.Position(symbol.range.start.line, 0);
-  edit.insert(document.uri, insertPosition, docstring + '\n');
+  const edit = new vscode.WorkspaceEdit()
+  const insertPosition = new vscode.Position(symbol.range.start.line, 0)
+  edit.insert(document.uri, insertPosition, docstring + "\n")
 
-  await vscode.workspace.applyEdit(edit);
-});
+  await vscode.workspace.applyEdit(edit)
+})
 
 // Bulk documentation command
-vscode.commands.registerCommand('ai.documentFile', async () => {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) return;
+vscode.commands.registerCommand("ai.documentFile", async () => {
+  const editor = vscode.window.activeTextEditor
+  if (!editor) return
 
   const result = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: 'Generating documentation...',
-      cancellable: false
+      title: "Generating documentation...",
+      cancellable: false,
     },
     async (progress) => {
-      return await documentationService.documentFile(editor.document.fileName);
-    }
-  );
+      return await documentationService.documentFile(editor.document.fileName)
+    },
+  )
 
   // Apply all documentation
-  const edit = new vscode.WorkspaceEdit();
+  const edit = new vscode.WorkspaceEdit()
 
   for (const element of result.elements) {
-    const position = new vscode.Position(element.location.line, 0);
-    edit.insert(editor.document.uri, position, element.docstring + '\n');
+    const position = new vscode.Position(element.location.line, 0)
+    edit.insert(editor.document.uri, position, element.docstring + "\n")
   }
 
-  await vscode.workspace.applyEdit(edit);
+  await vscode.workspace.applyEdit(edit)
 
-  vscode.window.showInformationMessage(
-    `Added documentation to ${result.elements.length} elements`
-  );
-});
+  vscode.window.showInformationMessage(`Added documentation to ${result.elements.length} elements`)
+})
 ```
 
 **Features:**
+
 - ✅ Generate function docstrings
 - ✅ Generate class documentation
 - ✅ Follow language conventions
@@ -1071,6 +1036,7 @@ vscode.commands.registerCommand('ai.documentFile', async () => {
 **Goal:** Google Docs-style collaborative coding
 
 **Technical Stack:**
+
 - Operational Transformation (OT) or CRDT
 - WebSocket for real-time communication
 - Yjs library for conflict resolution
@@ -1080,76 +1046,71 @@ vscode.commands.registerCommand('ai.documentFile', async () => {
 
 ```typescript
 // Collaborative Editing Service
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
+import * as Y from "yjs"
+import { WebsocketProvider } from "y-websocket"
+import { MonacoBinding } from "y-monaco"
 
 class CollaborativeEditingService {
-  private ydoc: Y.Doc;
-  private provider: WebsocketProvider;
-  private bindings: Map<string, MonacoBinding> = new Map();
+  private ydoc: Y.Doc
+  private provider: WebsocketProvider
+  private bindings: Map<string, MonacoBinding> = new Map()
 
   async joinSession(sessionId: string, userId: string, username: string): Promise<void> {
     // Create Yjs document
-    this.ydoc = new Y.Doc();
+    this.ydoc = new Y.Doc()
 
     // Connect to WebSocket server
     this.provider = new WebsocketProvider(
-      process.env.COLLAB_WS_URL || 'ws://localhost:4444',
+      process.env.COLLAB_WS_URL || "ws://localhost:4444",
       `session-${sessionId}`,
       this.ydoc,
       {
         params: {
           userId,
-          username
-        }
-      }
-    );
+          username,
+        },
+      },
+    )
 
     // Set user awareness (for cursor position)
-    this.provider.awareness.setLocalStateField('user', {
+    this.provider.awareness.setLocalStateField("user", {
       id: userId,
       name: username,
-      color: this.getUserColor(userId)
-    });
+      color: this.getUserColor(userId),
+    })
 
     // Listen for other users
-    this.provider.awareness.on('change', (changes) => {
-      this.updateUserCursors(changes);
-    });
+    this.provider.awareness.on("change", (changes) => {
+      this.updateUserCursors(changes)
+    })
   }
 
   bindEditor(editor: monaco.editor.IStandaloneCodeEditor, filePath: string): void {
     // Get or create shared text type
-    const ytext = this.ydoc.getText(filePath);
+    const ytext = this.ydoc.getText(filePath)
 
     // Create binding between Monaco and Yjs
-    const binding = new MonacoBinding(
-      ytext,
-      editor.getModel()!,
-      new Set([editor]),
-      this.provider.awareness
-    );
+    const binding = new MonacoBinding(ytext, editor.getModel()!, new Set([editor]), this.provider.awareness)
 
-    this.bindings.set(filePath, binding);
+    this.bindings.set(filePath, binding)
   }
 
   unbindEditor(filePath: string): void {
-    const binding = this.bindings.get(filePath);
+    const binding = this.bindings.get(filePath)
     if (binding) {
-      binding.destroy();
-      this.bindings.delete(filePath);
+      binding.destroy()
+      this.bindings.delete(filePath)
     }
   }
 
   private updateUserCursors(changes: any): void {
-    const states = this.provider.awareness.getStates();
+    const states = this.provider.awareness.getStates()
 
     states.forEach((state, clientId) => {
       if (state.user && state.cursor) {
-        this.showRemoteCursor(state.user, state.cursor);
+        this.showRemoteCursor(state.user, state.cursor)
       }
-    });
+    })
   }
 
   private showRemoteCursor(user: User, cursor: CursorPosition): void {
@@ -1158,67 +1119,64 @@ class CollaborativeEditingService {
   }
 
   private getUserColor(userId: string): string {
-    const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-      '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'
-    ];
+    const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"]
 
-    const hash = userId.split('').reduce((acc, char) => {
-      return char.charCodeAt(0) + ((acc << 5) - acc);
-    }, 0);
+    const hash = userId.split("").reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc)
+    }, 0)
 
-    return colors[Math.abs(hash) % colors.length];
+    return colors[Math.abs(hash) % colors.length]
   }
 
   leave(): void {
-    this.bindings.forEach(binding => binding.destroy());
-    this.bindings.clear();
-    this.provider.destroy();
-    this.ydoc.destroy();
+    this.bindings.forEach((binding) => binding.destroy())
+    this.bindings.clear()
+    this.provider.destroy()
+    this.ydoc.destroy()
   }
 }
 
 // WebSocket Server (Node.js)
-import { WebSocketServer } from 'ws';
-import * as Y from 'yjs';
-import { setupWSConnection } from 'y-websocket/bin/utils';
+import { WebSocketServer } from "ws"
+import * as Y from "yjs"
+import { setupWSConnection } from "y-websocket/bin/utils"
 
-const wss = new WebSocketServer({ port: 4444 });
+const wss = new WebSocketServer({ port: 4444 })
 
 // Store Yjs documents
-const docs = new Map<string, Y.Doc>();
+const docs = new Map<string, Y.Doc>()
 
-wss.on('connection', (ws, req) => {
-  const url = new URL(req.url!, 'ws://localhost');
-  const roomName = url.pathname.slice(1);
+wss.on("connection", (ws, req) => {
+  const url = new URL(req.url!, "ws://localhost")
+  const roomName = url.pathname.slice(1)
 
   // Get or create document for this room
   if (!docs.has(roomName)) {
-    docs.set(roomName, new Y.Doc());
+    docs.set(roomName, new Y.Doc())
   }
 
-  const doc = docs.get(roomName)!;
+  const doc = docs.get(roomName)!
 
   // Setup WebSocket connection
-  setupWSConnection(ws, req, { doc });
+  setupWSConnection(ws, req, { doc })
 
   // Log connection
-  console.log(`User joined room: ${roomName}`);
+  console.log(`User joined room: ${roomName}`)
 
-  ws.on('close', () => {
-    console.log(`User left room: ${roomName}`);
+  ws.on("close", () => {
+    console.log(`User left room: ${roomName}`)
 
     // Clean up empty rooms after timeout
     setTimeout(() => {
       if (doc.store.clients.size === 0) {
-        docs.delete(roomName);
-        console.log(`Cleaned up room: ${roomName}`);
+        docs.delete(roomName)
+        console.log(`Cleaned up room: ${roomName}`)
       }
-    }, 60000); // 1 minute
-  });
-});
+    }, 60000) // 1 minute
+  })
+})
 
-console.log('Collaboration server running on ws://localhost:4444');
+console.log("Collaboration server running on ws://localhost:4444")
 ```
 
 **VSCode Extension Integration:**
@@ -1226,58 +1184,51 @@ console.log('Collaboration server running on ws://localhost:4444');
 ```typescript
 // Collaborative editing extension
 export function activate(context: vscode.ExtensionContext) {
-  const collabService = new CollaborativeEditingService();
+  const collabService = new CollaborativeEditingService()
 
   // Command: Start collaboration session
   context.subscriptions.push(
-    vscode.commands.registerCommand('collab.start', async () => {
+    vscode.commands.registerCommand("collab.start", async () => {
       const sessionId = await vscode.window.showInputBox({
-        prompt: 'Enter session ID or leave blank to create new',
-        placeHolder: 'session-123'
-      });
+        prompt: "Enter session ID or leave blank to create new",
+        placeHolder: "session-123",
+      })
 
-      const user = await getCurrentUser();
+      const user = await getCurrentUser()
 
-      await collabService.joinSession(
-        sessionId || generateSessionId(),
-        user.id,
-        user.username
-      );
+      await collabService.joinSession(sessionId || generateSessionId(), user.id, user.username)
 
-      vscode.window.showInformationMessage('Joined collaboration session');
+      vscode.window.showInformationMessage("Joined collaboration session")
 
       // Bind all open editors
-      vscode.window.visibleTextEditors.forEach(editor => {
-        collabService.bindEditor(editor, editor.document.fileName);
-      });
+      vscode.window.visibleTextEditors.forEach((editor) => {
+        collabService.bindEditor(editor, editor.document.fileName)
+      })
 
       // Bind newly opened editors
-      const disposable = vscode.window.onDidChangeActiveTextEditor(editor => {
+      const disposable = vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {
-          collabService.bindEditor(editor, editor.document.fileName);
+          collabService.bindEditor(editor, editor.document.fileName)
         }
-      });
+      })
 
-      context.subscriptions.push(disposable);
-    })
-  );
+      context.subscriptions.push(disposable)
+    }),
+  )
 
   // Command: Leave collaboration session
   context.subscriptions.push(
-    vscode.commands.registerCommand('collab.leave', () => {
-      collabService.leave();
-      vscode.window.showInformationMessage('Left collaboration session');
-    })
-  );
+    vscode.commands.registerCommand("collab.leave", () => {
+      collabService.leave()
+      vscode.window.showInformationMessage("Left collaboration session")
+    }),
+  )
 
   // Show active users in status bar
-  const statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    100
-  );
-  statusBarItem.text = '$(account) Collaborating';
-  statusBarItem.command = 'collab.showUsers';
-  context.subscriptions.push(statusBarItem);
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
+  statusBarItem.text = "$(account) Collaborating"
+  statusBarItem.command = "collab.showUsers"
+  context.subscriptions.push(statusBarItem)
 }
 ```
 
@@ -1286,45 +1237,39 @@ export function activate(context: vscode.ExtensionContext) {
 ```tsx
 // React component for collaboration panel
 function CollaborationPanel() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [users, setUsers] = useState<User[]>([])
+  const [sessionId, setSessionId] = useState<string>("")
 
   useEffect(() => {
     // Listen for user changes
-    const unsubscribe = collabService.onUsersChanged(setUsers);
-    return unsubscribe;
-  }, []);
+    const unsubscribe = collabService.onUsersChanged(setUsers)
+    return unsubscribe
+  }, [])
 
   return (
     <div className="collab-panel">
       <h3>Active Users ({users.length})</h3>
 
-      {users.map(user => (
+      {users.map((user) => (
         <div key={user.id} className="user-item">
-          <div
-            className="user-avatar"
-            style={{ backgroundColor: user.color }}
-          >
+          <div className="user-avatar" style={{ backgroundColor: user.color }}>
             {user.name[0].toUpperCase()}
           </div>
           <div className="user-info">
             <div className="user-name">{user.name}</div>
-            <div className="user-status">
-              {user.cursor ? `Editing ${user.cursor.file}` : 'Idle'}
-            </div>
+            <div className="user-status">{user.cursor ? `Editing ${user.cursor.file}` : "Idle"}</div>
           </div>
         </div>
       ))}
 
-      <button onClick={() => copySessionLink(sessionId)}>
-        Copy Invite Link
-      </button>
+      <button onClick={() => copySessionLink(sessionId)}>Copy Invite Link</button>
     </div>
-  );
+  )
 }
 ```
 
 **Features:**
+
 - ✅ Real-time code editing
 - ✅ Show remote cursors with names
 - ✅ Conflict resolution (automatic)
@@ -1344,103 +1289,103 @@ function CollaborationPanel() {
 
 ```typescript
 // Shared Terminal Service
-import { Terminal } from 'xterm';
-import { AttachAddon } from 'xterm-addon-attach';
-import { FitAddon } from 'xterm-addon-fit';
+import { Terminal } from "xterm"
+import { AttachAddon } from "xterm-addon-attach"
+import { FitAddon } from "xterm-addon-fit"
 
 class SharedTerminalService {
-  private terminals: Map<string, Terminal> = new Map();
-  private ws: WebSocket;
+  private terminals: Map<string, Terminal> = new Map()
+  private ws: WebSocket
 
   createSharedTerminal(sessionId: string, terminalId: string): Terminal {
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace'
-    });
+      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    })
 
     // Connect to backend WebSocket
-    this.ws = new WebSocket(
-      `ws://localhost:3000/terminal/${sessionId}/${terminalId}`
-    );
+    this.ws = new WebSocket(`ws://localhost:3000/terminal/${sessionId}/${terminalId}`)
 
-    const attachAddon = new AttachAddon(this.ws);
-    const fitAddon = new FitAddon();
+    const attachAddon = new AttachAddon(this.ws)
+    const fitAddon = new FitAddon()
 
-    terminal.loadAddon(attachAddon);
-    terminal.loadAddon(fitAddon);
+    terminal.loadAddon(attachAddon)
+    terminal.loadAddon(fitAddon)
 
-    this.terminals.set(terminalId, terminal);
+    this.terminals.set(terminalId, terminal)
 
-    return terminal;
+    return terminal
   }
 
   shareTerminal(terminalId: string): string {
     // Generate shareable link
-    const shareId = generateId();
+    const shareId = generateId()
 
     // Send share request to backend
-    this.ws.send(JSON.stringify({
-      type: 'share',
-      terminalId,
-      shareId
-    }));
+    this.ws.send(
+      JSON.stringify({
+        type: "share",
+        terminalId,
+        shareId,
+      }),
+    )
 
-    return `${window.location.origin}/terminal/shared/${shareId}`;
+    return `${window.location.origin}/terminal/shared/${shareId}`
   }
 }
 
 // Backend WebSocket handler (Node.js + node-pty)
-import * as pty from 'node-pty';
-import { WebSocketServer } from 'ws';
+import * as pty from "node-pty"
+import { WebSocketServer } from "ws"
 
-const terminalSessions = new Map<string, any>();
+const terminalSessions = new Map<string, any>()
 
-wss.on('connection', (ws, req) => {
-  const match = req.url?.match(/\/terminal\/([^\/]+)\/([^\/]+)/);
-  if (!match) return ws.close();
+wss.on("connection", (ws, req) => {
+  const match = req.url?.match(/\/terminal\/([^\/]+)\/([^\/]+)/)
+  if (!match) return ws.close()
 
-  const [, sessionId, terminalId] = match;
+  const [, sessionId, terminalId] = match
 
   // Get or create PTY
-  let ptyProcess = terminalSessions.get(terminalId);
+  let ptyProcess = terminalSessions.get(terminalId)
 
   if (!ptyProcess) {
-    ptyProcess = pty.spawn('bash', [], {
-      name: 'xterm-256color',
+    ptyProcess = pty.spawn("bash", [], {
+      name: "xterm-256color",
       cols: 80,
       rows: 30,
       cwd: getUserWorkspace(sessionId),
-      env: process.env
-    });
+      env: process.env,
+    })
 
-    terminalSessions.set(terminalId, ptyProcess);
+    terminalSessions.set(terminalId, ptyProcess)
 
     // Broadcast to all connected clients
     ptyProcess.onData((data: string) => {
-      wss.clients.forEach(client => {
+      wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(data);
+          client.send(data)
         }
-      });
-    });
+      })
+    })
   }
 
   // Send PTY output to client
   ptyProcess.onData((data: string) => {
-    ws.send(data);
-  });
+    ws.send(data)
+  })
 
   // Receive input from client
-  ws.on('message', (data: string) => {
-    ptyProcess.write(data);
-  });
+  ws.on("message", (data: string) => {
+    ptyProcess.write(data)
+  })
 
-  ws.on('close', () => {
+  ws.on("close", () => {
     // Keep PTY alive for other users
     // Only kill if no more users
-  });
-});
+  })
+})
 ```
 
 #### Port Forwarding
@@ -1448,114 +1393,118 @@ wss.on('connection', (ws, req) => {
 ```typescript
 // Port Forwarding Service
 class PortForwardingService {
-  private tunnels: Map<number, http.Server> = new Map();
+  private tunnels: Map<number, http.Server> = new Map()
 
-  async forwardPort(
-    userId: string,
-    containerPort: number,
-    public: boolean = false
-  ): Promise<string> {
+  async forwardPort(userId: string, containerPort: number, public: boolean = false): Promise<string> {
     // Create reverse proxy to user's container
     const proxy = httpProxy.createProxyServer({
       target: `http://user-${userId}:${containerPort}`,
-      ws: true
-    });
+      ws: true,
+    })
 
     // Create HTTP server
     const server = http.createServer((req, res) => {
       // Check authorization
       if (!public) {
-        const session = await this.validateSession(req);
+        const session = await this.validateSession(req)
         if (session.userId !== userId) {
-          return res.writeHead(403).end('Forbidden');
+          return res.writeHead(403).end("Forbidden")
         }
       }
 
-      proxy.web(req, res);
-    });
+      proxy.web(req, res)
+    })
 
     // Handle WebSocket upgrades
-    server.on('upgrade', (req, socket, head) => {
-      proxy.ws(req, socket, head);
-    });
+    server.on("upgrade", (req, socket, head) => {
+      proxy.ws(req, socket, head)
+    })
 
     // Listen on random port
-    const publicPort = await this.findAvailablePort();
-    server.listen(publicPort);
+    const publicPort = await this.findAvailablePort()
+    server.listen(publicPort)
 
-    this.tunnels.set(publicPort, server);
+    this.tunnels.set(publicPort, server)
 
     // Generate public URL
-    const url = `https://${process.env.PUBLIC_DOMAIN}:${publicPort}`;
+    const url = `https://${process.env.PUBLIC_DOMAIN}:${publicPort}`
 
     // Store forwarding in database
-    await db.query(`
+    await db.query(
+      `
       INSERT INTO port_forwards (user_id, container_port, public_port, is_public, url)
       VALUES ($1, $2, $3, $4, $5)
-    `, [userId, containerPort, publicPort, public, url]);
+    `,
+      [userId, containerPort, publicPort, public, url],
+    )
 
-    return url;
+    return url
   }
 
   async stopForwarding(publicPort: number): Promise<void> {
-    const server = this.tunnels.get(publicPort);
+    const server = this.tunnels.get(publicPort)
     if (server) {
-      server.close();
-      this.tunnels.delete(publicPort);
+      server.close()
+      this.tunnels.delete(publicPort)
     }
 
-    await db.query(`
+    await db.query(
+      `
       DELETE FROM port_forwards WHERE public_port = $1
-    `, [publicPort]);
+    `,
+      [publicPort],
+    )
   }
 
   async listForwards(userId: string): Promise<PortForward[]> {
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT * FROM port_forwards WHERE user_id = $1
-    `, [userId]);
+    `,
+      [userId],
+    )
 
-    return result.rows;
+    return result.rows
   }
 }
 
 // VSCode Extension Command
-vscode.commands.registerCommand('port.forward', async () => {
+vscode.commands.registerCommand("port.forward", async () => {
   const port = await vscode.window.showInputBox({
-    prompt: 'Enter port number to forward',
-    placeHolder: '3000',
+    prompt: "Enter port number to forward",
+    placeHolder: "3000",
     validateInput: (value) => {
-      const port = parseInt(value);
-      return port > 0 && port < 65536 ? null : 'Invalid port number';
-    }
-  });
+      const port = parseInt(value)
+      return port > 0 && port < 65536 ? null : "Invalid port number"
+    },
+  })
 
-  if (!port) return;
+  if (!port) return
 
-  const isPublic = await vscode.window.showQuickPick(
-    ['Private (only you)', 'Public (anyone with link)'],
-    { placeHolder: 'Who can access this port?' }
-  );
+  const isPublic = await vscode.window.showQuickPick(["Private (only you)", "Public (anyone with link)"], {
+    placeHolder: "Who can access this port?",
+  })
 
   const url = await portForwardingService.forwardPort(
     currentUser.id,
     parseInt(port),
-    isPublic === 'Public (anyone with link)'
-  );
+    isPublic === "Public (anyone with link)",
+  )
 
-  vscode.window.showInformationMessage(
-    `Port ${port} is now accessible at: ${url}`,
-    'Copy URL', 'Open in Browser'
-  ).then(action => {
-    if (action === 'Copy URL') {
-      vscode.env.clipboard.writeText(url);
-    } else if (action === 'Open in Browser') {
-      vscode.env.openExternal(vscode.Uri.parse(url));
-    }
-  });
-});
+  vscode.window
+    .showInformationMessage(`Port ${port} is now accessible at: ${url}`, "Copy URL", "Open in Browser")
+    .then((action) => {
+      if (action === "Copy URL") {
+        vscode.env.clipboard.writeText(url)
+      } else if (action === "Open in Browser") {
+        vscode.env.openExternal(vscode.Uri.parse(url))
+      }
+    })
+})
 ```
 
 **Features:**
+
 - ✅ Share terminal sessions
 - ✅ Multiple users can type
 - ✅ Port forwarding for preview
@@ -1576,25 +1525,25 @@ vscode.commands.registerCommand('port.forward', async () => {
 
 ```typescript
 // GitHub PR Service
-import { Octokit } from '@octokit/rest';
+import { Octokit } from "@octokit/rest"
 
 class GitHubPRService {
-  private octokit: Octokit;
+  private octokit: Octokit
 
   constructor(token: string) {
-    this.octokit = new Octokit({ auth: token });
+    this.octokit = new Octokit({ auth: token })
   }
 
   async listPRs(owner: string, repo: string, filters?: PRFilters): Promise<PullRequest[]> {
     const { data } = await this.octokit.pulls.list({
       owner,
       repo,
-      state: filters?.state || 'open',
-      sort: filters?.sort || 'created',
-      direction: 'desc'
-    });
+      state: filters?.state || "open",
+      sort: filters?.sort || "created",
+      direction: "desc",
+    })
 
-    return data.map(pr => ({
+    return data.map((pr) => ({
       number: pr.number,
       title: pr.title,
       author: pr.user?.login,
@@ -1603,36 +1552,36 @@ class GitHubPRService {
       updatedAt: pr.updated_at,
       url: pr.html_url,
       branch: pr.head.ref,
-      baseBranch: pr.base.ref
-    }));
+      baseBranch: pr.base.ref,
+    }))
   }
 
   async getPRDetails(owner: string, repo: string, prNumber: number): Promise<PRDetails> {
     const [{ data: pr }, { data: files }, { data: comments }] = await Promise.all([
       this.octokit.pulls.get({ owner, repo, pull_number: prNumber }),
       this.octokit.pulls.listFiles({ owner, repo, pull_number: prNumber }),
-      this.octokit.pulls.listReviewComments({ owner, repo, pull_number: prNumber })
-    ]);
+      this.octokit.pulls.listReviewComments({ owner, repo, pull_number: prNumber }),
+    ])
 
     return {
       ...pr,
-      files: files.map(f => ({
+      files: files.map((f) => ({
         filename: f.filename,
         status: f.status,
         additions: f.additions,
         deletions: f.deletions,
         changes: f.changes,
-        patch: f.patch
+        patch: f.patch,
       })),
-      comments: comments.map(c => ({
+      comments: comments.map((c) => ({
         id: c.id,
         author: c.user?.login,
         body: c.body,
         path: c.path,
         line: c.line,
-        createdAt: c.created_at
-      }))
-    };
+        createdAt: c.created_at,
+      })),
+    }
   }
 
   async addComment(
@@ -1641,7 +1590,7 @@ class GitHubPRService {
     prNumber: number,
     body: string,
     path?: string,
-    line?: number
+    line?: number,
   ): Promise<void> {
     if (path && line) {
       // Add review comment on specific line
@@ -1652,16 +1601,16 @@ class GitHubPRService {
         body,
         path,
         line,
-        side: 'RIGHT'
-      });
+        side: "RIGHT",
+      })
     } else {
       // Add general comment
       await this.octokit.issues.createComment({
         owner,
         repo,
         issue_number: prNumber,
-        body
-      });
+        body,
+      })
     }
   }
 
@@ -1670,9 +1619,9 @@ class GitHubPRService {
       owner,
       repo,
       pull_number: prNumber,
-      event: 'APPROVE',
-      body
-    });
+      event: "APPROVE",
+      body,
+    })
   }
 
   async requestChanges(owner: string, repo: string, prNumber: number, body: string): Promise<void> {
@@ -1680,67 +1629,64 @@ class GitHubPRService {
       owner,
       repo,
       pull_number: prNumber,
-      event: 'REQUEST_CHANGES',
-      body
-    });
+      event: "REQUEST_CHANGES",
+      body,
+    })
   }
 
   async checkoutPR(owner: string, repo: string, prNumber: number): Promise<void> {
     const { data: pr } = await this.octokit.pulls.get({
       owner,
       repo,
-      pull_number: prNumber
-    });
+      pull_number: prNumber,
+    })
 
     // Fetch PR branch
-    await exec(`git fetch origin pull/${prNumber}/head:pr-${prNumber}`);
-    await exec(`git checkout pr-${prNumber}`);
+    await exec(`git fetch origin pull/${prNumber}/head:pr-${prNumber}`)
+    await exec(`git checkout pr-${prNumber}`)
   }
 }
 
 // VSCode Extension - PR Tree View
 class PRTreeDataProvider implements vscode.TreeDataProvider<PRTreeItem> {
-  private _onDidChangeTreeData = new vscode.EventEmitter<PRTreeItem | undefined>();
-  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData = new vscode.EventEmitter<PRTreeItem | undefined>()
+  readonly onDidChangeTreeData = this._onDidChangeTreeData.event
 
   async getChildren(element?: PRTreeItem): Promise<PRTreeItem[]> {
     if (!element) {
       // Root level - show PRs
-      const repo = await this.getCurrentRepo();
-      const prs = await githubService.listPRs(repo.owner, repo.name);
+      const repo = await this.getCurrentRepo()
+      const prs = await githubService.listPRs(repo.owner, repo.name)
 
-      return prs.map(pr => new PRTreeItem(
-        pr.title,
-        `#${pr.number} by ${pr.author}`,
-        vscode.TreeItemCollapsibleState.Collapsed,
-        pr
-      ));
+      return prs.map(
+        (pr) =>
+          new PRTreeItem(pr.title, `#${pr.number} by ${pr.author}`, vscode.TreeItemCollapsibleState.Collapsed, pr),
+      )
     } else if (element.pr) {
       // Show PR files
-      const details = await githubService.getPRDetails(
-        element.repo.owner,
-        element.repo.name,
-        element.pr.number
-      );
+      const details = await githubService.getPRDetails(element.repo.owner, element.repo.name, element.pr.number)
 
-      return details.files.map(file => new PRTreeItem(
-        file.filename,
-        `+${file.additions} -${file.deletions}`,
-        vscode.TreeItemCollapsibleState.None,
-        undefined,
-        file
-      ));
+      return details.files.map(
+        (file) =>
+          new PRTreeItem(
+            file.filename,
+            `+${file.additions} -${file.deletions}`,
+            vscode.TreeItemCollapsibleState.None,
+            undefined,
+            file,
+          ),
+      )
     }
 
-    return [];
+    return []
   }
 
   getTreeItem(element: PRTreeItem): vscode.TreeItem {
-    return element;
+    return element
   }
 
   refresh(): void {
-    this._onDidChangeTreeData.fire(undefined);
+    this._onDidChangeTreeData.fire(undefined)
   }
 }
 
@@ -1750,93 +1696,85 @@ class PRTreeItem extends vscode.TreeItem {
     public readonly description: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly pr?: PullRequest,
-    public readonly file?: PRFile
+    public readonly file?: PRFile,
   ) {
-    super(label, collapsibleState);
+    super(label, collapsibleState)
 
     if (pr) {
-      this.iconPath = new vscode.ThemeIcon('git-pull-request');
-      this.contextValue = 'pullRequest';
+      this.iconPath = new vscode.ThemeIcon("git-pull-request")
+      this.contextValue = "pullRequest"
       this.command = {
-        command: 'pr.showDetails',
-        title: 'Show PR Details',
-        arguments: [pr]
-      };
+        command: "pr.showDetails",
+        title: "Show PR Details",
+        arguments: [pr],
+      }
     } else if (file) {
-      this.iconPath = vscode.ThemeIcon.File;
-      this.contextValue = 'prFile';
+      this.iconPath = vscode.ThemeIcon.File
+      this.contextValue = "prFile"
       this.command = {
-        command: 'pr.showFileDiff',
-        title: 'Show Diff',
-        arguments: [file]
-      };
+        command: "pr.showFileDiff",
+        title: "Show Diff",
+        arguments: [file],
+      }
     }
   }
 }
 
 // Commands
-vscode.commands.registerCommand('pr.showDetails', async (pr: PullRequest) => {
-  const panel = vscode.window.createWebviewPanel(
-    'prDetails',
-    `PR #${pr.number}`,
-    vscode.ViewColumn.Two,
-    { enableScripts: true }
-  );
+vscode.commands.registerCommand("pr.showDetails", async (pr: PullRequest) => {
+  const panel = vscode.window.createWebviewPanel("prDetails", `PR #${pr.number}`, vscode.ViewColumn.Two, {
+    enableScripts: true,
+  })
 
-  const details = await githubService.getPRDetails(repo.owner, repo.name, pr.number);
+  const details = await githubService.getPRDetails(repo.owner, repo.name, pr.number)
 
-  panel.webview.html = getPRDetailsHTML(details);
+  panel.webview.html = getPRDetailsHTML(details)
 
   // Handle webview messages
   panel.webview.onDidReceiveMessage(async (message) => {
     switch (message.type) {
-      case 'approve':
-        await githubService.approvePR(repo.owner, repo.name, pr.number, message.body);
-        vscode.window.showInformationMessage('PR approved');
-        break;
+      case "approve":
+        await githubService.approvePR(repo.owner, repo.name, pr.number, message.body)
+        vscode.window.showInformationMessage("PR approved")
+        break
 
-      case 'requestChanges':
-        await githubService.requestChanges(repo.owner, repo.name, pr.number, message.body);
-        vscode.window.showInformationMessage('Changes requested');
-        break;
+      case "requestChanges":
+        await githubService.requestChanges(repo.owner, repo.name, pr.number, message.body)
+        vscode.window.showInformationMessage("Changes requested")
+        break
 
-      case 'addComment':
-        await githubService.addComment(
-          repo.owner,
-          repo.name,
-          pr.number,
-          message.body,
-          message.path,
-          message.line
-        );
-        break;
+      case "addComment":
+        await githubService.addComment(repo.owner, repo.name, pr.number, message.body, message.path, message.line)
+        break
     }
-  });
-});
+  })
+})
 
-vscode.commands.registerCommand('pr.checkoutAndTest', async (pr: PullRequest) => {
+vscode.commands.registerCommand("pr.checkoutAndTest", async (pr: PullRequest) => {
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Checking out PR #${pr.number}...`
+      title: `Checking out PR #${pr.number}...`,
     },
     async () => {
       // Checkout PR branch
-      await githubService.checkoutPR(repo.owner, repo.name, pr.number);
+      await githubService.checkoutPR(repo.owner, repo.name, pr.number)
 
       // Create isolated test environment (container)
-      const containerId = await createTestContainer(pr.number);
+      const containerId = await createTestContainer(pr.number)
 
       vscode.window.showInformationMessage(
         `PR #${pr.number} checked out in test environment`,
-        'Run Tests', 'Open Terminal'
-      );
-    }
-  );
-});
+        "Run Tests",
+        "Open Terminal",
+      )
+    },
+  )
+})
 ```
 
 **Features:**
+
 - ✅ List and filter PRs
 - ✅ View PR details and files
 - ✅ Comment on code lines
@@ -1860,136 +1798,120 @@ vscode.commands.registerCommand('pr.checkoutAndTest', async (pr: PullRequest) =>
 // Advanced Diff Service
 class AdvancedDiffService {
   async showDiff(file: string, options?: DiffOptions): Promise<void> {
-    const original = await this.getOriginalContent(file);
-    const modified = await this.getModifiedContent(file);
+    const original = await this.getOriginalContent(file)
+    const modified = await this.getModifiedContent(file)
 
     // Compute diff
-    const diffs = this.computeDiff(original, modified);
+    const diffs = this.computeDiff(original, modified)
 
     // Show in split editor
-    const uri1 = vscode.Uri.file(file).with({ scheme: 'git', query: 'HEAD' });
-    const uri2 = vscode.Uri.file(file);
+    const uri1 = vscode.Uri.file(file).with({ scheme: "git", query: "HEAD" })
+    const uri2 = vscode.Uri.file(file)
 
-    await vscode.commands.executeCommand(
-      'vscode.diff',
-      uri1,
-      uri2,
-      `${path.basename(file)} (Working Tree)`,
-      {
-        preview: false,
-        ...options
-      }
-    );
+    await vscode.commands.executeCommand("vscode.diff", uri1, uri2, `${path.basename(file)} (Working Tree)`, {
+      preview: false,
+      ...options,
+    })
 
     // Add custom decorations for hunks
-    this.decorateHunks(diffs);
+    this.decorateHunks(diffs)
   }
 
   async stageHunk(file: string, hunk: DiffHunk): Promise<void> {
     // Create patch for this hunk only
-    const patch = this.createPatch(hunk);
+    const patch = this.createPatch(hunk)
 
     // Apply patch to index
-    await exec(`git apply --cached`, { input: patch });
+    await exec(`git apply --cached`, { input: patch })
 
-    vscode.window.showInformationMessage('Hunk staged');
+    vscode.window.showInformationMessage("Hunk staged")
   }
 
   async stageLine(file: string, lineNumber: number): Promise<void> {
-    const content = await fs.readFile(file, 'utf-8');
-    const lines = content.split('\n');
+    const content = await fs.readFile(file, "utf-8")
+    const lines = content.split("\n")
 
     // Create patch for single line
-    const patch = this.createLinePatch(file, lineNumber, lines[lineNumber]);
+    const patch = this.createLinePatch(file, lineNumber, lines[lineNumber])
 
-    await exec(`git apply --cached`, { input: patch });
+    await exec(`git apply --cached`, { input: patch })
 
-    vscode.window.showInformationMessage('Line staged');
+    vscode.window.showInformationMessage("Line staged")
   }
 
   async unstageHunk(file: string, hunk: DiffHunk): Promise<void> {
-    const patch = this.createPatch(hunk);
-    await exec(`git apply --cached --reverse`, { input: patch });
+    const patch = this.createPatch(hunk)
+    await exec(`git apply --cached --reverse`, { input: patch })
 
-    vscode.window.showInformationMessage('Hunk unstaged');
+    vscode.window.showInformationMessage("Hunk unstaged")
   }
 
   private decorateHunks(diffs: Diff[]): void {
     const decorationType = vscode.window.createTextEditorDecorationType({
       isWholeLine: true,
-      backgroundColor: 'rgba(0, 122, 204, 0.1)',
-      overviewRulerColor: 'rgba(0, 122, 204, 0.5)',
+      backgroundColor: "rgba(0, 122, 204, 0.1)",
+      overviewRulerColor: "rgba(0, 122, 204, 0.5)",
       overviewRulerLane: vscode.OverviewRulerLane.Left,
       after: {
-        contentText: ' [Stage Hunk]',
-        color: '#007ACC'
-      }
-    });
+        contentText: " [Stage Hunk]",
+        color: "#007ACC",
+      },
+    })
 
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    const editor = vscode.window.activeTextEditor
+    if (!editor) return
 
-    const decorations: vscode.DecorationOptions[] = [];
+    const decorations: vscode.DecorationOptions[] = []
 
     for (const diff of diffs) {
-      const range = new vscode.Range(
-        diff.startLine,
-        0,
-        diff.endLine,
-        Number.MAX_VALUE
-      );
+      const range = new vscode.Range(diff.startLine, 0, diff.endLine, Number.MAX_VALUE)
 
       decorations.push({
         range,
-        hoverMessage: 'Click to stage this hunk'
-      });
+        hoverMessage: "Click to stage this hunk",
+      })
     }
 
-    editor.setDecorations(decorationType, decorations);
+    editor.setDecorations(decorationType, decorations)
   }
 }
 
 // Git History Graph
 class GitGraphService {
   async showGraph(): Promise<void> {
-    const panel = vscode.window.createWebviewPanel(
-      'gitGraph',
-      'Git History',
-      vscode.ViewColumn.One,
-      { enableScripts: true }
-    );
+    const panel = vscode.window.createWebviewPanel("gitGraph", "Git History", vscode.ViewColumn.One, {
+      enableScripts: true,
+    })
 
-    const commits = await this.getCommits();
-    const graph = this.buildGraph(commits);
+    const commits = await this.getCommits()
+    const graph = this.buildGraph(commits)
 
-    panel.webview.html = this.getGraphHTML(graph);
+    panel.webview.html = this.getGraphHTML(graph)
 
     panel.webview.onDidReceiveMessage(async (message) => {
       switch (message.type) {
-        case 'checkout':
-          await exec(`git checkout ${message.commitHash}`);
-          break;
+        case "checkout":
+          await exec(`git checkout ${message.commitHash}`)
+          break
 
-        case 'cherry-pick':
-          await exec(`git cherry-pick ${message.commitHash}`);
-          break;
+        case "cherry-pick":
+          await exec(`git cherry-pick ${message.commitHash}`)
+          break
 
-        case 'revert':
-          await exec(`git revert ${message.commitHash}`);
-          break;
+        case "revert":
+          await exec(`git revert ${message.commitHash}`)
+          break
       }
-    });
+    })
   }
 
   private async getCommits(): Promise<Commit[]> {
-    const output = await exec(
-      `git log --all --graph --pretty=format:'%h|%an|%ae|%ad|%s|%d' --date=short -n 100`
-    );
+    const output = await exec(`git log --all --graph --pretty=format:'%h|%an|%ae|%ad|%s|%d' --date=short -n 100`)
 
-    return output.split('\n').map(line => {
-      const [hash, author, email, date, message, refs] = line.split('|');
-      return { hash, author, email, date, message, refs };
-    });
+    return output.split("\n").map((line) => {
+      const [hash, author, email, date, message, refs] = line.split("|")
+      return { hash, author, email, date, message, refs }
+    })
   }
 
   private buildGraph(commits: Commit[]): GraphNode[] {
@@ -2000,6 +1922,7 @@ class GitGraphService {
 ```
 
 **Features:**
+
 - ✅ Side-by-side diff view
 - ✅ Stage/unstage individual lines
 - ✅ Stage/unstage hunks
@@ -2130,6 +2053,7 @@ const FileIcon = memo(({ file }: { file: string }) => {
 ```
 
 **Performance Targets:**
+
 - Initial load: < 2 seconds
 - Time to interactive: < 3 seconds
 - Keystroke latency: < 16ms (60fps)
@@ -2150,51 +2074,47 @@ const FileIcon = memo(({ file }: { file: string }) => {
 
 ```typescript
 // Language Server Protocol client
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions
-} from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node"
 
 class LSPService {
-  private clients: Map<string, LanguageClient> = new Map();
+  private clients: Map<string, LanguageClient> = new Map()
 
   async startServer(language: string): Promise<void> {
-    const serverModule = this.getServerModule(language);
+    const serverModule = this.getServerModule(language)
 
     const serverOptions: ServerOptions = {
       run: { module: serverModule, transport: TransportKind.ipc },
-      debug: { module: serverModule, transport: TransportKind.ipc }
-    };
+      debug: { module: serverModule, transport: TransportKind.ipc },
+    }
 
     const clientOptions: LanguageClientOptions = {
-      documentSelector: [{ scheme: 'file', language }],
+      documentSelector: [{ scheme: "file", language }],
       synchronize: {
-        fileEvents: vscode.workspace.createFileSystemWatcher('**/*')
-      }
-    };
+        fileEvents: vscode.workspace.createFileSystemWatcher("**/*"),
+      },
+    }
 
     const client = new LanguageClient(
       `${language}LanguageServer`,
       `${language} Language Server`,
       serverOptions,
-      clientOptions
-    );
+      clientOptions,
+    )
 
-    await client.start();
-    this.clients.set(language, client);
+    await client.start()
+    this.clients.set(language, client)
   }
 
   private getServerModule(language: string): string {
     const servers = {
-      typescript: 'typescript-language-server',
-      python: 'pyright',
-      go: 'gopls',
-      rust: 'rust-analyzer',
-      java: 'jdtls'
-    };
+      typescript: "typescript-language-server",
+      python: "pyright",
+      go: "gopls",
+      rust: "rust-analyzer",
+      java: "jdtls",
+    }
 
-    return servers[language] || '';
+    return servers[language] || ""
   }
 }
 
@@ -2202,62 +2122,63 @@ class LSPService {
 class FrameworkCompletionProvider implements vscode.CompletionItemProvider {
   async provideCompletionItems(
     document: vscode.TextDocument,
-    position: vscode.Position
+    position: vscode.Position,
   ): Promise<vscode.CompletionItem[]> {
-    const line = document.lineAt(position).text;
-    const framework = this.detectFramework(document);
+    const line = document.lineAt(position).text
+    const framework = this.detectFramework(document)
 
-    if (framework === 'react') {
-      return this.getReactCompletions(line, position);
-    } else if (framework === 'vue') {
-      return this.getVueCompletions(line, position);
+    if (framework === "react") {
+      return this.getReactCompletions(line, position)
+    } else if (framework === "vue") {
+      return this.getVueCompletions(line, position)
     }
 
-    return [];
+    return []
   }
 
   private getReactCompletions(line: string, position: vscode.Position): vscode.CompletionItem[] {
-    const completions: vscode.CompletionItem[] = [];
+    const completions: vscode.CompletionItem[] = []
 
     // Hooks
-    if (line.includes('use')) {
+    if (line.includes("use")) {
       completions.push(
-        this.createHookCompletion('useState'),
-        this.createHookCompletion('useEffect'),
-        this.createHookCompletion('useContext'),
-        this.createHookCompletion('useReducer'),
-        this.createHookCompletion('useMemo'),
-        this.createHookCompletion('useCallback')
-      );
+        this.createHookCompletion("useState"),
+        this.createHookCompletion("useEffect"),
+        this.createHookCompletion("useContext"),
+        this.createHookCompletion("useReducer"),
+        this.createHookCompletion("useMemo"),
+        this.createHookCompletion("useCallback"),
+      )
     }
 
     // Component props
-    if (line.includes('<')) {
-      completions.push(...this.getComponentProps());
+    if (line.includes("<")) {
+      completions.push(...this.getComponentProps())
     }
 
-    return completions;
+    return completions
   }
 
   private createHookCompletion(hook: string): vscode.CompletionItem {
-    const item = new vscode.CompletionItem(hook, vscode.CompletionItemKind.Function);
+    const item = new vscode.CompletionItem(hook, vscode.CompletionItemKind.Function)
 
     const snippets = {
-      useState: 'const [${1:state}, set${1/(.*)/${1:/capitalize}/}] = useState($2);',
-      useEffect: 'useEffect(() => {\n\t$1\n}, [$2]);',
-      useMemo: 'const ${1:memoized} = useMemo(() => $2, [$3]);',
-      useCallback: 'const ${1:callback} = useCallback(() => {\n\t$2\n}, [$3]);'
-    };
+      useState: "const [${1:state}, set${1/(.*)/${1:/capitalize}/}] = useState($2);",
+      useEffect: "useEffect(() => {\n\t$1\n}, [$2]);",
+      useMemo: "const ${1:memoized} = useMemo(() => $2, [$3]);",
+      useCallback: "const ${1:callback} = useCallback(() => {\n\t$2\n}, [$3]);",
+    }
 
-    item.insertText = new vscode.SnippetString(snippets[hook] || hook);
-    item.documentation = new vscode.MarkdownString(`React ${hook} hook`);
+    item.insertText = new vscode.SnippetString(snippets[hook] || hook)
+    item.documentation = new vscode.MarkdownString(`React ${hook} hook`)
 
-    return item;
+    return item
   }
 }
 ```
 
 **Features:**
+
 - ✅ TypeScript/JavaScript IntelliSense
 - ✅ Framework-specific completions (React, Vue, Angular)
 - ✅ Import suggestions
@@ -2483,6 +2404,7 @@ const debugConfigs = {
 ```
 
 **Features:**
+
 - ✅ Breakpoints (conditional, logpoints)
 - ✅ Step through code (in/out/over)
 - ✅ Call stack inspection
@@ -2507,43 +2429,44 @@ Already implemented in the codebase! (xterm.js + node-pty)
 ```typescript
 // Multi-terminal manager
 class TerminalManager {
-  private terminals: Map<string, Terminal> = new Map();
+  private terminals: Map<string, Terminal> = new Map()
 
   createTerminal(name: string, cwd: string): string {
-    const id = generateId();
+    const id = generateId()
 
-    const terminal = pty.spawn(process.env.SHELL || 'bash', [], {
-      name: 'xterm-256color',
+    const terminal = pty.spawn(process.env.SHELL || "bash", [], {
+      name: "xterm-256color",
       cols: 120,
       rows: 30,
       cwd,
-      env: process.env
-    });
+      env: process.env,
+    })
 
-    this.terminals.set(id, terminal);
+    this.terminals.set(id, terminal)
 
-    return id;
+    return id
   }
 
   async runCommand(terminalId: string, command: string): Promise<void> {
-    const terminal = this.terminals.get(terminalId);
-    if (!terminal) throw new Error('Terminal not found');
+    const terminal = this.terminals.get(terminalId)
+    if (!terminal) throw new Error("Terminal not found")
 
-    terminal.write(command + '\r');
+    terminal.write(command + "\r")
   }
 
-  async splitTerminal(terminalId: string, direction: 'horizontal' | 'vertical'): Promise<string> {
-    const original = this.terminals.get(terminalId);
-    if (!original) throw new Error('Terminal not found');
+  async splitTerminal(terminalId: string, direction: "horizontal" | "vertical"): Promise<string> {
+    const original = this.terminals.get(terminalId)
+    if (!original) throw new Error("Terminal not found")
 
     // Create new terminal with same cwd
-    const cwd = original.cwd;
-    return this.createTerminal(`Split ${direction}`, cwd);
+    const cwd = original.cwd
+    return this.createTerminal(`Split ${direction}`, cwd)
   }
 }
 ```
 
 **Features:**
+
 - ✅ Multiple terminals
 - ✅ Split terminals
 - ✅ Command history
@@ -2776,6 +2699,7 @@ CREATE TABLE extension_reviews (
 ```
 
 **Features:**
+
 - ✅ Browse extensions
 - ✅ Search and filter
 - ✅ Install/uninstall
@@ -2973,6 +2897,7 @@ function ProjectSetup() {
 ```
 
 **Features:**
+
 - ✅ devcontainer.json support
 - ✅ Auto-install dependencies
 - ✅ Auto-configure services (DB, Redis)
@@ -3157,6 +3082,7 @@ function DockerPanel() {
 ```
 
 **Features:**
+
 - ✅ List containers
 - ✅ Start/stop/restart
 - ✅ Build images
@@ -3314,6 +3240,7 @@ function SettingsPanel() {
 ```
 
 **Features:**
+
 - ✅ Cloud sync
 - ✅ Cross-device sync
 - ✅ Import/export
@@ -3338,7 +3265,7 @@ function SettingsPanel() {
 // Deployment Service
 class DeploymentService {
   async deployToVercel(projectPath: string, config: VercelConfig): Promise<DeploymentResult> {
-    const vercel = new Vercel({ token: config.token });
+    const vercel = new Vercel({ token: config.token })
 
     // Create deployment
     const deployment = await vercel.createDeployment({
@@ -3347,136 +3274,133 @@ class DeploymentService {
       projectSettings: {
         framework: config.framework,
         buildCommand: config.buildCommand,
-        outputDirectory: config.outputDirectory
-      }
-    });
+        outputDirectory: config.outputDirectory,
+      },
+    })
 
     return {
       url: deployment.url,
-      status: 'success',
-      logs: deployment.buildLogs
-    };
+      status: "success",
+      logs: deployment.buildLogs,
+    }
   }
 
   async deployToNetlify(projectPath: string, config: NetlifyConfig): Promise<DeploymentResult> {
-    const netlify = new NetlifyAPI(config.token);
+    const netlify = new NetlifyAPI(config.token)
 
     // Create site if doesn't exist
-    let site = await netlify.getSite(config.siteName);
+    let site = await netlify.getSite(config.siteName)
 
     if (!site) {
       site = await netlify.createSite({
         name: config.siteName,
-        custom_domain: config.domain
-      });
+        custom_domain: config.domain,
+      })
     }
 
     // Deploy
-    const deploy = await netlify.deploy(site.id, projectPath);
+    const deploy = await netlify.deploy(site.id, projectPath)
 
     return {
       url: deploy.url,
-      status: 'success',
-      logs: deploy.logs
-    };
+      status: "success",
+      logs: deploy.logs,
+    }
   }
 
   async deployToAWS(projectPath: string, config: AWSConfig): Promise<DeploymentResult> {
-    const s3 = new AWS.S3();
-    const cloudfront = new AWS.CloudFront();
+    const s3 = new AWS.S3()
+    const cloudfront = new AWS.CloudFront()
 
     // Build project
-    await exec(`cd ${projectPath} && ${config.buildCommand}`);
+    await exec(`cd ${projectPath} && ${config.buildCommand}`)
 
     // Upload to S3
-    const buildDir = path.join(projectPath, config.outputDirectory);
-    const files = await this.getFilesRecursive(buildDir);
+    const buildDir = path.join(projectPath, config.outputDirectory)
+    const files = await this.getFilesRecursive(buildDir)
 
     for (const file of files) {
-      await s3.putObject({
-        Bucket: config.bucketName,
-        Key: path.relative(buildDir, file),
-        Body: await fs.readFile(file),
-        ContentType: this.getContentType(file)
-      }).promise();
+      await s3
+        .putObject({
+          Bucket: config.bucketName,
+          Key: path.relative(buildDir, file),
+          Body: await fs.readFile(file),
+          ContentType: this.getContentType(file),
+        })
+        .promise()
     }
 
     // Invalidate CloudFront cache
     if (config.distributionId) {
-      await cloudfront.createInvalidation({
-        DistributionId: config.distributionId,
-        InvalidationBatch: {
-          CallerReference: Date.now().toString(),
-          Paths: { Quantity: 1, Items: ['/*'] }
-        }
-      }).promise();
+      await cloudfront
+        .createInvalidation({
+          DistributionId: config.distributionId,
+          InvalidationBatch: {
+            CallerReference: Date.now().toString(),
+            Paths: { Quantity: 1, Items: ["/*"] },
+          },
+        })
+        .promise()
     }
 
     return {
       url: `http://${config.bucketName}.s3-website-${config.region}.amazonaws.com`,
-      status: 'success'
-    };
+      status: "success",
+    }
   }
 }
 
 // VSCode Extension Commands
-vscode.commands.registerCommand('deploy.configure', async () => {
-  const platform = await vscode.window.showQuickPick([
-    'Vercel',
-    'Netlify',
-    'AWS S3',
-    'Google Cloud',
-    'Azure',
-    'Heroku'
-  ], { placeHolder: 'Select deployment platform' });
+vscode.commands.registerCommand("deploy.configure", async () => {
+  const platform = await vscode.window.showQuickPick(
+    ["Vercel", "Netlify", "AWS S3", "Google Cloud", "Azure", "Heroku"],
+    { placeHolder: "Select deployment platform" },
+  )
 
-  if (!platform) return;
+  if (!platform) return
 
-  const config = await showDeploymentConfigUI(platform);
+  const config = await showDeploymentConfigUI(platform)
 
-  await saveDeploymentConfig(config);
-});
+  await saveDeploymentConfig(config)
+})
 
-vscode.commands.registerCommand('deploy.now', async () => {
-  const config = await loadDeploymentConfig();
+vscode.commands.registerCommand("deploy.now", async () => {
+  const config = await loadDeploymentConfig()
 
   if (!config) {
-    vscode.window.showErrorMessage('No deployment configuration found');
-    return;
+    vscode.window.showErrorMessage("No deployment configuration found")
+    return
   }
 
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       title: `Deploying to ${config.platform}...`,
-      cancellable: false
+      cancellable: false,
     },
     async (progress) => {
-      progress.report({ increment: 10, message: 'Building project...' });
+      progress.report({ increment: 10, message: "Building project..." })
 
-      const result = await deploymentService.deploy(
-        vscode.workspace.workspaceFolders[0].uri.fsPath,
-        config
-      );
+      const result = await deploymentService.deploy(vscode.workspace.workspaceFolders[0].uri.fsPath, config)
 
-      progress.report({ increment: 90, message: 'Deployment complete!' });
+      progress.report({ increment: 90, message: "Deployment complete!" })
 
-      vscode.window.showInformationMessage(
-        `Deployed successfully! URL: ${result.url}`,
-        'Open URL', 'Copy URL'
-      ).then(action => {
-        if (action === 'Open URL') {
-          vscode.env.openExternal(vscode.Uri.parse(result.url));
-        } else if (action === 'Copy URL') {
-          vscode.env.clipboard.writeText(result.url);
-        }
-      });
-    }
-  );
-});
+      vscode.window
+        .showInformationMessage(`Deployed successfully! URL: ${result.url}`, "Open URL", "Copy URL")
+        .then((action) => {
+          if (action === "Open URL") {
+            vscode.env.openExternal(vscode.Uri.parse(result.url))
+          } else if (action === "Copy URL") {
+            vscode.env.clipboard.writeText(result.url)
+          }
+        })
+    },
+  )
+})
 ```
 
 **Features:**
+
 - ✅ Vercel deployment
 - ✅ Netlify deployment
 - ✅ AWS S3/CloudFront
@@ -3703,6 +3627,7 @@ function DatabasePanel() {
 ```
 
 **Features:**
+
 - ✅ Connect to databases (SQL, NoSQL)
 - ✅ Execute queries
 - ✅ Browse tables and schemas
@@ -3907,6 +3832,7 @@ function SecretsPanel() {
 ```
 
 **Features:**
+
 - ✅ Encrypted storage
 - ✅ Environment variable injection
 - ✅ Audit logging
@@ -3925,24 +3851,28 @@ function SecretsPanel() {
 ### Phase 1: MVP (12-14 weeks)
 
 **Weeks 1-4: Foundation**
+
 - ✅ Session isolation (directory-based)
 - ✅ Shared authentication
 - ✅ Basic IDE integration
 - ✅ Terminal support
 
 **Weeks 5-8: AI Features (Basic)**
+
 - ✅ AI code completion
 - ✅ AI chat panel
 - ✅ Code explanation
 - ✅ Basic debugging assistance
 
 **Weeks 9-12: Core Editor**
+
 - ✅ Language servers (LSP)
 - ✅ IntelliSense
 - ✅ Basic debugger
 - ✅ Git integration
 
 **Week 13-14: Polish & Testing**
+
 - ✅ Bug fixes
 - ✅ Performance optimization
 - ✅ Documentation
@@ -3951,24 +3881,28 @@ function SecretsPanel() {
 ### Phase 2: Production (12-14 weeks)
 
 **Weeks 15-18: Collaboration**
+
 - ✅ Real-time collaborative editing
 - ✅ Shared terminals
 - ✅ Port forwarding
 - ✅ PR management
 
 **Weeks 19-22: Advanced AI**
+
 - ✅ AI refactoring
 - ✅ AI documentation generation
 - ✅ Advanced debugging
 - ✅ Code translation
 
 **Weeks 23-26: Extensions & DevOps**
+
 - ✅ Extension marketplace
 - ✅ devcontainer.json support
 - ✅ Container management
 - ✅ One-click deployment
 
 **Weeks 27-28: Hardening**
+
 - ✅ Security audit
 - ✅ Performance tuning
 - ✅ Load testing
@@ -3977,18 +3911,21 @@ function SecretsPanel() {
 ### Phase 3: Enterprise (8-10 weeks)
 
 **Weeks 29-32: Enterprise Features**
+
 - ✅ Container-based isolation
 - ✅ Advanced RBAC
 - ✅ SSO/SAML
 - ✅ Usage analytics
 
 **Weeks 33-36: Scale**
+
 - ✅ Horizontal scaling
 - ✅ Multi-region
 - ✅ Auto-scaling
 - ✅ Advanced monitoring
 
 **Weeks 37-38: Enterprise Polish**
+
 - ✅ Admin dashboard
 - ✅ Billing integration
 - ✅ SLA monitoring
@@ -4057,11 +3994,13 @@ This comprehensive plan covers all requested features for a world-class web IDE 
 **Estimated Cost:** $300k-$500k (including infrastructure)
 
 **Key Milestones:**
+
 - Month 3: MVP with basic AI features
 - Month 6: Production-ready with collaboration
 - Month 8: Enterprise-grade platform
 
 **Priority Features (MVP):**
+
 1. Session isolation
 2. AI code completion
 3. AI chat panel

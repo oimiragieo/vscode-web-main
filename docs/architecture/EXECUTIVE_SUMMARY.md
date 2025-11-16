@@ -14,6 +14,7 @@ This document provides an executive summary of the comprehensive architecture an
 ## Current State
 
 You have:
+
 - ✅ **VSCode Web IDE (code-server)** - A production-ready web IDE codebase
 - ✅ **Multi-user infrastructure** - Session management, authentication, user isolation already designed
 - ✅ **AI chat feature** - Running with your AI infrastructure (Claude API)
@@ -40,12 +41,14 @@ Shared Infrastructure:
 ### Key Features
 
 **1. Session Isolation (Critical)**
+
 - Each user gets isolated workspace
 - Directory-based isolation (Phase 1) or Container-based (Phase 2)
 - No data leakage between users
 - Resource quotas enforced
 
 **2. AI-Powered Intelligence**
+
 - Real-time code completion (GitHub Copilot-style)
 - Conversational AI assistant in IDE
 - AI-driven debugging with fix suggestions
@@ -53,6 +56,7 @@ Shared Infrastructure:
 - Automated documentation generation
 
 **3. Collaboration & Version Control**
+
 - Google Docs-style real-time collaborative editing
 - Shared terminals for pair programming
 - Port forwarding for live preview sharing
@@ -60,6 +64,7 @@ Shared Infrastructure:
 - Visual diff viewer with line-level staging
 
 **4. Core Editor & Performance**
+
 - Sub-2-second load time
 - Zero keystroke latency
 - Advanced IntelliSense (non-AI)
@@ -67,12 +72,14 @@ Shared Infrastructure:
 - Integrated terminal with multiple sessions
 
 **5. Environment & Extensibility**
+
 - Extension marketplace (VSCode-compatible)
 - devcontainer.json support (zero-config onboarding)
 - Docker container management GUI
 - Settings sync across devices
 
 **6. DevOps & Cloud Integration**
+
 - One-click deployment (Vercel, Netlify, AWS, etc.)
 - Integrated database GUI (SQL/NoSQL)
 - Secure secrets vault
@@ -86,6 +93,7 @@ Shared Infrastructure:
 **Goal:** Launch functional IDE with basic AI features
 
 **Features:**
+
 - Directory-based session isolation
 - AI code completion
 - AI chat panel
@@ -104,6 +112,7 @@ Shared Infrastructure:
 **Goal:** Production-ready platform with collaboration
 
 **Features:**
+
 - Real-time collaborative editing
 - Shared terminals and port forwarding
 - PR management
@@ -123,6 +132,7 @@ Shared Infrastructure:
 **Goal:** Enterprise-grade scalability and features
 
 **Features:**
+
 - Container-based isolation
 - Horizontal scaling
 - Multi-region deployment
@@ -144,6 +154,7 @@ Shared Infrastructure:
 **Budget:** $300k-$500k (development + infrastructure)
 
 **Breakdown:**
+
 - Engineering: $250k-$400k
 - Infrastructure (AWS/GCP): $30k-$60k/year
 - AI API costs (Claude): $20k-$40k/year (variable)
@@ -157,12 +168,14 @@ Shared Infrastructure:
 **Recommendation: Monolithic (Phase 1) → Microservices (Phase 3)**
 
 **Phase 1-2:** Single Node.js application
+
 - Simpler deployment
 - Shared authentication
 - Lower operational complexity
 - **Best for:** MVP and early production
 
 **Phase 3:** Split to microservices
+
 - Independent scaling
 - Better fault isolation
 - **Best for:** Enterprise scale
@@ -172,12 +185,14 @@ Shared Infrastructure:
 ### 2. Session Isolation Strategy
 
 **Phase 1: Directory-Based Isolation**
+
 - OS-level file permissions
 - Disk quotas
 - Fast startup (< 1 second)
 - **Best for:** Development, low-security environments
 
 **Phase 2: Container-Based Isolation**
+
 - Complete isolation (filesystem, network, process)
 - Resource limits enforced by Docker
 - Startup overhead: 2-5 seconds
@@ -199,6 +214,7 @@ AI Service (Claude API)
 ```
 
 **Benefits:**
+
 - Single API integration
 - Shared context across features
 - Cost-efficient (shared quota)
@@ -209,18 +225,21 @@ AI Service (Claude API)
 ## Technical Stack
 
 **Frontend:**
+
 - React 18
 - Monaco Editor (VSCode editor component)
 - xterm.js (terminal)
 - Yjs (real-time collaboration)
 
 **Backend:**
+
 - Node.js 22
 - Express.js 5
 - TypeScript 5
 - WebSocket (Socket.io)
 
 **Infrastructure:**
+
 - PostgreSQL (users, sessions, data)
 - Redis (cache, sessions)
 - Docker (user isolation)
@@ -228,6 +247,7 @@ AI Service (Claude API)
 - Claude API (AI features)
 
 **DevOps:**
+
 - Docker Compose (development)
 - Kubernetes (production)
 - Prometheus + Grafana (monitoring)
@@ -238,6 +258,7 @@ AI Service (Claude API)
 ## Security & Compliance
 
 **Authentication & Authorization:**
+
 - JWT or session cookies
 - Argon2 password hashing
 - CSRF protection
@@ -245,6 +266,7 @@ AI Service (Claude API)
 - RBAC (Admin, User, Viewer)
 
 **Data Privacy:**
+
 - Encryption at rest (AES-256)
 - Encryption in transit (HTTPS/TLS)
 - Complete user isolation
@@ -252,6 +274,7 @@ AI Service (Claude API)
 - GDPR compliance ready
 
 **Code Execution Security:**
+
 - Sandboxed containers
 - Limited network access
 - Resource quotas
@@ -261,16 +284,16 @@ AI Service (Claude API)
 
 ## Performance Targets
 
-| Metric                  | Target       |
-|------------------------|--------------|
-| IDE Initial Load       | < 2 seconds  |
-| Time to Interactive    | < 3 seconds  |
-| Keystroke Latency      | < 16ms (60fps) |
-| File Open              | < 200ms      |
-| Search                 | < 500ms      |
-| Container Startup      | < 5 seconds  |
-| AI Code Completion     | < 500ms      |
-| Max Concurrent Users   | 100+ per instance |
+| Metric               | Target            |
+| -------------------- | ----------------- |
+| IDE Initial Load     | < 2 seconds       |
+| Time to Interactive  | < 3 seconds       |
+| Keystroke Latency    | < 16ms (60fps)    |
+| File Open            | < 200ms           |
+| Search               | < 500ms           |
+| Container Startup    | < 5 seconds       |
+| AI Code Completion   | < 500ms           |
+| Max Concurrent Users | 100+ per instance |
 
 ---
 
@@ -279,14 +302,17 @@ AI Service (Claude API)
 ### AI API Usage
 
 **Claude API Pricing (approximate):**
+
 - Input: $3 per million tokens
 - Output: $15 per million tokens
 
 **Estimated Monthly Costs:**
+
 - 100 users, 50 AI requests/day: ~$3,000-$5,000/month
 - 1,000 users, 50 AI requests/day: ~$30,000-$50,000/month
 
 **Optimization Strategies:**
+
 - Caching common completions
 - Rate limiting per user
 - Tiered pricing plans
@@ -295,6 +321,7 @@ AI Service (Claude API)
 ### Infrastructure Costs
 
 **AWS/GCP (estimated for 100 concurrent users):**
+
 - Compute (EC2/GCE): $500-$1,000/month
 - Database (RDS/Cloud SQL): $200-$400/month
 - Storage (S3/GCS): $100-$200/month
@@ -302,6 +329,7 @@ AI Service (Claude API)
 - **Total:** ~$1,000-$2,000/month
 
 **Kubernetes (1,000 users):**
+
 - Compute: $3,000-$5,000/month
 - Database: $500-$1,000/month
 - Storage: $300-$500/month
@@ -312,16 +340,18 @@ AI Service (Claude API)
 ## Revenue Model Suggestions
 
 **Freemium:**
+
 - Free: Limited AI requests, 1GB storage, 10 hours/month
 - Pro ($20/month): Unlimited AI, 10GB storage, unlimited hours
 - Team ($50/user/month): Collaboration, admin features, SSO
 - Enterprise (Custom): SLA, dedicated support, on-premise
 
 **Usage-Based:**
+
 - Base: $10/month
-- + AI usage: $0.01 per 1,000 tokens
-- + Storage: $0.10/GB/month
-- + Compute hours: $0.50/hour
+- - AI usage: $0.01 per 1,000 tokens
+- - Storage: $0.10/GB/month
+- - Compute hours: $0.50/hour
 
 ---
 
@@ -330,20 +360,25 @@ AI Service (Claude API)
 ### Technical Risks
 
 **Risk: AI API costs spiral out of control**
+
 - Mitigation: Usage quotas, caching, rate limiting
 
 **Risk: Container startup too slow (> 10 seconds)**
+
 - Mitigation: Container pool pre-warming, optimized images
 
 **Risk: Performance degrades with scale**
+
 - Mitigation: Horizontal scaling, caching, CDN
 
 ### Business Risks
 
 **Risk: Low user adoption**
+
 - Mitigation: Freemium model, superior UX, unique AI features
 
 **Risk: Competition from GitHub Codespaces, Replit, etc.**
+
 - Mitigation: AI-first approach, integrated chat+IDE, lower pricing
 
 ---
@@ -351,18 +386,21 @@ AI Service (Claude API)
 ## Success Metrics
 
 **Technical:**
+
 - ✅ 99.9% uptime
 - ✅ < 2 second page load
 - ✅ < 100ms API response time
 - ✅ Zero data breaches
 
 **Business:**
+
 - ✅ 1,000 active users (Month 6)
 - ✅ 10,000 active users (Month 12)
 - ✅ 70% user retention
 - ✅ NPS score > 50
 
 **User Engagement:**
+
 - ✅ Average session: 30+ minutes
 - ✅ Daily active users: 40%
 - ✅ AI feature usage: 80% of users
@@ -372,6 +410,7 @@ AI Service (Claude API)
 ## Next Steps
 
 ### Immediate (Week 1-2)
+
 1. ✅ Review architecture documents
 2. ⬜ Assemble development team
 3. ⬜ Set up development environment
@@ -379,6 +418,7 @@ AI Service (Claude API)
 5. ⬜ Finalize technical stack decisions
 
 ### Short-term (Week 3-8)
+
 1. ⬜ Implement authentication system
 2. ⬜ Set up database schema
 3. ⬜ Integrate VSCode Web
@@ -386,6 +426,7 @@ AI Service (Claude API)
 5. ⬜ Build AI code completion MVP
 
 ### Medium-term (Week 9-14)
+
 1. ⬜ Polish MVP features
 2. ⬜ Conduct user testing
 3. ⬜ Fix bugs and optimize performance
@@ -432,6 +473,7 @@ This comprehensive plan includes the following documents:
 This project will create a **unique, AI-first web IDE** that integrates seamlessly with your existing chat feature, providing users with a unified development experience.
 
 **Key Differentiators:**
+
 - 🤖 AI-powered throughout (not bolted on)
 - 💬 Integrated chat + IDE (unique positioning)
 - 🔒 Complete user isolation (enterprise-ready)
@@ -439,12 +481,14 @@ This project will create a **unique, AI-first web IDE** that integrates seamless
 - 🌍 Cloud-native, scalable architecture
 
 **Recommended Approach:**
+
 1. Start with Phase 1 (MVP) to validate product-market fit
 2. Gather user feedback and iterate
 3. Proceed to Phase 2 if traction is strong
 4. Scale to Phase 3 for enterprise customers
 
 **Success Probability:** High
+
 - ✅ Strong technical foundation (VSCode Web)
 - ✅ Clear market need (remote development)
 - ✅ Unique AI integration
