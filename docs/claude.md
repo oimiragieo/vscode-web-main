@@ -841,16 +841,218 @@ More content
 
 ---
 
+---
+
+## Architecture Documentation
+
+### architecture/
+
+**Purpose:** Technical architecture and design documentation
+
+**Key Documents:**
+
+#### EXECUTIVE_SUMMARY.md
+
+**Purpose:** High-level overview of AI Website + Web IDE integration
+
+**Contents:**
+
+- Investment analysis ($300k-$500k, 6-8 months)
+- Three-phase roadmap (MVP → Production → Enterprise)
+- Technical stack and architectural decisions
+- Revenue models and cost management
+- Risk assessment and success metrics
+- Next steps and implementation plan
+
+**Target Audience:** Decision makers, investors, product managers
+
+---
+
+#### AI_WEBSITE_IDE_INTEGRATION.md
+
+**Purpose:** Detailed integration architecture for merging chat and IDE features
+
+**Contents:**
+
+- Unified platform design (/chat + /ide routes)
+- Session isolation strategies (directory vs container-based)
+- Shared authentication and database schema
+- AI integration architecture (Claude API)
+- Deployment options (monolithic vs microservices)
+- Security, performance, and monitoring strategies
+
+**Target Audience:** Architects, tech leads, senior engineers
+
+**Key Topics:**
+
+- Integration Strategy (Monolithic vs Microservices)
+- Session Isolation (Directory-based → Container-based)
+- Shared Authentication & Database Schema
+- AI Service Integration (Chat + IDE)
+- Routes Structure (Frontend & Backend)
+- Deployment Architecture (Docker Compose, Kubernetes)
+- Security Considerations
+- Performance Optimization
+- Cost Management
+
+---
+
+#### WORLD_CLASS_IDE_FEATURES.md
+
+**Purpose:** Comprehensive implementation guide for IDE features
+
+**Contents:**
+
+**1. AI-Powered Intelligence**
+
+- Real-time code completion (GitHub Copilot-style)
+- Conversational AI assistant panel
+- AI-driven debugging with fix suggestions
+- Intelligent refactoring and code translation
+- Automated documentation generation
+
+**2. Collaboration & Version Control**
+
+- Google Docs-style real-time editing (Yjs CRDT)
+- Shared terminals for pair programming
+- Port forwarding for live preview sharing
+- In-IDE PR management and review
+- Visual diff viewer with line-level staging
+
+**3. Core Editor & Performance**
+
+- Sub-2-second load time optimization
+- Advanced IntelliSense (Language Server Protocol)
+- Full-featured visual debugger
+- Multi-terminal support
+
+**4. Environment & Extensibility**
+
+- VSCode-compatible extension marketplace
+- devcontainer.json support (zero-config)
+- Docker container management GUI
+- Settings sync across devices
+
+**5. DevOps & Cloud Integration**
+
+- One-click deployment (Vercel, Netlify, AWS, Azure)
+- Integrated database GUI (SQL/NoSQL)
+- Secure secrets vault with encryption
+
+**Target Audience:** Developers, engineers, implementation teams
+
+**Timeline:** 24-32 weeks (6-8 months)
+
+---
+
+#### MULTI_USER_ARCHITECTURE_DESIGN.md
+
+**Purpose:** Multi-user deployment architecture
+
+**Contents:**
+
+- Two deployment modes (single-user, multi-user)
+- Complete user isolation strategies
+- Authentication and authorization
+- Session management
+- Resource quotas and limits
+- Scalability and performance
+- Security considerations
+
+---
+
+#### MULTI_USER_README.md
+
+**Purpose:** Quick start for multi-user deployments
+
+**Contents:**
+
+- Configuration examples
+- Deployment modes
+- Setup instructions
+- Docker Compose examples
+- Kubernetes deployment
+- Troubleshooting guide
+
+---
+
+#### IMPLEMENTATION_GUIDE.md
+
+**Purpose:** Step-by-step integration guide
+
+**Contents:**
+
+- Prerequisites and dependencies
+- 7-step integration process
+- Database schema (users, sessions, audit_events)
+- API examples and testing
+- Migration from single-user to multi-user
+- Troubleshooting common issues
+
+---
+
+#### SERVER_ARCHITECTURE_ANALYSIS.md
+
+**Purpose:** Current server architecture analysis
+
+**Contents:**
+
+- Process model (parent-child)
+- Session management (EditorSessionManager)
+- Authentication flow
+- File system structure
+- Communication mechanisms
+- WebSocket routing
+
+---
+
+#### ARCHITECTURE_DIAGRAMS.md
+
+**Purpose:** Visual architecture documentation
+
+**Contents:**
+
+- Process architecture diagrams
+- Request flow diagrams
+- WebSocket upgrade sequence
+- Session management flow
+- Authentication flow
+- Startup sequence
+
+---
+
+### Using the Architecture Documentation
+
+**For Planning:**
+
+1. Read `EXECUTIVE_SUMMARY.md` for overview
+2. Review timeline and budget estimates
+3. Assess risks and mitigation strategies
+
+**For Implementation:**
+
+1. Study `AI_WEBSITE_IDE_INTEGRATION.md` for architecture
+2. Follow `WORLD_CLASS_IDE_FEATURES.md` for features
+3. Use `IMPLEMENTATION_GUIDE.md` for step-by-step setup
+
+**For Deployment:**
+
+1. Choose deployment mode (single vs multi-user)
+2. Follow `MULTI_USER_README.md` for setup
+3. Configure using examples in architecture docs
+
+---
+
 ## Future Documentation
 
+- [x] Architecture deep dive (DONE - see architecture/)
+- [x] Multi-tenancy setup (DONE - MULTI_USER_ARCHITECTURE_DESIGN.md)
+- [x] Enterprise deployment guide (DONE - EXECUTIVE_SUMMARY.md)
 - [ ] API reference documentation
 - [ ] Plugin development guide
 - [ ] Performance tuning guide
 - [ ] Backup and restore guide
-- [ ] Multi-tenancy setup
-- [ ] Enterprise deployment guide
 - [ ] Compliance documentation
-- [ ] Architecture deep dive
 - [ ] Extension development tutorial
 - [ ] Video tutorials
 ```

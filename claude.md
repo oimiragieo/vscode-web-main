@@ -118,6 +118,9 @@ vscode-web-main/
 ├── lib/                      # External libraries (VSCode source)
 ├── docs/                     # User & developer documentation
 │   └── architecture/        # Architecture documentation
+│       ├── EXECUTIVE_SUMMARY.md                # AI Website + IDE integration overview
+│       ├── AI_WEBSITE_IDE_INTEGRATION.md       # Unified platform architecture
+│       ├── WORLD_CLASS_IDE_FEATURES.md         # Feature implementation guide
 │       ├── MULTI_USER_README.md                # Multi-user overview
 │       ├── MULTI_USER_ARCHITECTURE_DESIGN.md  # Complete architecture
 │       ├── IMPLEMENTATION_GUIDE.md             # Integration guide
@@ -1724,6 +1727,382 @@ Detailed documentation for each directory is available in the respective `claude
 - Platform-specific instructions
 - Security and best practices
 - Contributing and maintaining
+
+---
+
+## AI Website + Web IDE Integration Architecture
+
+### Overview
+
+The codebase now includes comprehensive architecture documentation for integrating this VSCode Web IDE into an AI-powered website platform, creating a unified experience with both `/chat` and `/ide` features.
+
+**Key Documents:**
+
+- **[docs/architecture/EXECUTIVE_SUMMARY.md](docs/architecture/EXECUTIVE_SUMMARY.md)** - High-level overview for decision makers
+- **[docs/architecture/AI_WEBSITE_IDE_INTEGRATION.md](docs/architecture/AI_WEBSITE_IDE_INTEGRATION.md)** - Detailed integration architecture
+- **[docs/architecture/WORLD_CLASS_IDE_FEATURES.md](docs/architecture/WORLD_CLASS_IDE_FEATURES.md)** - Complete feature implementation guide
+
+---
+
+### EXECUTIVE_SUMMARY.md - Investment & Planning
+
+**Purpose:** High-level overview of AI Website + Web IDE integration
+
+**Target Audience:** Decision makers, investors, product managers
+
+**Contents:**
+
+- **Investment Analysis:** $300k-$500k over 6-8 months
+- **Three-Phase Roadmap:**
+  - Phase 1 (12-14 weeks): MVP with basic AI features
+  - Phase 2 (12-14 weeks): Production with collaboration
+  - Phase 3 (8-10 weeks): Enterprise scale and features
+- **Technical Stack:** React, Node.js, PostgreSQL, Redis, Docker, Claude API
+- **Revenue Models:** Freemium and usage-based pricing suggestions
+- **Risk Assessment:** Technical and business risks with mitigation strategies
+- **Success Metrics:** Technical, business, and user engagement KPIs
+- **Next Steps:** Week-by-week implementation plan
+
+**Key Insights:**
+
+- Unified platform with `/chat` and `/ide` routes
+- Complete user session isolation (critical requirement)
+- Shared AI infrastructure (Claude API) for both features
+- Start monolithic, scale to microservices
+- Directory-based isolation → Container-based isolation
+
+---
+
+### AI_WEBSITE_IDE_INTEGRATION.md - Integration Architecture
+
+**Purpose:** Detailed technical architecture for merging chat and IDE features
+
+**Target Audience:** Architects, tech leads, senior engineers
+
+**Contents:**
+
+#### 1. Integration Strategy
+
+**Option 1: Monolithic (Recommended for MVP)**
+
+```
+Single Node.js Application
+├── /chat routes → Chat Service
+└── /ide routes → IDE Service
+    └── Shared: Authentication, Sessions, AI
+```
+
+- Simpler deployment
+- Shared authentication
+- Lower operational complexity
+- **Best for:** MVP, teams < 100 users
+
+**Option 2: Microservices (Phase 3)**
+
+```
+Gateway (nginx/API Gateway)
+├── /chat/* → Chat Service (Port 3000)
+├── /ide/* → IDE Service (Port 8080)
+└── /api/* → API Service (Port 4000)
+```
+
+- Independent scaling
+- Better fault isolation
+- **Best for:** Enterprise, 100+ users
+
+#### 2. Session Isolation Strategy
+
+**Phase 1: Directory-Based Isolation**
+
+```
+/var/lib/ai-website/users/
+├── user-123/
+│   ├── workspaces/          # Project files
+│   ├── settings/            # VS Code settings
+│   └── extensions/          # Installed extensions
+```
+
+- OS-level permissions (chmod 700)
+- Disk quotas
+- Fast startup (< 1 second)
+- **Best for:** Development, low-security environments
+
+**Phase 2: Container-Based Isolation**
+
+```yaml
+services:
+  ide-user-123:
+    image: ai-website-ide:latest
+    resources:
+      limits:
+        cpus: "2"
+        memory: 4G
+    networks:
+      - user-123-network
+```
+
+- Complete isolation (filesystem, network, process)
+- Resource limits enforced
+- Startup: 2-5 seconds
+- **Best for:** Production, high-security
+
+#### 3. Database Schema
+
+**Users Table:**
+
+- id, username, email, password_hash
+- roles (Admin, User, Viewer)
+- created_at, updated_at, last_login
+- is_active, metadata (JSONB)
+
+**Sessions Table:**
+
+- id, user_id, token, created_at, expires_at
+- ip_address, user_agent, metadata
+
+**Chat Conversations & Messages:**
+
+- conversation_id, user_id, role, content
+- created_at, metadata
+
+**IDE Workspaces & Sessions:**
+
+- workspace_id, user_id, name, path
+- container_id, process_id, status
+- created_at, last_accessed
+
+**Audit Log:**
+
+- event_type, user_id, resource_type
+- action, status, ip_address, metadata
+
+#### 4. AI Integration Architecture
+
+**Shared AI Service (Claude API):**
+
+```typescript
+class AIService {
+  // For /chat
+  async chat(messages, options): Promise<ChatResponse>
+
+  // For /ide code completion
+  async complete(code, context): Promise<string>
+
+  // For /ide code explanation
+  async explain(code, language): Promise<string>
+
+  // For /ide debugging
+  async debug(error, code, context): Promise<DebugSuggestion>
+
+  // For /ide refactoring
+  async refactor(code, instruction): Promise<string>
+}
+```
+
+**Benefits:**
+
+- Single API integration
+- Shared context across features
+- Cost-efficient (shared quota)
+- Unified user experience
+
+#### 5. Performance Targets
+
+| Metric               | Target            |
+| -------------------- | ----------------- |
+| IDE Initial Load     | < 2 seconds       |
+| Time to Interactive  | < 3 seconds       |
+| Keystroke Latency    | < 16ms (60fps)    |
+| Container Startup    | < 5 seconds       |
+| AI Code Completion   | < 500ms           |
+| Max Concurrent Users | 100+ per instance |
+
+---
+
+### WORLD_CLASS_IDE_FEATURES.md - Implementation Guide
+
+**Purpose:** Comprehensive feature implementation guide with code examples
+
+**Target Audience:** Developers, engineers, implementation teams
+
+**Timeline:** 24-32 weeks (6-8 months)
+
+**Contents:**
+
+#### 1. AI-Powered Intelligence (Weeks 5-8)
+
+**Features:**
+
+- **AI Code Completion** - GitHub Copilot-style real-time suggestions
+- **Conversational AI Assistant** - In-IDE chat panel understanding codebase
+- **AI-Driven Debugging** - Analyze errors and suggest fixes
+- **Intelligent Refactoring** - Optimize code, convert languages
+- **Automated Documentation** - Generate docstrings and comments
+
+**Implementation:**
+
+- Monaco Editor API integration
+- Claude API with streaming
+- WebSocket for real-time updates
+- Code context extraction
+- Caching strategies
+
+#### 2. Collaboration & Version Control (Weeks 15-18)
+
+**Features:**
+
+- **Real-Time Collaborative Editing** - Google Docs-style code editing
+- **Shared Terminals** - Multiple users in same terminal session
+- **Port Forwarding** - Share localhost ports with teammates
+- **In-IDE PR Management** - Review and manage PRs without leaving IDE
+- **Advanced Diff Viewer** - Visual diff with line-level staging
+
+**Implementation:**
+
+- Yjs (CRDT) for conflict resolution
+- WebSocket for real-time communication
+- GitHub API integration
+- Git operations via libgit2
+- Monaco diff editor
+
+#### 3. Core Editor & Performance (Weeks 9-12)
+
+**Features:**
+
+- **High-Performance UI** - Sub-2-second load, zero latency
+- **Advanced IntelliSense** - Language Server Protocol integration
+- **Visual Debugger** - Breakpoints, watches, call stack
+- **Integrated Terminal** - Multi-terminal with shell integration
+
+**Implementation:**
+
+- Code splitting and lazy loading
+- Virtual scrolling for file lists
+- LSP client for each language
+- Debug Adapter Protocol (DAP)
+- xterm.js + node-pty
+
+#### 4. Environment & Extensibility (Weeks 23-26)
+
+**Features:**
+
+- **Extension Marketplace** - VSCode-compatible extensions
+- **devcontainer.json Support** - Zero-config project onboarding
+- **Container Integration** - Docker management GUI
+- **Settings Sync** - Cloud sync across devices
+
+**Implementation:**
+
+- Extension registry database
+- Package management system
+- Docker API integration
+- Cloud storage (S3)
+- Encryption for synced settings
+
+#### 5. DevOps & Cloud Integration (Weeks 23-26)
+
+**Features:**
+
+- **One-Click Deployment** - Deploy to Vercel, Netlify, AWS, etc.
+- **Integrated Database GUI** - Connect to and manage databases
+- **Secure Secrets Vault** - Encrypted secrets management
+
+**Implementation:**
+
+- Cloud platform APIs (Vercel, Netlify, AWS)
+- Database drivers (pg, mysql2, mongodb)
+- AES-256 encryption for secrets
+- Audit logging for secret access
+
+---
+
+### Use Cases
+
+#### Use Case 1: Solo Developer
+
+```
+User accesses https://your-website.com
+├── Authenticates once
+├── /chat - Asks AI about code concepts
+└── /ide - Writes code with AI completion
+    └── Complete isolation, no interference
+```
+
+#### Use Case 2: Team Collaboration
+
+```
+Team of 5 developers
+├── Each has isolated workspace
+├── Real-time collaborative editing
+├── Shared terminal for debugging
+└── Port forwarding for live preview
+    └── All using shared AI infrastructure
+```
+
+#### Use Case 3: Enterprise (100+ users)
+
+```
+Container-based isolation
+├── Kubernetes deployment
+├── Horizontal scaling
+├── Multi-region support
+├── SSO/SAML authentication
+└── Usage analytics & billing
+```
+
+---
+
+### Development Timeline
+
+**Phase 1: MVP (Weeks 1-14)**
+
+- Week 1-4: Foundation (authentication, DB, isolation)
+- Week 5-8: AI features (completion, chat, debugging)
+- Week 9-12: Core editor (LSP, debugger, Git)
+- Week 13-14: Testing & polish
+
+**Phase 2: Production (Weeks 15-28)**
+
+- Week 15-18: Collaboration (real-time editing, terminals)
+- Week 19-22: Advanced AI (refactoring, documentation)
+- Week 23-26: Extensions & DevOps (marketplace, deployment)
+- Week 27-28: Hardening (security, performance, load testing)
+
+**Phase 3: Enterprise (Weeks 29-38)**
+
+- Week 29-32: Enterprise features (SSO, RBAC, analytics)
+- Week 33-36: Scale (horizontal scaling, multi-region)
+- Week 37-38: Enterprise polish (admin dashboard, billing)
+
+---
+
+### Cost Estimates
+
+**Development Costs:**
+
+- Phase 1: $100k-$150k (3-4 engineers × 14 weeks)
+- Phase 2: $150k-$200k (4-5 engineers × 14 weeks)
+- Phase 3: $100k-$150k (4-6 engineers × 10 weeks)
+- **Total:** $350k-$500k
+
+**Operational Costs (Monthly):**
+
+- Infrastructure (100 users): $1,000-$2,000
+- AI API (Claude): $3,000-$5,000
+- Storage (S3): $100-$200
+- **Total:** $4,000-$7,000/month
+
+---
+
+### Key Differentiators
+
+What makes this special:
+
+1. **AI-First Approach** - AI integrated throughout, not bolted on
+2. **Chat + IDE Integration** - Unique positioning (no competitor does this)
+3. **Real-time Collaboration** - Google Docs for code
+4. **Zero-Config Onboarding** - devcontainer.json support
+5. **Enterprise-Ready** - Complete isolation, RBAC, SSO
 
 ---
 
