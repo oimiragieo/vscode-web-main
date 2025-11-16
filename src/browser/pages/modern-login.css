@@ -35,9 +35,10 @@ body {
 .gradient-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(40px);
   opacity: 0.3;
   animation: float 20s ease-in-out infinite;
+  will-change: transform;
 }
 
 .blob-1 {
@@ -69,7 +70,8 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   33% {
@@ -90,6 +92,7 @@ body {
   width: 100%;
   max-width: 480px;
   animation: fadeInUp 0.6s ease-out;
+  will-change: transform, opacity;
 }
 
 @keyframes fadeInUp {
@@ -114,7 +117,9 @@ body {
   box-shadow: var(--shadow-2xl);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .login-card:hover {
@@ -147,10 +152,12 @@ body {
   border-radius: var(--radius-xl);
   margin-bottom: var(--spacing-4);
   animation: pulse 2s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -301,9 +308,16 @@ body {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
 }
 
 /* ==========================================================================
@@ -371,6 +385,7 @@ body {
   width: 20px;
   height: 20px;
   transition: transform 0.2s ease;
+  will-change: transform;
 }
 
 .submit-button:hover .button-icon {
@@ -458,7 +473,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -522,7 +539,7 @@ body {
   }
 
   .background-decoration .gradient-blob {
-    filter: blur(60px);
+    filter: blur(30px);
   }
 
   .blob-1,

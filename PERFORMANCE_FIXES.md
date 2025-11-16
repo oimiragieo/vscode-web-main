@@ -7,11 +7,13 @@ This document provides concrete code examples and fixes for the performance bott
 ## Quick Win #1: Per-Request Authentication Cache
 
 ### Problem
+
 Every route calls `authenticated()` which performs expensive Argon2 password verification. A single user making multiple requests (proxy requests, settings reads, etc.) triggers multiple crypto operations.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/http.ts` lines 116-138
 
 ### Solution
+
 Add request-scoped authentication cache in express middleware.
 
 #### Implementation:
@@ -20,7 +22,7 @@ Add request-scoped authentication cache in express middleware.
 // Add to http.ts - add authentication cache middleware
 export const createAuthCacheMiddleware = (): express.RequestHandler => {
   return async (req, res, next) => {
-    if (!('_authCache' in req)) {
+    if (!("_authCache" in req)) {
       // Perform authentication once and cache on request object
       const isAuthenticated = await authenticatedImpl(req)
       ;(req as any)._authCache = isAuthenticated
@@ -32,10 +34,10 @@ export const createAuthCacheMiddleware = (): express.RequestHandler => {
 // Modify authenticated() to use cache
 export const authenticated = async (req: express.Request): Promise<boolean> => {
   // Check if already cached on this request
-  if ('_authCache' in req) {
+  if ("_authCache" in req) {
     return (req as any)._authCache
   }
-  
+
   // Fall back to full authentication
   const result = await authenticatedImpl(req)
   ;(req as any)._authCache = result
@@ -71,16 +73,17 @@ export const register = async (
   args: DefaultedArgs,
 ): Promise<{ disposeRoutes: Disposable["dispose"]; heart: Heart }> => {
   // ... existing code ...
-  
+
   // Add early, before route-specific middleware
   app.router.use(createAuthCacheMiddleware())
   app.wsRouter.use(createAuthCacheMiddleware())
-  
+
   // ... rest of middleware ...
 }
 ```
 
-**Impact:** 
+**Impact:**
+
 - Eliminates 50-100ms per additional authenticated request
 - User making 10 proxied requests: saves 500-1000ms
 
@@ -89,11 +92,13 @@ export const register = async (
 ## Quick Win #2: Batch Session Cleanup
 
 ### Problem
+
 `AuthService.deleteUserSessions()` and `SessionStore.deleteUserSessions()` fetch all sessions then delete individually. For users with multiple sessions, this causes N+1 query pattern.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/services/session/SessionStore.ts` lines 308-321
 
 ### Solution
+
 Implement batch delete operations at storage layer.
 
 #### For Database Store:
@@ -106,11 +111,11 @@ async deleteUserSessions(userId: string): Promise<number> {
   // for (const session of sessions) {
   //   await this.delete(session.id)
   // }
-  
+
   // AFTER: Single batch delete
   const sql = "DELETE FROM sessions WHERE user_id = ?"
   const result = await this.db.execute(sql, [userId])
-  
+
   // Audit log (single operation)
   await this.auditLogger?.log({
     id: randomUUID(),
@@ -120,7 +125,7 @@ async deleteUserSessions(userId: string): Promise<number> {
     status: "success",
     metadata: { sessionCount: result.affectedRows },
   })
-  
+
   return result.affectedRows
 }
 ```
@@ -135,25 +140,25 @@ async deleteUserSessions(userId: string): Promise<number> {
   // for (const session of sessions) {
   //   await this.delete(session.id)
   // }
-  
+
   // AFTER: Use Redis pipeline for atomic batch delete
   const userKey = this.getUserKey(userId)
   const sessionIds = await this.getSessionIdsForUser(userId)
-  
+
   if (sessionIds.length === 0) {
     return 0
   }
-  
+
   // Build pipeline: delete all session keys + user index
   const pipeline = this.redis.pipeline()
-  
+
   for (const sessionId of sessionIds) {
     pipeline.del(this.getKey(sessionId))
   }
   pipeline.del(userKey)
-  
+
   await pipeline.exec()
-  
+
   return sessionIds.length
 }
 
@@ -161,16 +166,17 @@ async deleteUserSessions(userId: string): Promise<number> {
 private async getSessionIdsForUser(userId: string): Promise<string[]> {
   const userKey = this.getUserKey(userId)
   const value = await this.redis.get(userKey)
-  
+
   if (!value) {
     return []
   }
-  
+
   return JSON.parse(value) as string[]
 }
 ```
 
 **Impact:**
+
 - Single logout: 1 batch delete instead of 1 read + N deletes
 - User with 5 sessions: saves 50-100ms (5 roundtrips eliminated)
 
@@ -179,11 +185,13 @@ private async getSessionIdsForUser(userId: string): Promise<string[]> {
 ## Quick Win #3: Move Crypto Initialization to Startup
 
 ### Problem
+
 The mint-key POST endpoint initializes crypto on first request, blocking that request.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/routes/vscode.ts` lines 214-239
 
 ### Solution
+
 Pre-generate key during server startup.
 
 #### Implementation:
@@ -194,13 +202,13 @@ Pre-generate key during server startup.
 async function runCodeServer(args: DefaultedArgs): Promise<Disposable> {
   // Add key initialization before everything else
   await initializeCryptoKeys(args)
-  
+
   // ... rest of server startup ...
 }
 
 async function initializeCryptoKeys(args: DefaultedArgs): Promise<void> {
   const keyPath = path.join(args["user-data-dir"], "serve-web-key-half")
-  
+
   try {
     // Try to load existing key
     await fs.access(keyPath)
@@ -224,7 +232,7 @@ let mintKeyPromise: Promise<Buffer> | undefined
 
 router.post("/mint-key", async (req, res) => {
   const keyPath = path.join(req.args["user-data-dir"], "serve-web-key-half")
-  
+
   try {
     // Key should already exist from startup
     const key = await fs.readFile(keyPath)
@@ -248,6 +256,7 @@ router.post("/mint-key", async (req, res) => {
 ```
 
 **Impact:**
+
 - Eliminates 50-200ms delay on first client request
 - Smoother initial page load
 
@@ -256,11 +265,13 @@ router.post("/mint-key", async (req, res) => {
 ## Quick Win #4: Debounce Heartbeat Writes
 
 ### Problem
+
 Every request triggers heart.beat() which does file I/O. At 100 RPS, this causes 100 file writes per heartbeat cycle.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/heart.ts` lines 40-72
 
 ### Solution
+
 Batch heartbeat writes using debounce.
 
 #### Implementation:
@@ -273,7 +284,7 @@ export class Heart {
   private readonly _onChange = new Emitter<"alive" | "expired" | "unknown">()
   readonly onChange = this._onChange.event
   private state: "alive" | "expired" | "unknown" = "expired"
-  
+
   // ADDED: Debounce state for write batching
   private writeScheduled = false
   private readonly writeDebounceMs = 10000 // 10 second window
@@ -311,7 +322,7 @@ export class Heart {
 
     logger.debug("heartbeat")
     this.lastHeartbeat = Date.now()
-    
+
     if (typeof this.heartbeatTimer !== "undefined") {
       clearTimeout(this.heartbeatTimer)
     }
@@ -334,7 +345,7 @@ export class Heart {
     // CHANGED: Debounce file writes instead of writing every beat
     if (!this.writeScheduled) {
       this.writeScheduled = true
-      
+
       setTimeout(async () => {
         this.writeScheduled = false
         try {
@@ -355,6 +366,7 @@ export class Heart {
 ```
 
 **Impact:**
+
 - 80-90% reduction in file I/O operations
 - At 100 RPS: reduces from 100 writes/beat to ~1 write/beat
 
@@ -363,11 +375,13 @@ export class Heart {
 ## Quick Win #5: Settings Write Debouncing
 
 ### Problem
+
 Settings read/write happens on every page load with no caching.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/settings.ts` lines 17-41
 
 ### Solution
+
 Implement write-through cache with debounced persistence.
 
 #### Implementation:
@@ -400,7 +414,7 @@ export class SettingsProvider<T> {
         logger.warn(error.message)
       }
     }
-    
+
     this.cache = {} as T
     return this.cache
   }
@@ -411,7 +425,7 @@ export class SettingsProvider<T> {
   public async write(settings: Partial<T>): Promise<void> {
     // Merge into pending write
     this.pendingWrite = { ...this.pendingWrite, ...settings }
-    
+
     // Update cache immediately for reads
     if (this.cache !== null) {
       this.cache = { ...this.cache, ...settings }
@@ -429,7 +443,7 @@ export class SettingsProvider<T> {
     // Schedule debounced write
     this.writeTimer = setTimeout(async () => {
       this.writeTimer = null
-      
+
       if (this.pendingWrite === null || Object.keys(this.pendingWrite).length === 0) {
         return
       }
@@ -437,13 +451,13 @@ export class SettingsProvider<T> {
       try {
         const toWrite = this.pendingWrite
         this.pendingWrite = null
-        
+
         const nextSettings = { ...this.cache, ...toWrite }
-        
+
         // Write to temp file first (atomic operation)
         const tempPath = this.settingsPath + ".tmp"
         await fs.writeFile(tempPath, JSON.stringify(nextSettings, null, 2))
-        
+
         // Atomic rename
         try {
           await fs.rename(tempPath, this.settingsPath)
@@ -452,7 +466,7 @@ export class SettingsProvider<T> {
           await fs.copyFile(tempPath, this.settingsPath)
           await fs.unlink(tempPath)
         }
-        
+
         // Update cache with persisted value
         this.cache = nextSettings
       } catch (error: any) {
@@ -468,7 +482,7 @@ export class SettingsProvider<T> {
     if (this.writeTimer !== null) {
       clearTimeout(this.writeTimer)
       this.writeTimer = null
-      
+
       // Perform final write without debounce
       if (this.pendingWrite !== null) {
         const nextSettings = { ...this.cache, ...this.pendingWrite }
@@ -484,7 +498,7 @@ export class SettingsProvider<T> {
 ```typescript
 router.get("/", ensureVSCodeLoaded, async (req, res, next) => {
   // ... existing logic ...
-  
+
   // Still works the same from caller perspective
   await req.settings.write({ query: req.query })
   // But now writes are batched every 5 seconds instead of immediately
@@ -494,6 +508,7 @@ router.get("/", ensureVSCodeLoaded, async (req, res, next) => {
 ```
 
 **Impact:**
+
 - 10-20x fewer file operations under normal load
 - Immediate reads from cache (0ms instead of 1-5ms)
 - 10 concurrent page loads: 10 writes → 1 batched write
@@ -503,11 +518,13 @@ router.get("/", ensureVSCodeLoaded, async (req, res, next) => {
 ## Medium Complexity Fix #1: Batch Session Lookups
 
 ### Problem
+
 `getUserSessions()` fetches individual sessions in a loop, causing N+1 queries.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/services/session/SessionStore.ts`
 
 ### Solution
+
 Add batch get operations to reduce round trips.
 
 #### For Redis Store:
@@ -622,7 +639,7 @@ export class DatabaseSessionStore implements SessionStore {
     `
     const rows = await this.db.query(sql, [userId])
     const sessionIds = rows.map((row) => row.id)
-    
+
     // CHANGED: Use batch get
     return await this.getSessionsBatch(sessionIds)
   }
@@ -630,6 +647,7 @@ export class DatabaseSessionStore implements SessionStore {
 ```
 
 **Impact:**
+
 - Redis: 2 + N round trips → 2 round trips (50-100ms savings for 5+ sessions)
 - Database: 2 queries → 1 query (20-50ms savings)
 
@@ -638,11 +656,13 @@ export class DatabaseSessionStore implements SessionStore {
 ## Medium Complexity Fix #2: Fix Socket Proxy Memory Leak
 
 ### Problem
+
 Socket proxy Promise never resolves if socket already destroyed, causing memory leak.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/socket.ts` lines 44-75
 
 ### Solution
+
 Add proper cleanup and guards.
 
 #### Implementation:
@@ -670,7 +690,7 @@ export class SocketProxyProvider {
     return new Promise((resolve, reject) => {
       const id = generateUuid()
       let resolved = false // Guard against double resolution
-      
+
       // Track this connection
       this.pendingConnections.set(id, true)
 
@@ -685,7 +705,7 @@ export class SocketProxyProvider {
         this.pendingConnections.delete(id)
         clearTimeout(timeout)
         listener.dispose()
-        
+
         // Destroy sockets only if not already destroyed
         if (!socket.destroyed) socket.destroy()
         if (!proxy.destroyed) proxy.destroy()
@@ -705,7 +725,7 @@ export class SocketProxyProvider {
 
         const onData = (data: Buffer) => {
           if (resolved) return
-          
+
           if (data.toString() === id && !socket.destroyed && !proxy.destroyed) {
             connection.removeListener("data", onData)
             cleanup()
@@ -739,7 +759,7 @@ export class SocketProxyProvider {
         cleanup()
         reject(new Error("Socket error during proxy setup"))
       }
-      
+
       socket.once("error", onSocketError)
       proxy.once("error", onSocketError)
     })
@@ -766,10 +786,10 @@ export class SocketProxyProvider {
               }
               this.onProxyConnect.emit(p)
             })
-            
+
             // Prevent event listener leaks
             proxyServer.setMaxListeners(100)
-            
+
             proxyServer.once("listening", () => resolve(proxyServer))
             proxyServer.listen(this.proxyPipe)
           })
@@ -791,6 +811,7 @@ export class SocketProxyProvider {
 ```
 
 **Impact:**
+
 - Prevents promise leak (was unbounded)
 - Saves 100MB+ memory on long-running servers with many disconnects
 
@@ -799,11 +820,13 @@ export class SocketProxyProvider {
 ## Medium Complexity Fix #3: EditorSessionManager TTL Cleanup
 
 ### Problem
+
 Editor sessions accumulate in memory indefinitely.
 
 **Current Location:** `/home/user/vscode-web-main/src/node/vscodeSocket.ts` lines 85-144
 
 ### Solution
+
 Add TTL-based cleanup.
 
 #### Implementation:
@@ -827,7 +850,7 @@ export interface EditorSessionEntry {
 export class EditorSessionManager {
   // Map from socket path to EditorSessionEntry
   private entries = new Map<string, EditorSessionEntry>()
-  
+
   // ADDED: Cleanup interval
   private cleanupInterval: NodeJS.Timeout | null = null
   private readonly sessionTTL = 5 * 60 * 1000 // 5 minutes
@@ -854,9 +877,7 @@ export class EditorSessionManager {
       if (matchCheckResults.has(entry.socketPath)) {
         return matchCheckResults.get(entry.socketPath)!
       }
-      const result = entry.workspace.folders.some((folder) =>
-        filePath.startsWith(folder.uri.path + path.sep)
-      )
+      const result = entry.workspace.folders.some((folder) => filePath.startsWith(folder.uri.path + path.sep))
       matchCheckResults.set(entry.socketPath, result)
       return result
     }
@@ -951,6 +972,7 @@ export class EditorSessionManager {
 ```
 
 **Impact:**
+
 - Prevents unbounded memory growth
 - Long-running server with 100+ sessions: saves 10-50MB memory
 
@@ -1029,14 +1051,13 @@ runTests().catch(console.error)
 
 ## Summary of Expected Performance Improvements
 
-| Fix | Before | After | Improvement |
-|-----|--------|-------|-------------|
-| Auth cache | 100ms (10 calls × 10ms) | 10ms (1 crypto op) | 90ms |
-| Batch sessions | 200ms (5 ops × 40ms) | 40ms (1 batch op) | 160ms |
-| Heartbeat debounce | 100 writes | 10 writes | 90% reduction |
-| Settings debounce | 10 writes/load | 1 write/5s | 80% reduction |
-| Socket proxy leak | Memory leak | Bounded | +50-100MB |
-| Session TTL cleanup | Unbounded | Fixed | +10-50MB |
+| Fix                 | Before                  | After              | Improvement   |
+| ------------------- | ----------------------- | ------------------ | ------------- |
+| Auth cache          | 100ms (10 calls × 10ms) | 10ms (1 crypto op) | 90ms          |
+| Batch sessions      | 200ms (5 ops × 40ms)    | 40ms (1 batch op)  | 160ms         |
+| Heartbeat debounce  | 100 writes              | 10 writes          | 90% reduction |
+| Settings debounce   | 10 writes/load          | 1 write/5s         | 80% reduction |
+| Socket proxy leak   | Memory leak             | Bounded            | +50-100MB     |
+| Session TTL cleanup | Unbounded               | Fixed              | +10-50MB      |
 
 **Total potential improvement: 300-600ms per typical user workflow**
-

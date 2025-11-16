@@ -5,6 +5,7 @@
 This VSCode web IDE implementation demonstrates a well-architected network layer with Express.js for HTTP handling and native Node.js WebSocket support. The architecture includes proxy capabilities, rate limiting, and basic caching, but lacks several critical network optimization patterns like connection pooling, HTTP/2 support, and advanced request batching strategies.
 
 **Architecture Score: 7/10**
+
 - Strong: Express middleware chain, error handling, authentication
 - Weak: Limited connection pooling, no HTTP/2, minimal caching strategy
 
@@ -33,6 +34,7 @@ router.use(compression())
 ```
 
 **Analysis:**
+
 - ✅ Supports both HTTP and HTTPS transparently via httpolyglot
 - ✅ Compression enabled at the application layer (gzip/deflate)
 - ✅ Socket management with proper cleanup (disposer pattern)
@@ -58,6 +60,7 @@ export enum HttpCode {
 ```
 
 **Analysis:**
+
 - ✅ Basic HTTP codes defined
 - ❌ Missing 301 (permanent redirect), 429 (rate limiting), 503 (service unavailable)
 - ❌ No 202 (accepted) for async operations
@@ -72,7 +75,7 @@ const common: express.RequestHandler = (req, _, next) => {
   if (!/^\/healthz\/?$/.test(req.url)) {
     // NOTE@jsjoeio - intentionally not awaiting the .beat() call here because
     // we don't want to slow down the request.
-    heart.beat()  // ⚠️ Fire-and-forget async operation
+    heart.beat() // ⚠️ Fire-and-forget async operation
   }
   req.args = args
   req.heart = heart
@@ -83,6 +86,7 @@ const common: express.RequestHandler = (req, _, next) => {
 ```
 
 **Issues Found:**
+
 - ⚠️ **Fire-and-forget heartbeat beat()** - async operation not awaited, could miss errors
 - ✅ Proper middleware attachment of context objects
 - ✅ Early exit for health check endpoints
@@ -107,10 +111,11 @@ export const errorHandler: express.ErrorRequestHandler = async (err, req, res, n
     const resourcePath = path.resolve(rootPath, "src/browser/pages/error.html")
     res.set("Content-Type", getMediaMime(resourcePath))
     const content = await fs.readFile(resourcePath, "utf8")
-    res.send(replaceTemplates(req, content)
-      .replace(/{{ERROR_TITLE}}/g, statusCode.toString())
-      .replace(/{{ERROR_HEADER}}/g, statusCode.toString())
-      .replace(/{{ERROR_BODY}}/g, escapeHtml(err.message))
+    res.send(
+      replaceTemplates(req, content)
+        .replace(/{{ERROR_TITLE}}/g, statusCode.toString())
+        .replace(/{{ERROR_HEADER}}/g, statusCode.toString())
+        .replace(/{{ERROR_BODY}}/g, escapeHtml(err.message)),
     )
   } else {
     res.json({ error: err.message, ...(err.details || {}) })
@@ -119,6 +124,7 @@ export const errorHandler: express.ErrorRequestHandler = async (err, req, res, n
 ```
 
 **Analysis:**
+
 - ✅ Proper content negotiation (HTML vs JSON)
 - ✅ HTML escaping to prevent XSS
 - ✅ Status code extraction from multiple error types
@@ -172,6 +178,7 @@ private async requestResponse(uri: string): Promise<http.IncomingMessage> {
 ```
 
 **Analysis:**
+
 - ✅ Proper redirect handling with cycle detection (maxRedirects = 10)
 - ✅ keepAlive enabled on ProxyAgent for connection reuse
 - ✅ Proper response cleanup on errors
@@ -181,6 +188,7 @@ private async requestResponse(uri: string): Promise<http.IncomingMessage> {
 - ❌ No response size limits (potential DoS)
 
 **BOTTLENECK:** Missing timeout on line 112:
+
 ```typescript
 const client = httpx.get(uri, { headers: ..., agent, timeout: 10000 }, ...)
 ```
@@ -196,7 +204,7 @@ const client = httpx.get(uri, { headers: ..., agent, timeout: 10000 }, ...)
 ```typescript
 export const handleUpgrade = (app: express.Express, server: http.Server): void => {
   server.on("upgrade", (req, socket, head) => {
-    socket.pause()  // ✅ Pause to prevent data loss
+    socket.pause() // ✅ Pause to prevent data loss
 
     const wreq = req as InternalWebsocketRequest
     wreq.ws = socket
@@ -206,7 +214,7 @@ export const handleUpgrade = (app: express.Express, server: http.Server): void =
     // Send the request off to be handled by Express
     ;(app as any).handle(wreq, new http.ServerResponse(wreq), () => {
       if (!wreq._ws_handled) {
-        socket.end("HTTP/1.1 404 Not Found\r\n\r\n")  // ✅ Proper cleanup
+        socket.end("HTTP/1.1 404 Not Found\r\n\r\n") // ✅ Proper cleanup
       }
     })
   })
@@ -214,6 +222,7 @@ export const handleUpgrade = (app: express.Express, server: http.Server): void =
 ```
 
 **Analysis:**
+
 - ✅ Proper pause/resume pattern to prevent data loss
 - ✅ Fallback 404 handling for unmatched routes
 - ✅ Flag-based tracking of handled connections
@@ -243,6 +252,7 @@ wsRouter.ws("/", async (req) => {
 ```
 
 **Analysis:**
+
 - ✅ Async handler pattern
 - ✅ Proper JSON serialization
 - ❌ No message size limits
@@ -256,6 +266,7 @@ wsRouter.ws("/", async (req) => {
 **Analysis:** No explicit reconnection logic found in server-side code. Relies entirely on client to reconnect.
 
 **Risk:**
+
 - ⚠️ Silent failures if client connection drops
 - ⚠️ No heartbeat from server to detect stale connections
 - ⚠️ No exponential backoff on client reconnects
@@ -277,6 +288,7 @@ wsRouter.ws(/.*/, ensureOrigin, ensureAuthenticated, ensureVSCodeLoaded, async (
 ```
 
 **Analysis:**
+
 - ✅ TLS socket wrapping for child processes
 - ✅ Proper authentication and origin checks
 - ❌ No error handling on socket proxy creation
@@ -324,6 +336,7 @@ export async function proxy(
 ```
 
 **Analysis:**
+
 - ✅ Authentication checks before proxying
 - ✅ CORS preflight skip option
 - ✅ Base path rewriting for relative URLs
@@ -359,6 +372,7 @@ const proxyDomainsToRegex = (proxyDomains: string[]): RegExp[] => {
 ```
 
 **Analysis:**
+
 - ✅ Proper regex escaping to prevent injection
 - ✅ Caching compiled regexes
 - ❌ Regex recompilation on every request if length changes
@@ -392,6 +406,7 @@ proxy.on("proxyRes", (res, req) => {
 ```
 
 **Issues:**
+
 - ❌ **No agent configuration** - http-proxy uses default agents
 - ❌ **No keepAlive** - creates new connections for each request
 - ❌ **No maxSockets** - unlimited concurrent connections
@@ -399,16 +414,17 @@ proxy.on("proxyRes", (res, req) => {
 - ⚠️ **Limited error context** - error.message only
 
 **FIX:** Should be:
+
 ```typescript
-const http = require('http')
-const https = require('https')
+const http = require("http")
+const https = require("https")
 
 const httpAgent = new http.Agent({
   keepAlive: true,
   keepAliveMsecs: 30000,
   maxSockets: 50,
   maxFreeSockets: 10,
-  timeout: 60000
+  timeout: 60000,
 })
 
 const httpsAgent = new https.Agent({
@@ -416,7 +432,7 @@ const httpsAgent = new https.Agent({
   keepAliveMsecs: 30000,
   maxSockets: 50,
   maxFreeSockets: 10,
-  timeout: 60000
+  timeout: 60000,
 })
 
 export const proxy = proxyServer.createProxyServer({
@@ -440,6 +456,7 @@ proxy.on("proxyRes", (res, req) => {
 ```
 
 **Analysis:**
+
 - ✅ Rewrite absolute paths to relative
 - ✅ Prevents redirect loops
 - ❌ Only handles absolute paths (relative redirects ignored)
@@ -458,7 +475,7 @@ proxy.on("proxyRes", (res, req) => {
 app.router.use(
   "/_static",
   express.static(rootPath, {
-    cacheControl: commit !== "development",  // ✅ Development vs production
+    cacheControl: commit !== "development", // ✅ Development vs production
     fallthrough: false,
     setHeaders: (res, path, stat) => {
       // The service worker is served from a sub-path on the static route so
@@ -472,6 +489,7 @@ app.router.use(
 ```
 
 **Analysis:**
+
 - ✅ Cache-Control conditional on development mode
 - ✅ Service worker scope handling
 - ❌ No explicit cache headers configured
@@ -481,6 +499,7 @@ app.router.use(
 - ❌ No immutable flag for versioned assets
 
 **Missing Headers:**
+
 ```typescript
 setHeaders: (res, path, stat) => {
   // For production assets with hashes
@@ -511,6 +530,7 @@ public async getUpdate(force?: boolean): Promise<Update> {
 ```
 
 **Analysis:**
+
 - ✅ De-duplication of concurrent requests
 - ✅ Promise-based caching
 - ✅ Cache invalidation after completion
@@ -541,6 +561,7 @@ export class SettingsProvider<T> {
 ```
 
 **Analysis:**
+
 - ❌ **No caching** - reads from disk on every call
 - ❌ No in-memory cache
 - ❌ Repeated file I/O on every settings.read()
@@ -555,6 +576,7 @@ export class SettingsProvider<T> {
 ### 5.1 API Design Patterns
 
 **Update Check Endpoint:**
+
 ```typescript
 router.get("/check", ensureAuthenticated, async (req, res) => {
   const update = await req.updater.getUpdate(req.query.force === "true")
@@ -568,6 +590,7 @@ router.get("/check", ensureAuthenticated, async (req, res) => {
 ```
 
 **Analysis:**
+
 - ✅ Proper async/await pattern
 - ✅ Boolean query parameter handling
 - ✅ Multiple fields in response
@@ -583,21 +606,22 @@ router.get("/check", ensureAuthenticated, async (req, res) => {
 router.get("/", ensureVSCodeLoaded, async (req, res, next) => {
   const isAuthenticated = await authenticated(req)
   // ... redirect to login if not authenticated
-  
+
   if (NO_FOLDER_OR_WORKSPACE_QUERY && !FOLDER_OR_WORKSPACE_WAS_CLOSED) {
-    const settings = await req.settings.read()  // Prefetch settings
+    const settings = await req.settings.read() // Prefetch settings
     const lastOpened = settings.query || {}
-    
+
     // Determine folder/workspace from cache or CLI args
     // ... redirect if found
   }
-  
-  await req.settings.write({ query: req.query })  // Write back settings
+
+  await req.settings.write({ query: req.query }) // Write back settings
   next()
 })
 ```
 
 **Analysis:**
+
 - ✅ Prefetches settings before rendering
 - ✅ Avoids redundant queries
 - ❌ Settings read triggers disk I/O (not cached)
@@ -606,6 +630,7 @@ router.get("/", ensureVSCodeLoaded, async (req, res, next) => {
 ### 5.3 Lazy Loading / Progressive Enhancement
 
 **VSCode Module Loading:**
+
 ```typescript
 let vscodeServer: IVSCodeServerAPI | undefined
 let vscodeServerPromise: Promise<IVSCodeServerAPI> | undefined
@@ -616,15 +641,15 @@ export const ensureVSCodeLoaded = async (
   next: express.NextFunction,
 ): Promise<void> => {
   if (vscodeServer) {
-    return next()  // Already loaded
+    return next() // Already loaded
   }
   if (!vscodeServerPromise) {
-    vscodeServerPromise = loadVSCode(req)  // Start loading
+    vscodeServerPromise = loadVSCode(req) // Start loading
   }
   try {
     vscodeServer = await vscodeServerPromise
   } catch (error) {
-    vscodeServerPromise = undefined  // Reset on error
+    vscodeServerPromise = undefined // Reset on error
     // ... error handling
   }
   return next()
@@ -632,6 +657,7 @@ export const ensureVSCodeLoaded = async (
 ```
 
 **Analysis:**
+
 - ✅ Lazy loading of VS Code module
 - ✅ De-duplication of concurrent loads
 - ✅ Error recovery (reset promise)
@@ -657,6 +683,7 @@ router.use(compression())
 ```
 
 **Analysis:**
+
 - ✅ Compression enabled globally
 - ✅ Uses 'compression' package (gzip/deflate)
 - ❌ No Brotli support
@@ -664,26 +691,31 @@ router.use(compression())
 - ❌ No threshold configuration (may compress small responses)
 
 **Improvement:**
+
 ```typescript
-router.use(compression({
-  level: 6,  // Balanced compression
-  threshold: 1024,  // Only compress > 1KB
-  // Enable Brotli for modern clients
-  brotli: { enabled: true, params: { lgwin: 22 } }
-}))
+router.use(
+  compression({
+    level: 6, // Balanced compression
+    threshold: 1024, // Only compress > 1KB
+    // Enable Brotli for modern clients
+    brotli: { enabled: true, params: { lgwin: 22 } },
+  }),
+)
 ```
 
 ### 6.2 Connection Reuse
 
 **ProxyAgent (Update Check):**
+
 ```typescript
 const agent = new ProxyAgent({
-  keepAlive: true,  // ✅ Connection reuse enabled
+  keepAlive: true, // ✅ Connection reuse enabled
   getProxyForUrl: () => httpProxyUri || "",
 })
 ```
 
 **Analysis:**
+
 - ✅ keepAlive enabled for update checks
 - ❌ http-proxy uses default agents (no keepAlive)
 - ❌ No connection pooling limits
@@ -696,6 +728,7 @@ const agent = new ProxyAgent({
 Current implementation uses httpolyglot which only provides HTTP/1.1 over TLS.
 
 **Recommendation:** Upgrade to:
+
 ```typescript
 import spdy from 'spdy'
 const server = spdy.createServer({
@@ -723,6 +756,7 @@ router.get("/manifest.json", async (req, res) => {
 ```
 
 **Analysis:**
+
 - ❌ No Link headers with rel="preload" or rel="prefetch"
 - ❌ No early hints (103 Early Hints)
 - ❌ No DNS prefetch hints
@@ -738,7 +772,7 @@ router.get("/manifest.json", async (req, res) => {
 ```typescript
 export class Heart {
   private heartbeatTimer?: NodeJS.Timeout
-  private heartbeatInterval = 60000  // 60 seconds
+  private heartbeatInterval = 60000 // 60 seconds
   public lastHeartbeat = 0
   private state: "alive" | "expired" | "unknown" = "expired"
 
@@ -778,6 +812,7 @@ export class Heart {
 ```
 
 **Analysis:**
+
 - ✅ Activity detection based on active connections
 - ✅ Exponential backoff (60s intervals)
 - ✅ File-based heartbeat (works across processes)
@@ -811,6 +846,7 @@ export class RateLimiter {
 ```
 
 **Analysis:**
+
 - ✅ Multi-level rate limiting (per minute and per hour)
 - ✅ Token bucket algorithm
 - ✅ Logs failed attempts with context
@@ -825,16 +861,19 @@ export class RateLimiter {
 ```typescript
 export function securityHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
-    res.setHeader("Content-Security-Policy", [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  // ⚠️ Very permissive for VS Code
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https:",
-      "font-src 'self' data:",
-      "connect-src 'self' ws: wss:",
-      "frame-ancestors 'self'",
-    ].join("; "))
-    
+    res.setHeader(
+      "Content-Security-Policy",
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // ⚠️ Very permissive for VS Code
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "font-src 'self' data:",
+        "connect-src 'self' ws: wss:",
+        "frame-ancestors 'self'",
+      ].join("; "),
+    )
+
     res.setHeader("X-Frame-Options", "SAMEORIGIN")
     res.setHeader("X-Content-Type-Options", "nosniff")
     res.setHeader("X-XSS-Protection", "1; mode=block")
@@ -853,6 +892,7 @@ export function hsts(maxAge: number = 31536000) {
 ```
 
 **Analysis:**
+
 - ✅ Comprehensive security headers
 - ✅ CSP, HSTS, X-Frame-Options configured
 - ✅ HSTS preload enabled
@@ -881,6 +921,7 @@ proxy.on("error", (error, _, res) => {
 ```
 
 **Issues:**
+
 - ❌ No error logging or telemetry
 - ❌ Errors not differentiated by type
 - ❌ No retry logic
@@ -909,6 +950,7 @@ export const wsErrorHandler: express.ErrorRequestHandler = async (err, req, res,
 ```
 
 **Analysis:**
+
 - ✅ Proper logging (500+ errors logged as errors, others as debug)
 - ✅ Stack traces included
 - ❌ No graceful WebSocket close (using raw HTTP response)
@@ -920,18 +962,18 @@ export const wsErrorHandler: express.ErrorRequestHandler = async (err, req, res,
 
 ### Critical Bottlenecks
 
-| # | Issue | Severity | Impact | File |
-|---|-------|----------|--------|------|
-| 1 | No HTTP/2 support | HIGH | 6-9x slower for many small files | app.ts |
-| 2 | http-proxy no connection pooling | HIGH | Connection exhaustion at scale | proxy.ts |
-| 3 | Settings file read on every request | HIGH | Disk I/O per request | settings.ts, vscode.ts:132 |
-| 4 | No timeout on http-proxy | HIGH | Hanging requests under failures | proxy.ts |
-| 5 | Fire-and-forget heartbeat() | HIGH | Silent failures, idle detection broken | routes/index.ts:70 |
-| 6 | No max response size limits | MEDIUM | Potential OOM from large proxied responses | proxy.ts |
-| 7 | Settings not cached in memory | MEDIUM | Repeated disk I/O | settings.ts |
-| 8 | No ETag/If-None-Match | MEDIUM | Wasted bandwidth on unchanged assets | routes/index.ts |
-| 9 | VSCode module singleton | MEDIUM | Memory leak, not suitable for multi-user | routes/vscode.ts |
-| 10 | No async error handling in redirects | MEDIUM | Memory leaks from uncaught promise rejections | routes/domainProxy.ts |
+| #   | Issue                                | Severity | Impact                                        | File                       |
+| --- | ------------------------------------ | -------- | --------------------------------------------- | -------------------------- |
+| 1   | No HTTP/2 support                    | HIGH     | 6-9x slower for many small files              | app.ts                     |
+| 2   | http-proxy no connection pooling     | HIGH     | Connection exhaustion at scale                | proxy.ts                   |
+| 3   | Settings file read on every request  | HIGH     | Disk I/O per request                          | settings.ts, vscode.ts:132 |
+| 4   | No timeout on http-proxy             | HIGH     | Hanging requests under failures               | proxy.ts                   |
+| 5   | Fire-and-forget heartbeat()          | HIGH     | Silent failures, idle detection broken        | routes/index.ts:70         |
+| 6   | No max response size limits          | MEDIUM   | Potential OOM from large proxied responses    | proxy.ts                   |
+| 7   | Settings not cached in memory        | MEDIUM   | Repeated disk I/O                             | settings.ts                |
+| 8   | No ETag/If-None-Match                | MEDIUM   | Wasted bandwidth on unchanged assets          | routes/index.ts            |
+| 9   | VSCode module singleton              | MEDIUM   | Memory leak, not suitable for multi-user      | routes/vscode.ts           |
+| 10  | No async error handling in redirects | MEDIUM   | Memory leaks from uncaught promise rejections | routes/domainProxy.ts      |
 
 ---
 
@@ -940,12 +982,14 @@ export const wsErrorHandler: express.ErrorRequestHandler = async (err, req, res,
 ### A. Missing Timeout Configurations
 
 **Pattern Found:**
+
 ```typescript
 // ❌ NO TIMEOUT
 const client = httpx.get(uri, { headers: { "User-Agent": "code-server" }, agent }, callback)
 ```
 
 **All network operations missing timeouts:**
+
 - `http.get()` in update.ts (line 112)
 - `http.request()` in vscodeSocket.ts (lines 161-181)
 - `http-proxy` in proxy.ts (lines 51-54)
@@ -954,9 +998,10 @@ const client = httpx.get(uri, { headers: { "User-Agent": "code-server" }, agent 
 ### B. Fire-and-Forget Async Operations
 
 **Pattern:**
+
 ```typescript
 // ❌ NOT AWAITED
-heart.beat()  // Could fail silently
+heart.beat() // Could fail silently
 ```
 
 **Impact:** Errors are logged but request continues, making failures hard to detect.
@@ -964,6 +1009,7 @@ heart.beat()  // Could fail silently
 ### C. No Request/Response Size Limits
 
 **Missing checks:**
+
 ```typescript
 // ❌ NO SIZE LIMITS
 const buffer = await this.request(this.latestUrl)  // Could be GB
@@ -973,6 +1019,7 @@ _proxy.web(req, res, { target: ... })  // Unbounded proxy
 ### D. Type Casting Instead of Proper Typing
 
 **Pattern:**
+
 ```typescript
 ;(req as any).base = ...  // ❌ Fragile
 ;(req as WebsocketRequest).ws  // ✅ Better
@@ -981,6 +1028,7 @@ _proxy.web(req, res, { target: ... })  // Unbounded proxy
 ### E. No Connection Pooling
 
 **Pattern:**
+
 ```typescript
 // ❌ New connection per request
 const client = httpx.get(uri, ...)
@@ -989,6 +1037,7 @@ const client = httpx.get(uri, ...)
 ### F. Lack of Observability
 
 **Missing:**
+
 - No request/response size logging
 - No latency histograms
 - No error rate tracking
@@ -1001,14 +1050,16 @@ const client = httpx.get(uri, ...)
 ### Fix #1: Add Timeout to http-proxy
 
 **Current (proxy.ts):**
+
 ```typescript
 export const proxy = proxyServer.createProxyServer({})
 ```
 
 **Fixed:**
+
 ```typescript
-import * as http from 'http'
-import * as https from 'https'
+import * as http from "http"
+import * as https from "https"
 
 const httpAgent = new http.Agent({
   keepAlive: true,
@@ -1036,36 +1087,39 @@ export const proxy = proxyServer.createProxyServer({
 })
 
 // Add timeout to all proxied requests
-proxy.on('proxyReq', (proxyReq, req, res) => {
+proxy.on("proxyReq", (proxyReq, req, res) => {
   const timeout = setTimeout(() => {
     proxyReq.destroy()
-    res.writeHead(504, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'Gateway Timeout' }))
+    res.writeHead(504, { "Content-Type": "application/json" })
+    res.end(JSON.stringify({ error: "Gateway Timeout" }))
   }, 60000)
-  
-  proxyReq.on('response', () => clearTimeout(timeout))
-  proxyReq.on('error', () => clearTimeout(timeout))
+
+  proxyReq.on("response", () => clearTimeout(timeout))
+  proxyReq.on("error", () => clearTimeout(timeout))
 })
 ```
 
 ### Fix #2: Await Heartbeat
 
 **Current (routes/index.ts:70):**
+
 ```typescript
-heart.beat()  // Fire-and-forget
+heart.beat() // Fire-and-forget
 ```
 
 **Fixed:**
+
 ```typescript
 try {
   await heart.beat()
 } catch (error) {
-  logger.warn('Heartbeat failed', { error: error.message })
+  logger.warn("Heartbeat failed", { error: error.message })
   // Don't fail the request, but log the issue
 }
 ```
 
 Or use Promise.allSettled for non-critical operations:
+
 ```typescript
 Promise.allSettled([heart.beat()]).catch(() => {})
 ```
@@ -1073,6 +1127,7 @@ Promise.allSettled([heart.beat()]).catch(() => {})
 ### Fix #3: Cache Settings in Memory
 
 **Current (settings.ts:17-26):**
+
 ```typescript
 public async read(): Promise<T> {
   try {
@@ -1085,6 +1140,7 @@ public async read(): Promise<T> {
 ```
 
 **Fixed:**
+
 ```typescript
 private cache?: { data: T; mtime: number }
 
@@ -1095,7 +1151,7 @@ public async read(): Promise<T> {
     if (this.cache && this.cache.mtime === stats.mtime.getTime()) {
       return this.cache.data
     }
-    
+
     const raw = (await fs.readFile(this.settingsPath, "utf8")).trim()
     const data = raw ? JSON.parse(raw) : ({} as T)
     this.cache = { data, mtime: stats.mtime.getTime() }
@@ -1110,6 +1166,7 @@ public async read(): Promise<T> {
 ### Fix #4: Add Cache Headers
 
 **Current (routes/index.ts:135-149):**
+
 ```typescript
 app.router.use(
   "/_static",
@@ -1121,22 +1178,23 @@ app.router.use(
 ```
 
 **Fixed:**
+
 ```typescript
 const setHeaders = (res: Response, path: string, stat: fs.Stats) => {
   // Versioned assets (hash in filename) can be cached forever
   if (path.match(/\.[a-f0-9]{8,}\./)) {
-    res.setHeader('Cache-Control', 'public, immutable, max-age=31536000')
-    res.setHeader('ETag', stat.mtime.getTime().toString())
+    res.setHeader("Cache-Control", "public, immutable, max-age=31536000")
+    res.setHeader("ETag", stat.mtime.getTime().toString())
   }
   // Service worker must validate frequently
-  else if (path.endsWith('serviceWorker.js')) {
-    res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate')
-    res.setHeader('Service-Worker-Allowed', '/')
+  else if (path.endsWith("serviceWorker.js")) {
+    res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate")
+    res.setHeader("Service-Worker-Allowed", "/")
   }
   // Other assets cached with revalidation
   else {
-    res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate')
-    res.setHeader('ETag', stat.mtime.getTime().toString())
+    res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate")
+    res.setHeader("ETag", stat.mtime.getTime().toString())
   }
 }
 
@@ -1153,25 +1211,27 @@ app.router.use(
 ### Fix #5: Add Timeout to Update Check
 
 **Current (update.ts:112):**
+
 ```typescript
 const client = httpx.get(uri, { headers: { "User-Agent": "code-server" }, agent }, (response) => {
 ```
 
 **Fixed:**
+
 ```typescript
 const client = httpx.get(
   uri,
   {
     headers: { "User-Agent": "code-server" },
     agent,
-    timeout: 30000,  // 30 second timeout
+    timeout: 30000, // 30 second timeout
   },
   (response) => {
     // ...
-  }
+  },
 )
 
-client.on('timeout', () => {
+client.on("timeout", () => {
   client.destroy()
   reject(new Error(`Request timeout after 30s: ${uri}`))
 })
@@ -1180,6 +1240,7 @@ client.on('timeout', () => {
 ### Fix #6: Add Response Size Limits
 
 **Current (update.ts:84-98):**
+
 ```typescript
 private async request(uri: string): Promise<Buffer> {
   const response = await this.requestResponse(uri)
@@ -1196,6 +1257,7 @@ private async request(uri: string): Promise<Buffer> {
 ```
 
 **Fixed:**
+
 ```typescript
 private async request(uri: string): Promise<Buffer> {
   const MAX_RESPONSE_SIZE = 10 * 1024 * 1024  // 10 MB
@@ -1225,41 +1287,49 @@ private async request(uri: string): Promise<Buffer> {
 ## OPTIMIZATION OPPORTUNITIES
 
 ### Priority 1: HTTP/2 Support
+
 - **Effort:** Medium (2-3 days)
 - **Impact:** 40-60% faster static file delivery
 - **Implementation:** Replace http/https with spdy or http2
 
 ### Priority 2: Connection Pooling in http-proxy
+
 - **Effort:** Low (1 day)
 - **Impact:** 50-70% reduction in connection errors at scale
 - **Implementation:** Add httpAgent/httpsAgent with maxSockets=50
 
 ### Priority 3: Memory Cache for Settings
+
 - **Effort:** Low (4 hours)
 - **Impact:** 60-80% reduction in disk I/O for settings
 - **Implementation:** Add file mtime-based cache invalidation
 
 ### Priority 4: Request/Response Size Limits
+
 - **Effort:** Low (1 day)
 - **Impact:** Prevents DoS and OOM attacks
 - **Implementation:** Add size checks in proxy and update handler
 
 ### Priority 5: Proper Timeout Configuration
+
 - **Effort:** Low (1 day)
 - **Impact:** Prevent hanging requests (50+ second wait times)
 - **Implementation:** Add timeout to all http.get/http.request
 
 ### Priority 6: Cache Headers with ETag
+
 - **Effort:** Low (4 hours)
 - **Impact:** 30-50% bandwidth reduction for unchanged assets
 - **Implementation:** Use express.static setHeaders with mtime-based ETags
 
 ### Priority 7: WebSocket Backpressure Handling
+
 - **Effort:** Medium (2 days)
 - **Impact:** Prevent memory exhaustion from fast producers
 - **Implementation:** Add writeBufferedAmount checks and pause/resume
 
 ### Priority 8: Request Batching API
+
 - **Effort:** High (1 week)
 - **Impact:** 80% reduction in latency for multi-resource loads
 - **Implementation:** GraphQL-like batching endpoint
@@ -1269,23 +1339,26 @@ private async request(uri: string): Promise<Buffer> {
 ## SUMMARY RECOMMENDATIONS
 
 ### Immediate Actions (Next Sprint)
+
 1. ✅ Add timeout to http-proxy and http.get()
 2. ✅ Implement connection pooling with maxSockets=50
 3. ✅ Add size limits to responses
 4. ✅ Fix fire-and-forget heart.beat() with await or Promise.allSettled()
 
 ### Short-term (1-2 Weeks)
+
 5. ✅ Add memory caching for settings file
 6. ✅ Implement proper Cache-Control headers with ETags
 7. ✅ Add request rate limiting middleware
 
 ### Medium-term (1-2 Months)
+
 8. ✅ Upgrade to HTTP/2 with spdy
 9. ✅ Implement WebSocket message queuing
 10. ✅ Add comprehensive observability (metrics, logging)
 
 ### Long-term (Roadmap)
+
 11. ✅ Implement request batching API
 12. ✅ Multi-user session management with connection pooling per user
 13. ✅ Smart caching with CDN integration
-

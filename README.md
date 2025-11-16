@@ -13,6 +13,7 @@ Run VS Code in your browser with enhanced security, professional UI, and easy in
 ## ✨ Features
 
 ### 🎨 Modern Professional UI
+
 - **Beautiful Design**: Completely redesigned with modern aesthetics
 - **Responsive**: Works flawlessly on desktop, tablet, and mobile
 - **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation
@@ -20,12 +21,14 @@ Run VS Code in your browser with enhanced security, professional UI, and easy in
 - **Smooth Animations**: Professional loading states and transitions
 
 ### 🔌 Modular Architecture
+
 - **Plugin System**: Extend functionality with custom plugins
 - **SDK Support**: Easy integration as NPM package
 - **Dependency Injection**: Clean, testable architecture
 - **Event-Driven**: Hook into lifecycle events
 
 ### 🔒 Enhanced Security
+
 - **CSRF Protection**: Built-in token-based protection
 - **Security Headers**: CSP, HSTS, X-Frame-Options, and more
 - **Input Sanitization**: Comprehensive XSS prevention
@@ -33,6 +36,7 @@ Run VS Code in your browser with enhanced security, professional UI, and easy in
 - **Argon2 Hashing**: Strong password hashing
 
 ### 📦 Easy Deployment
+
 - **Docker Ready**: Optimized multi-stage Dockerfile
 - **Kubernetes Support**: Helm charts and manifests
 - **Docker Compose**: Production-ready configuration
@@ -40,6 +44,7 @@ Run VS Code in your browser with enhanced security, professional UI, and easy in
 - **Cloud Native**: Works with AWS, GCP, Azure
 
 ### ⚡ Performance Optimized
+
 - **Fast Loading**: Optimized bundle sizes
 - **Caching**: Smart caching strategies
 - **Health Checks**: Built-in health monitoring
@@ -131,7 +136,7 @@ docker run -d \
 ### With Docker Compose
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   ide:
     image: vscode-web-ide:latest
@@ -169,15 +174,18 @@ kubectl apply -f k8s/
 ### Embed in Express App
 
 ```typescript
-import express from 'express'
-import { createIDEMiddleware } from '@vscode-web-ide/core'
+import express from "express"
+import { createIDEMiddleware } from "@vscode-web-ide/core"
 
 const app = express()
 
-app.use('/ide', createIDEMiddleware({
-  auth: { type: 'password', password: 'secret' },
-  basePath: '/ide'
-}))
+app.use(
+  "/ide",
+  createIDEMiddleware({
+    auth: { type: "password", password: "secret" },
+    basePath: "/ide",
+  }),
+)
 
 app.listen(3000)
 ```
@@ -185,22 +193,22 @@ app.listen(3000)
 ### Use Plugin System
 
 ```typescript
-import { WebIDE, BasePlugin } from '@vscode-web-ide/core'
+import { WebIDE, BasePlugin } from "@vscode-web-ide/core"
 
 class MyPlugin extends BasePlugin {
   metadata = {
-    name: 'my-plugin',
-    version: '1.0.0'
+    name: "my-plugin",
+    version: "1.0.0",
   }
 
   async init(context) {
-    context.app.use('/api/custom', this.customRoute)
+    context.app.use("/api/custom", this.customRoute)
   }
 }
 
 const ide = new WebIDE({
   port: 8080,
-  plugins: [new MyPlugin()]
+  plugins: [new MyPlugin()],
 })
 
 await ide.start()
@@ -330,12 +338,12 @@ Supports multiple authentication methods:
 
 ### Benchmarks
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Build time | ~5 min | <2 min |
-| First load | ~3s | <1s |
-| Bundle size | ~50MB | ~10MB |
-| Test coverage | 60% | 85%+ |
+| Metric        | Before | After  |
+| ------------- | ------ | ------ |
+| Build time    | ~5 min | <2 min |
+| First load    | ~3s    | <1s    |
+| Bundle size   | ~50MB  | ~10MB  |
+| Test coverage | 60%    | 85%+   |
 
 ### Optimizations
 

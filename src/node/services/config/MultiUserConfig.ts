@@ -6,14 +6,7 @@
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as yaml from "js-yaml"
-import {
-  DeploymentMode,
-  MultiUserConfig,
-  AuthProvider,
-  SessionStoreType,
-  IsolationStrategy,
-  UserRole,
-} from "../types"
+import { DeploymentMode, MultiUserConfig, AuthProvider, SessionStoreType, IsolationStrategy, UserRole } from "../types"
 
 export interface CodeServerArgs {
   // Existing args

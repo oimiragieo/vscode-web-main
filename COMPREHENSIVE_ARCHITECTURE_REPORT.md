@@ -1,4 +1,5 @@
 # VSCode Web IDE - Comprehensive Architecture Report
+
 **Analysis Date:** November 15, 2025  
 **Codebase:** code-server (VS Code Web IDE)  
 **Total Source Files:** 39 TypeScript files  
@@ -9,6 +10,7 @@
 ## EXECUTIVE SUMMARY
 
 This is a **remote IDE server** that runs VS Code in the browser with:
+
 - **Backend:** Node.js with Express.js serving the web interface
 - **Frontend:** VS Code bundled as a web-based editor
 - **Architecture:** Single-process, single-user (default), with process forking for hot reload
@@ -16,6 +18,7 @@ This is a **remote IDE server** that runs VS Code in the browser with:
 - **Deployment:** Docker-ready with multi-stage builds
 
 **Key Characteristics:**
+
 - Lightweight and self-contained
 - Single password authentication (no per-user auth)
 - File-based state persistence
@@ -237,7 +240,7 @@ entry() async function
    - Mount HTTPS redirect
    - Mount security.txt, robots.txt
    - Mount domain/path proxies
-   - Mount static files (/_static)
+   - Mount static files (/\_static)
    - Mount health check (/healthz)
    - Mount auth routes (/login, /logout)
    - Mount update route (/update)
@@ -253,6 +256,7 @@ entry() async function
 **File:** `/src/node/cli.ts`
 
 Defined arguments:
+
 - `--auth` (password | none)
 - `--password`, `--hashed-password` (Argon2)
 - `--host`, `--port`, `--bind-addr`
@@ -276,6 +280,7 @@ Defined arguments:
 **File:** `/src/node/app.ts` + `/src/node/routes/index.ts`
 
 **Components:**
+
 - `router`: Express app for standard HTTP requests
 - `wsRouter`: Express app mounted on WebSocket upgrade
 - `server`: HTTP/S server (httpolyglot handles both)
@@ -283,20 +288,20 @@ Defined arguments:
 
 **Key Middleware (in order):**
 
-| Middleware | Purpose |
-|-----------|---------|
-| `compression()` | Gzip compression for responses |
-| `cookieParser()` | Parse/set cookies |
-| `common()` | Attach args, heart, settings, updater to req |
-| HTTPS check | Redirect HTTP→HTTPS if TLS enabled |
-| Security routes | robots.txt, security.txt |
-| Domain proxy | Cross-domain proxy with origin validation |
-| Path proxy | /proxy/:port/:path routing |
-| Static files | /_static (src/browser) |
-| Health check | /healthz endpoint |
-| Auth routes | /login, /logout |
-| Update route | /update (version check) |
-| Main IDE | / (vscode route) |
+| Middleware       | Purpose                                      |
+| ---------------- | -------------------------------------------- |
+| `compression()`  | Gzip compression for responses               |
+| `cookieParser()` | Parse/set cookies                            |
+| `common()`       | Attach args, heart, settings, updater to req |
+| HTTPS check      | Redirect HTTP→HTTPS if TLS enabled           |
+| Security routes  | robots.txt, security.txt                     |
+| Domain proxy     | Cross-domain proxy with origin validation    |
+| Path proxy       | /proxy/:port/:path routing                   |
+| Static files     | /\_static (src/browser)                      |
+| Health check     | /healthz endpoint                            |
+| Auth routes      | /login, /logout                              |
+| Update route     | /update (version check)                      |
+| Main IDE         | / (vscode route)                             |
 
 ### 3.2 Request Processing Pipeline
 
@@ -343,6 +348,7 @@ WebsocketRouter.ws(route, ...handlers)
 ```
 
 **VS Code uses WebSocket for:**
+
 - Real-time code changes
 - Terminal output
 - Language server communication
@@ -350,17 +356,17 @@ WebsocketRouter.ws(route, ...handlers)
 
 ### 3.4 Route Handlers
 
-| Route | File | Purpose | Auth |
-|-------|------|---------|------|
-| GET / | vscode.ts | Main IDE interface | ✓ Required |
-| POST /login | login.ts | Authenticate user | ✗ Public |
-| POST /logout | logout.ts | Clear session | ✓ Required |
-| GET /healthz | health.ts | Health check | ✗ Public |
-| GET /update | update.ts | Check new version | ✓ Required |
-| GET/POST /proxy/:port/* | pathProxy.ts | Route to service on port | ✓ Required |
-| GET /absproxy/:port/* | pathProxy.ts | Route (no path rewrite) | ✓ Required |
-| * (others) | domainProxy.ts | Multi-domain proxy | ✓ Required |
-| WS / | vscode.ts | WebSocket to VS Code | ✓ Required |
+| Route                    | File           | Purpose                  | Auth       |
+| ------------------------ | -------------- | ------------------------ | ---------- |
+| GET /                    | vscode.ts      | Main IDE interface       | ✓ Required |
+| POST /login              | login.ts       | Authenticate user        | ✗ Public   |
+| POST /logout             | logout.ts      | Clear session            | ✓ Required |
+| GET /healthz             | health.ts      | Health check             | ✗ Public   |
+| GET /update              | update.ts      | Check new version        | ✓ Required |
+| GET/POST /proxy/:port/\* | pathProxy.ts   | Route to service on port | ✓ Required |
+| GET /absproxy/:port/\*   | pathProxy.ts   | Route (no path rewrite)  | ✓ Required |
+| \* (others)              | domainProxy.ts | Multi-domain proxy       | ✓ Required |
+| WS /                     | vscode.ts      | WebSocket to VS Code     | ✓ Required |
 
 ### 3.5 Core Services
 
@@ -371,17 +377,18 @@ WebsocketRouter.ws(route, ...handlers)
 ```typescript
 class Heart {
   lastHeartbeat: number
-  heartbeatInterval = 60000  // 60 seconds
+  heartbeatInterval = 60000 // 60 seconds
   state: "alive" | "expired" | "unknown"
-  
-  beat()          // Called on each request (async, not awaited)
-  alive()         // Check if recently active
-  dispose()       // Clear timers on shutdown
-  onChange        // Event: subscribe to state changes
+
+  beat() // Called on each request (async, not awaited)
+  alive() // Check if recently active
+  dispose() // Clear timers on shutdown
+  onChange // Event: subscribe to state changes
 }
 ```
 
 **Purpose:**
+
 - Track idle periods
 - Trigger auto-shutdown via `--idle-timeout-seconds`
 - Detect active connections
@@ -393,9 +400,9 @@ class Heart {
 ```typescript
 class EditorSessionManager {
   entries: Map<socketPath, EditorSessionEntry>
-  
-  addSession(entry)              // Register workspace
-  deleteSession(socketPath)      // Unregister workspace
+
+  addSession(entry) // Register workspace
+  deleteSession(socketPath) // Unregister workspace
   getCandidatesForFile(filePath) // Find matching workspace
   getConnectedSocketPath(filePath) // Get socket path
 }
@@ -405,11 +412,12 @@ interface EditorSessionEntry {
     id: string
     folders: { uri: { path: string } }[]
   }
-  socketPath: string  // Unix socket to workspace's editor
+  socketPath: string // Unix socket to workspace's editor
 }
 ```
 
 **Purpose:**
+
 - Manage multiple VS Code editor instances per user
 - Route file operations to correct workspace
 - Exposed via separate HTTP API
@@ -421,14 +429,14 @@ interface EditorSessionEntry {
 ```typescript
 class SettingsProvider<T> {
   settingsPath: string
-  
-  read()        // Load JSON file
-  write()       // Save + merge with existing
+
+  read() // Load JSON file
+  write() // Save + merge with existing
 }
 
 // Stored in: user-data-dir/coder.json
 interface CoderSettings {
-  query?: ParsedQs        // Last opened folder/workspace
+  query?: ParsedQs // Last opened folder/workspace
   update?: {
     checked: number
     version: string
@@ -437,6 +445,7 @@ interface CoderSettings {
 ```
 
 **Purpose:**
+
 - Persist user preferences
 - Track last opened folders
 - Store update check results
@@ -448,14 +457,15 @@ interface CoderSettings {
 ```typescript
 class UpdateProvider {
   latestUrl = "https://api.github.com/repos/coder/code-server/releases/latest"
-  updateInterval = 86400000  // 24 hours
-  
-  getUpdate(force?)        // Check for newer version
-  isLatestVersion()        // Compare with current
+  updateInterval = 86400000 // 24 hours
+
+  getUpdate(force?) // Check for newer version
+  isLatestVersion() // Compare with current
 }
 ```
 
 **Purpose:**
+
 - Check for code-server updates
 - Notify user of new versions
 - Cache results
@@ -466,16 +476,17 @@ class UpdateProvider {
 
 ```typescript
 class SocketProxyProvider {
-  proxyPipe: string  // Unix socket path
+  proxyPipe: string // Unix socket path
   proxyTimeout = 5000
-  
-  createProxy(socket)           // Wrap TLS socket
-  startProxyServer()            // Start Unix socket server
-  findFreeSocketPath(basePath)  // Find available path
+
+  createProxy(socket) // Wrap TLS socket
+  startProxyServer() // Start Unix socket server
+  findFreeSocketPath(basePath) // Find available path
 }
 ```
 
 **Purpose:**
+
 - Wrap TLS sockets for child processes (can't pass TLS sockets via IPC)
 - Enable VS Code to use HTTPS connections
 - Tunneling for WebSocket upgrades
@@ -487,30 +498,32 @@ class SocketProxyProvider {
 ```typescript
 abstract class Process {
   onDispose: Event<NodeJS.Signals | undefined>
-  
+
   preventExit()
   exit(error?)
   dispose()
 }
 
 class ParentProcess extends Process {
-  start(args)        // Fork child
+  start(args) // Fork child
   on(event, handler) // Listen for IPC messages
-  send(message)      // Send to child
+  send(message) // Send to child
 }
 
 class ChildProcess extends Process {
-  handshake()        // Receive args from parent
-  onMessage()        // Subscribe to parent messages
+  handshake() // Receive args from parent
+  onMessage() // Subscribe to parent messages
 }
 ```
 
 **Message Types:**
+
 - `ParentHandshakeMessage`: Parent sends args to child
 - `ChildHandshakeMessage`: Child confirms ready
 - `RelaunchMessage`: Trigger reload
 
 **Use Cases:**
+
 - Hot reload (SIGUSR1/SIGUSR2)
 - Graceful shutdown
 - IPC communication
@@ -520,18 +533,20 @@ class ChildProcess extends Process {
 **File:** `/src/node/http.ts` + `/src/node/routes/login.ts`
 
 ```typescript
-authenticated(req)        // Check if session cookie valid
-ensureAuthenticated(req)  // Throw if not authenticated
-ensureOrigin(req)         // Verify Origin header
+authenticated(req) // Check if session cookie valid
+ensureAuthenticated(req) // Throw if not authenticated
+ensureOrigin(req) // Verify Origin header
 ```
 
 **Cookie Details:**
+
 - Name: `code-server-session`
 - Value: Hash of password (not plain)
 - Secure: If HTTPS
 - HttpOnly: Prevents JS access
 
 **Auth Middleware Checks:**
+
 - Cookie exists
 - Cookie value matches password hash
 - Origin header valid (for WebSocket)
@@ -544,13 +559,13 @@ ensureOrigin(req)         // Verify Origin header
 
 **Location:** `/ci/build/`
 
-| Script | Purpose |
-|--------|---------|
-| `build-code-server.sh` | TypeScript → JavaScript |
-| `build-vscode.sh` | Compile VS Code web server |
-| `build-release.sh` | Package for distribution |
-| `clean.sh` | Remove build artifacts |
-| `build-packages.sh` | Create platform-specific packages |
+| Script                 | Purpose                           |
+| ---------------------- | --------------------------------- |
+| `build-code-server.sh` | TypeScript → JavaScript           |
+| `build-vscode.sh`      | Compile VS Code web server        |
+| `build-release.sh`     | Package for distribution          |
+| `clean.sh`             | Remove build artifacts            |
+| `build-packages.sh`    | Create platform-specific packages |
 
 ### 4.2 TypeScript Build
 
@@ -568,6 +583,7 @@ ensureOrigin(req)         // Verify Origin header
 ```
 
 **Build Steps:**
+
 1. `npm run build:vscode` → Compile VS Code
 2. `npm run build` → `tsc` compiles src/ to out/
 3. Add shebang to entry.js
@@ -596,6 +612,7 @@ lib/vscode/
 ### 4.4 VS Code Integration
 
 **Dynamic Loading:**
+
 - VS Code is loaded as ESM module via `eval(import(...))`
 - Lazy-loaded on first request to `/` or `/vscode`
 - Cached in memory after first load
@@ -635,26 +652,27 @@ CMD ["node", "out/node/entry.js", "--bind-addr", "0.0.0.0:8080"]
 
 **File:** `package.json`
 
-| Package | Version | Purpose | Size* |
-|---------|---------|---------|-------|
-| @coder/logger | ^3.0.1 | Structured logging | ~50KB |
-| express | ^5.0.1 | HTTP framework | ~250KB |
-| compression | ^1.7.4 | Gzip middleware | ~50KB |
-| cookie-parser | ^1.4.6 | Cookie parsing | ~40KB |
-| http-proxy | ^1.18.1 | HTTP/WS proxy | ~100KB |
-| httpolyglot | ^0.1.2 | HTTP/HTTPS selector | ~10KB |
-| ws | ^8.14.2 | WebSocket library | ~120KB |
-| argon2 | ^0.31.1 | Password hashing | ~200KB |
-| pem | ^1.14.8 | Certificate generation | ~50KB |
-| semver | ^7.5.4 | Version parsing | ~40KB |
-| js-yaml | ^4.1.0 | YAML parsing | ~80KB |
-| rotating-file-stream | ^3.1.1 | Log rotation | ~50KB |
-| i18next | ^25.3.0 | Internationalization | ~200KB |
-| proxy-agent | ^6.3.1 | HTTP proxy support | ~60KB |
+| Package              | Version | Purpose                | Size\* |
+| -------------------- | ------- | ---------------------- | ------ |
+| @coder/logger        | ^3.0.1  | Structured logging     | ~50KB  |
+| express              | ^5.0.1  | HTTP framework         | ~250KB |
+| compression          | ^1.7.4  | Gzip middleware        | ~50KB  |
+| cookie-parser        | ^1.4.6  | Cookie parsing         | ~40KB  |
+| http-proxy           | ^1.18.1 | HTTP/WS proxy          | ~100KB |
+| httpolyglot          | ^0.1.2  | HTTP/HTTPS selector    | ~10KB  |
+| ws                   | ^8.14.2 | WebSocket library      | ~120KB |
+| argon2               | ^0.31.1 | Password hashing       | ~200KB |
+| pem                  | ^1.14.8 | Certificate generation | ~50KB  |
+| semver               | ^7.5.4  | Version parsing        | ~40KB  |
+| js-yaml              | ^4.1.0  | YAML parsing           | ~80KB  |
+| rotating-file-stream | ^3.1.1  | Log rotation           | ~50KB  |
+| i18next              | ^25.3.0 | Internationalization   | ~200KB |
+| proxy-agent          | ^6.3.1  | HTTP proxy support     | ~60KB  |
 
-*Approximate unpacked sizes
+\*Approximate unpacked sizes
 
 **Dev Dependencies:**
+
 - `typescript` ^5.6.2
 - `@types/node` 22.x
 - Various ESLint packages
@@ -689,6 +707,7 @@ lib/vscode-reh-web-linux-x64/
 Defines interfaces for:
 
 **User Management:**
+
 ```typescript
 interface User {
   id: string (UUID)
@@ -705,6 +724,7 @@ enum UserRole { Admin = "admin", User = "user", Viewer = "viewer" }
 ```
 
 **Session Management:**
+
 ```typescript
 interface Session {
   id: string
@@ -719,6 +739,7 @@ interface Session {
 ```
 
 **Resource Management:**
+
 ```typescript
 interface ResourceLimits {
   maxStorageMB: number
@@ -733,10 +754,11 @@ interface ResourceLimits {
 interface ResourceUsage {
   userId: string
   timestamp: Date
-  storage: { used, limit }
-  sessions: { active, limit }
-  connections: { current, limit }
-  cpu?, memory?
+  storage: { used; limit }
+  sessions: { active; limit }
+  connections: { current; limit }
+  cpu?
+  memory?
 }
 ```
 
@@ -764,15 +786,15 @@ interface SessionStore {
   get(sessionId): Promise<Session | null>
   delete(sessionId): Promise<void>
   exists(sessionId): Promise<boolean>
-  
+
   // Query
   getUserSessions(userId): Promise<Session[]>
   getAllActiveSessions(): Promise<Session[]>
-  
+
   // Cleanup
   deleteUserSessions(userId): Promise<number>
   deleteExpiredSessions(): Promise<number>
-  
+
   // Stats
   getSessionCount(): Promise<number>
   getUserSessionCount(userId): Promise<number>
@@ -790,17 +812,17 @@ class DatabaseSessionStore      // For persistence
 interface IsolationStrategy {
   initializeUserEnvironment(userId): Promise<UserEnvironment>
   destroyUserEnvironment(userId): Promise<void>
-  
+
   getUserDataPath(userId): string
   getUserSettingsPath(userId): string
   getUserExtensionsPath(userId): string
   getUserWorkspacesPath(userId): string
   getUserLogsPath(userId): string
-  
+
   enforceStorageQuota(userId): Promise<void>
   getResourceUsage(userId): Promise<ResourceUsage>
   checkQuota(userId, resource): Promise<QuotaStatus>
-  
+
   cleanupIdleResources(idleThresholdMinutes): Promise<number>
 }
 
@@ -831,11 +853,22 @@ interface AuditEvent {
 }
 
 enum AuditEventType {
-  UserLogin, UserLogout, UserCreated, UserUpdated, UserDeleted,
-  SessionCreated, SessionExpired, SessionRevoked,
-  ResourceAccessed, ResourceModified, ResourceDeleted,
-  ContainerStarted, ContainerStopped, ContainerError,
-  SecurityViolation, SuspiciousActivity,
+  UserLogin,
+  UserLogout,
+  UserCreated,
+  UserUpdated,
+  UserDeleted,
+  SessionCreated,
+  SessionExpired,
+  SessionRevoked,
+  ResourceAccessed,
+  ResourceModified,
+  ResourceDeleted,
+  ContainerStarted,
+  ContainerStopped,
+  ContainerError,
+  SecurityViolation,
+  SuspiciousActivity,
   // ... more
 }
 ```
@@ -869,13 +902,13 @@ class ServiceContainer {
   private sessionStore: SessionStore
   private auditLogger: AuditLogger
   private isolationManager: IsolationStrategy
-  
+
   constructor(config: MultiUserConfig) {
     this.sessionStore = createSessionStore(config.session)
     this.authService = new AuthService(userRepo, this.sessionStore, this.auditLogger)
     this.isolationManager = createIsolationStrategy(config.isolation)
   }
-  
+
   getAuthService() { return this.authService }
   getSessionStore() { return this.sessionStore }
   // ...
@@ -899,56 +932,56 @@ router.post('/login', async (req, res) => {
 
 ### 7.1 Entry Point & Process Management
 
-| File | Lines | Role |
-|------|-------|------|
-| `entry.ts` | 67 | CLI entry, parent/child branching |
-| `wrapper.ts` | 200+ | Process lifecycle, IPC |
-| `main.ts` | 246 | Server initialization, route registration |
-| `app.ts` | 100 | Express app creation |
+| File         | Lines | Role                                      |
+| ------------ | ----- | ----------------------------------------- |
+| `entry.ts`   | 67    | CLI entry, parent/child branching         |
+| `wrapper.ts` | 200+  | Process lifecycle, IPC                    |
+| `main.ts`    | 246   | Server initialization, route registration |
+| `app.ts`     | 100   | Express app creation                      |
 
 ### 7.2 HTTP Routing
 
-| File | Lines | Role |
-|------|-------|------|
-| `routes/index.ts` | 250+ | Route registration, middleware |
-| `http.ts` | 250+ | Auth utilities, template replacement |
-| `wsRouter.ts` | 69 | WebSocket upgrade handler |
+| File              | Lines | Role                                 |
+| ----------------- | ----- | ------------------------------------ |
+| `routes/index.ts` | 250+  | Route registration, middleware       |
+| `http.ts`         | 250+  | Auth utilities, template replacement |
+| `wsRouter.ts`     | 69    | WebSocket upgrade handler            |
 
 ### 7.3 Route Handlers
 
-| File | Lines | Role |
-|------|-------|------|
-| `routes/vscode.ts` | 300+ | Main IDE interface, VS Code loading |
-| `routes/login.ts` | 200+ | Authentication |
-| `routes/logout.ts` | 30 | Session cleanup |
-| `routes/pathProxy.ts` | 78 | Service routing |
-| `routes/domainProxy.ts` | 100+ | Multi-domain proxy |
+| File                    | Lines | Role                                |
+| ----------------------- | ----- | ----------------------------------- |
+| `routes/vscode.ts`      | 300+  | Main IDE interface, VS Code loading |
+| `routes/login.ts`       | 200+  | Authentication                      |
+| `routes/logout.ts`      | 30    | Session cleanup                     |
+| `routes/pathProxy.ts`   | 78    | Service routing                     |
+| `routes/domainProxy.ts` | 100+  | Multi-domain proxy                  |
 
 ### 7.4 Support Services
 
-| File | Lines | Role |
-|------|-------|------|
-| `heart.ts` | 83 | Idle detection |
-| `vscodeSocket.ts` | 150+ | Workspace management |
-| `socket.ts` | 120+ | TLS proxy |
-| `settings.ts` | 57 | Preferences store |
-| `update.ts` | 100+ | Version check |
+| File              | Lines | Role                 |
+| ----------------- | ----- | -------------------- |
+| `heart.ts`        | 83    | Idle detection       |
+| `vscodeSocket.ts` | 150+  | Workspace management |
+| `socket.ts`       | 120+  | TLS proxy            |
+| `settings.ts`     | 57    | Preferences store    |
+| `update.ts`       | 100+  | Version check        |
 
 ### 7.5 CLI & Config
 
-| File | Lines | Role |
-|------|-------|------|
-| `cli.ts` | 400+ | Argument parsing |
-| `constants.ts` | 49 | Build info |
-| `util.ts` | 300+ | Helpers (certs, paths, etc) |
+| File           | Lines | Role                        |
+| -------------- | ----- | --------------------------- |
+| `cli.ts`       | 400+  | Argument parsing            |
+| `constants.ts` | 49    | Build info                  |
+| `util.ts`      | 300+  | Helpers (certs, paths, etc) |
 
 ### 7.6 Common/Shared
 
-| File | Lines | Role |
-|------|-------|------|
-| `common/emitter.ts` | 62 | Event emitter |
-| `common/http.ts` | 30 | HTTP constants |
-| `common/util.ts` | 36 | String utilities |
+| File                | Lines | Role             |
+| ------------------- | ----- | ---------------- |
+| `common/emitter.ts` | 62    | Event emitter    |
+| `common/http.ts`    | 30    | HTTP constants   |
+| `common/util.ts`    | 36    | String utilities |
 
 ---
 
@@ -957,30 +990,36 @@ router.post('/login', async (req, res) => {
 ### 8.1 Current Optimizations
 
 **Compression:**
+
 - `compression()` middleware for Gzip responses
 - Cache-control headers for static files
 
 **Caching:**
+
 - Lazy-load VS Code module (cached on first request)
 - Settings file caching
 - Update check caching (24-hour TTL)
 
 **Resource Limits:**
+
 - `--idle-timeout-seconds` (auto-shutdown on inactivity)
 - `maxSessions` limits per user (types defined)
 - `maxConcurrentConnections` limits
 
 **Connection Pooling:**
+
 - Reuses HTTP server connections
 - WebSocket persistence
 
 **Socket Optimization:**
+
 - Unix socket support (lower latency than TCP)
 - TLS socket proxying for child processes
 
 ### 8.2 Missing Optimizations
 
 **Code-Level:**
+
 - ❌ No HTTP response caching headers (Cache-Control)
 - ❌ No bundle minification configuration
 - ❌ No lazy-loading routes
@@ -989,6 +1028,7 @@ router.post('/login', async (req, res) => {
 - ❌ No connection pooling for external APIs
 
 **Infrastructure:**
+
 - ❌ No metrics collection (Prometheus, StatsD)
 - ❌ No performance monitoring
 - ❌ No profiling hooks
@@ -996,6 +1036,7 @@ router.post('/login', async (req, res) => {
 - ❌ No request logging/tracing
 
 **Deployment:**
+
 - ❌ No horizontal scaling support
 - ❌ No caching layer (Redis, Memcached)
 - ❌ No CDN integration
@@ -1059,18 +1100,18 @@ router.post('/login', async (req, res) => {
 
 ## 10. SUMMARY TABLE
 
-| Aspect | Status | Details |
-|--------|--------|---------|
-| **Architecture** | Single-user, single-process | Ready for multi-user changes |
-| **Backend** | Node.js + Express | Solid, extensible |
-| **Frontend** | VS Code web | Full IDE capability |
-| **Auth** | Password-based | Cookie sessions |
-| **Build** | TypeScript + VS Code bundling | Complex, multi-step |
-| **Deployment** | Docker-ready | Multi-stage optimized builds |
-| **Testing** | 60% coverage target | Unit + E2E tests |
-| **Monitoring** | None | Types defined for metrics |
-| **Performance** | Good basic | Room for optimization |
-| **Security** | Adequate | Multi-user features needed |
+| Aspect           | Status                        | Details                      |
+| ---------------- | ----------------------------- | ---------------------------- |
+| **Architecture** | Single-user, single-process   | Ready for multi-user changes |
+| **Backend**      | Node.js + Express             | Solid, extensible            |
+| **Frontend**     | VS Code web                   | Full IDE capability          |
+| **Auth**         | Password-based                | Cookie sessions              |
+| **Build**        | TypeScript + VS Code bundling | Complex, multi-step          |
+| **Deployment**   | Docker-ready                  | Multi-stage optimized builds |
+| **Testing**      | 60% coverage target           | Unit + E2E tests             |
+| **Monitoring**   | None                          | Types defined for metrics    |
+| **Performance**  | Good basic                    | Room for optimization        |
+| **Security**     | Adequate                      | Multi-user features needed   |
 
 ---
 
@@ -1079,6 +1120,7 @@ router.post('/login', async (req, res) => {
 The VSCode Web IDE is a **well-structured, single-user remote IDE** with solid fundamentals:
 
 ✅ **Strengths:**
+
 - Clean separation of concerns
 - Event-driven architecture
 - Extensible service layer
@@ -1086,6 +1128,7 @@ The VSCode Web IDE is a **well-structured, single-user remote IDE** with solid f
 - Type-safe TypeScript
 
 🔧 **Opportunities:**
+
 - Multi-user support (types already defined)
 - Performance monitoring
 - Advanced caching strategies
@@ -1093,4 +1136,3 @@ The VSCode Web IDE is a **well-structured, single-user remote IDE** with solid f
 - Enhanced security features
 
 The codebase is **production-ready for single-user deployments** and provides a solid foundation for **multi-user and enterprise features**.
-

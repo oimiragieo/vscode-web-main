@@ -35,9 +35,11 @@ docs/
 ## Core Documentation
 
 ### README.md
+
 **Purpose:** Documentation overview and index
 
 **Contents:**
+
 - Quick start guide
 - Links to all documentation
 - Documentation structure
@@ -46,11 +48,13 @@ docs/
 ---
 
 ### install.md
+
 **Purpose:** Installation instructions for all platforms
 
 **Sections:**
 
 #### Quick Install
+
 ```bash
 curl -fsSL https://code-server.dev/install.sh | sh
 ```
@@ -58,6 +62,7 @@ curl -fsSL https://code-server.dev/install.sh | sh
 #### Platform-Specific Installation
 
 **Linux:**
+
 ```bash
 # Debian/Ubuntu
 curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=deb
@@ -70,6 +75,7 @@ yay -S code-server
 ```
 
 **macOS:**
+
 ```bash
 # Homebrew
 brew install code-server
@@ -79,6 +85,7 @@ curl -fsSL https://code-server.dev/install.sh | sh
 ```
 
 **Windows:**
+
 ```powershell
 # Using npm
 npm install -g code-server
@@ -88,6 +95,7 @@ npm install -g code-server
 ```
 
 **Docker:**
+
 ```bash
 docker run -it -p 8080:8080 \
   -v "$PWD:/home/coder/project" \
@@ -95,6 +103,7 @@ docker run -it -p 8080:8080 \
 ```
 
 #### From Source
+
 ```bash
 git clone https://github.com/coder/code-server
 cd code-server
@@ -106,17 +115,20 @@ npm run release
 ---
 
 ### guide.md
+
 **Purpose:** Comprehensive user guide
 
 **Sections:**
 
 #### Getting Started
+
 - First launch
 - Setting password
 - Accessing the IDE
 - Opening workspace
 
 #### Configuration
+
 - Configuration file location
 - Environment variables
 - CLI flags
@@ -124,29 +136,34 @@ npm run release
 - Custom certificates
 
 #### Using Extensions
+
 - Installing extensions
 - Extension marketplace
 - VSIX installation
 - Extension directory
 
 #### Workspace Management
+
 - Opening folders
 - Multi-root workspaces
 - Workspace settings
 - Tasks and launch configurations
 
 #### Terminal Usage
+
 - Integrated terminal
 - Shell configuration
 - Environment variables
 - Multiple terminals
 
 #### Port Forwarding
+
 - Forwarding local ports
 - Accessing forwarded ports
 - Security considerations
 
 #### Remote Development
+
 - SSH setup
 - Git integration
 - Remote debugging
@@ -154,11 +171,13 @@ npm run release
 ---
 
 ### FAQ.md
+
 **Purpose:** Frequently Asked Questions
 
 **Common Questions:**
 
 **Q: How do I change the password?**
+
 ```bash
 # Using config file
 echo "password: your-new-password" > ~/.config/code-server/config.yaml
@@ -172,32 +191,38 @@ code-server --auth password --password your-new-password
 ```
 
 **Q: How do I use my own SSL certificate?**
+
 ```bash
 code-server --cert /path/to/cert.pem --cert-key /path/to/key.pem
 ```
 
 **Q: How do I disable telemetry?**
+
 ```bash
 code-server --disable-telemetry
 ```
 
 **Q: Can I run code-server on a remote server?**
+
 ```
 Yes! Run code-server on your remote server and access it via browser.
 Use SSH tunneling or reverse proxy for secure access.
 ```
 
 **Q: How do I install a specific VSCode extension?**
+
 ```bash
 code-server --install-extension publisher.extension-name
 ```
 
 **Q: Where are extensions installed?**
+
 ```
 ~/.local/share/code-server/extensions
 ```
 
 **Q: How do I update code-server?**
+
 ```
 See upgrade.md for detailed instructions.
 ```
@@ -207,15 +232,18 @@ See upgrade.md for detailed instructions.
 ## Deployment Documentation
 
 ### helm.md
+
 **Purpose:** Kubernetes Helm chart deployment
 
 **Quick Start:**
+
 ```bash
 helm repo add code-server https://helm.coder.com
 helm install my-code-server code-server/code-server
 ```
 
 **Configuration:**
+
 ```yaml
 # values.yaml
 password: "secure-password"
@@ -239,21 +267,25 @@ resources:
 ```
 
 **Install with custom values:**
+
 ```bash
 helm install my-code-server code-server/code-server -f values.yaml
 ```
 
 **Upgrade:**
+
 ```bash
 helm upgrade my-code-server code-server/code-server
 ```
 
 **Uninstall:**
+
 ```bash
 helm uninstall my-code-server
 ```
 
 **Advanced Configuration:**
+
 - Persistent volumes
 - Ingress setup
 - Resource limits
@@ -264,33 +296,38 @@ helm uninstall my-code-server
 ---
 
 ### npm.md
+
 **Purpose:** NPM package usage
 
 **Installation:**
+
 ```bash
 npm install -g code-server
 ```
 
 **Usage:**
+
 ```bash
 code-server
 ```
 
 **Programmatic Usage:**
+
 ```typescript
-import { createServer } from 'code-server'
+import { createServer } from "code-server"
 
 const server = await createServer({
   port: 8080,
-  auth: 'password',
-  password: 'your-password'
+  auth: "password",
+  password: "your-password",
 })
 
 await server.listen()
-console.log('Server started on port 8080')
+console.log("Server started on port 8080")
 ```
 
 **Package.json Scripts:**
+
 ```json
 {
   "scripts": {
@@ -303,15 +340,18 @@ console.log('Server started on port 8080')
 ---
 
 ### collaboration.md
+
 **Purpose:** Collaborative development features
 
 **Features:**
+
 - Live Share integration
 - Port forwarding for sharing
 - Multiple users on same server
 - Workspace sharing
 
 **Setup:**
+
 ```bash
 # Install Live Share extension
 code-server --install-extension ms-vsliveshare.vsliveshare
@@ -321,6 +361,7 @@ code-server --install-extension ms-vsliveshare.vsliveshare
 ```
 
 **Multi-User Setup:**
+
 - Each user gets their own instance
 - Use reverse proxy (nginx, Caddy)
 - Subdomain routing
@@ -331,9 +372,11 @@ code-server --install-extension ms-vsliveshare.vsliveshare
 ## Platform-Specific Documentation
 
 ### termux.md
+
 **Purpose:** Running on Android via Termux
 
 **Installation:**
+
 ```bash
 # Install Termux from F-Droid
 # In Termux:
@@ -343,11 +386,13 @@ code-server
 ```
 
 **Access:**
+
 ```
 Open browser to http://localhost:8080
 ```
 
 **Tips:**
+
 - Use external keyboard
 - Enable storage access
 - Install git, python for extensions
@@ -356,14 +401,17 @@ Open browser to http://localhost:8080
 ---
 
 ### android.md
+
 **Purpose:** Android deployment options
 
 **Methods:**
+
 1. **Termux** (see termux.md)
 2. **Remote server + Android browser**
 3. **Docker on Android (UserLand, etc.)**
 
 **Recommendations:**
+
 - Use tablet for better experience
 - External keyboard recommended
 - SSH to remote server often better
@@ -372,9 +420,11 @@ Open browser to http://localhost:8080
 ---
 
 ### ios.md
+
 **Purpose:** iOS deployment and usage
 
 **Access Methods:**
+
 1. **Remote server** (recommended)
    - Run code-server on remote Linux server
    - Access via Safari on iOS
@@ -384,11 +434,13 @@ Open browser to http://localhost:8080
    - Very slow, experimental
 
 **Browser Recommendations:**
+
 - Safari (best compatibility)
 - Chrome (good alternative)
 - Enable "Request Desktop Website"
 
 **Limitations:**
+
 - No local file system access
 - Limited terminal functionality
 - Some extensions may not work
@@ -396,21 +448,25 @@ Open browser to http://localhost:8080
 ---
 
 ### ipad.md
+
 **Purpose:** iPad-specific instructions and optimizations
 
 **Optimizations:**
+
 - Request desktop website
 - Use external keyboard
 - Split view support
 - Touch gestures
 
 **Keyboard Shortcuts:**
+
 - Cmd+P - Quick open
 - Cmd+Shift+P - Command palette
 - Cmd+B - Toggle sidebar
 - Cmd+J - Toggle panel
 
 **Tips:**
+
 - Use Magic Keyboard for best experience
 - Enable cursor support
 - Configure workspace layout
@@ -419,9 +475,11 @@ Open browser to http://localhost:8080
 ---
 
 ### coder.md
+
 **Purpose:** Integration with Coder platform
 
 **Coder Platform:**
+
 - Enterprise deployment
 - Managed code-server instances
 - User management
@@ -429,6 +487,7 @@ Open browser to http://localhost:8080
 - Workspace templates
 
 **Setup:**
+
 ```bash
 # Install Coder CLI
 curl -fsSL https://coder.com/install.sh | sh
@@ -445,17 +504,20 @@ coder open my-workspace
 ## Contributor Documentation
 
 ### CONTRIBUTING.md
+
 **Purpose:** Guidelines for contributing
 
 **Sections:**
 
 #### Getting Started
+
 - Fork repository
 - Clone locally
 - Install dependencies
 - Build from source
 
 #### Development Workflow
+
 ```bash
 # Install dependencies
 npm install
@@ -474,6 +536,7 @@ npm run fmt
 ```
 
 #### Submitting Changes
+
 1. Create feature branch
 2. Make changes
 3. Write tests
@@ -483,12 +546,14 @@ npm run fmt
 7. Create pull request
 
 #### Code Style
+
 - TypeScript strict mode
 - ESLint configuration
 - Prettier formatting
 - Conventional commits
 
 #### Testing
+
 - Unit tests for new features
 - Integration tests for APIs
 - E2E tests for user flows
@@ -497,9 +562,11 @@ npm run fmt
 ---
 
 ### MAINTAINING.md
+
 **Purpose:** Guide for maintainers
 
 **Responsibilities:**
+
 - Review pull requests
 - Triage issues
 - Release management
@@ -507,6 +574,7 @@ npm run fmt
 - Community management
 
 **Release Process:**
+
 1. Update version in package.json
 2. Update CHANGELOG.md
 3. Create git tag
@@ -518,6 +586,7 @@ npm run fmt
 9. Announce release
 
 **Security:**
+
 - Monitor security advisories
 - Respond to security reports
 - Patch vulnerabilities
@@ -526,9 +595,11 @@ npm run fmt
 ---
 
 ### triage.md
+
 **Purpose:** Issue triage guidelines
 
 **Labels:**
+
 - `bug` - Something isn't working
 - `enhancement` - New feature request
 - `documentation` - Documentation improvements
@@ -539,6 +610,7 @@ npm run fmt
 - `duplicate` - Duplicate issue
 
 **Triage Process:**
+
 1. Review new issues daily
 2. Ask for more information if needed
 3. Label appropriately
@@ -550,21 +622,25 @@ npm run fmt
 ---
 
 ### CODE_OF_CONDUCT.md
+
 **Purpose:** Community standards and behavior expectations
 
 **Standards:**
+
 - Respectful communication
 - Inclusive language
 - Constructive feedback
 - Focus on collaboration
 
 **Unacceptable Behavior:**
+
 - Harassment
 - Trolling
 - Spam
 - Off-topic discussions
 
 **Enforcement:**
+
 - Warning
 - Temporary ban
 - Permanent ban
@@ -572,16 +648,18 @@ npm run fmt
 ---
 
 ### SECURITY.md
+
 **Purpose:** Security policy and vulnerability reporting
 
 **Supported Versions:**
-| Version | Supported          |
+| Version | Supported |
 | ------- | ------------------ |
-| 4.x     | :white_check_mark: |
-| 3.x     | :x:                |
-| < 3.0   | :x:                |
+| 4.x | :white_check_mark: |
+| 3.x | :x: |
+| < 3.0 | :x: |
 
 **Reporting Vulnerabilities:**
+
 ```
 Email: security@coder.com
 PGP Key: Available on website
@@ -590,6 +668,7 @@ Do NOT open public issues for security vulnerabilities.
 ```
 
 **Response Timeline:**
+
 - Acknowledgment: 24 hours
 - Initial assessment: 48 hours
 - Fix development: Varies by severity
@@ -601,9 +680,11 @@ Do NOT open public issues for security vulnerabilities.
 ## Technical Documentation
 
 ### requirements.md
+
 **Purpose:** System requirements
 
 **Minimum Requirements:**
+
 - CPU: 1 core
 - RAM: 2 GB
 - Disk: 1 GB
@@ -611,16 +692,19 @@ Do NOT open public issues for security vulnerabilities.
 - Node.js: 22.x (if building from source)
 
 **Recommended:**
+
 - CPU: 2+ cores
 - RAM: 4+ GB
 - Disk: 10+ GB (for extensions and workspaces)
 - SSD for better performance
 
 **Network:**
+
 - Outbound: Internet access for extensions
 - Inbound: Firewall rules for access
 
 **Browser:**
+
 - Chrome/Chromium 90+
 - Firefox 88+
 - Safari 14+
@@ -629,14 +713,17 @@ Do NOT open public issues for security vulnerabilities.
 ---
 
 ### upgrade.md
+
 **Purpose:** Upgrade instructions
 
 **NPM:**
+
 ```bash
 npm update -g code-server
 ```
 
 **Package Managers:**
+
 ```bash
 # Debian/Ubuntu
 sudo apt update && sudo apt upgrade code-server
@@ -646,11 +733,13 @@ brew upgrade code-server
 ```
 
 **Docker:**
+
 ```bash
 docker pull codercom/code-server:latest
 ```
 
 **From Source:**
+
 ```bash
 git pull origin main
 npm install
@@ -659,6 +748,7 @@ npm run release
 ```
 
 **Migration Notes:**
+
 - Check CHANGELOG for breaking changes
 - Backup configuration files
 - Test in development first
@@ -669,9 +759,11 @@ npm run release
 ## Documentation Maintenance
 
 ### manifest.json
+
 **Purpose:** Documentation metadata
 
 **Contents:**
+
 ```json
 {
   "version": "1.0.0",
@@ -687,12 +779,7 @@ npm run release
       "category": "usage"
     }
   ],
-  "categories": [
-    "getting-started",
-    "usage",
-    "deployment",
-    "contributing"
-  ]
+  "categories": ["getting-started", "usage", "deployment", "contributing"]
 }
 ```
 
@@ -711,7 +798,7 @@ npm run release
 
 ### Documentation Structure
 
-```markdown
+````markdown
 # Title
 
 Brief description
@@ -728,10 +815,12 @@ Content with examples:
 ```bash
 code-server --help
 ```
+````
 
 ## Section 2
 
 More content
+
 ```
 
 ---
@@ -764,3 +853,4 @@ More content
 - [ ] Architecture deep dive
 - [ ] Extension development tutorial
 - [ ] Video tutorials
+```

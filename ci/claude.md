@@ -23,11 +23,13 @@ ci/
 ## Build Scripts (ci/build/)
 
 ### build-vscode.sh
+
 **Purpose:** Build VS Code from source
 
 **Location:** `ci/build/build-vscode.sh:1`
 
 **Responsibilities:**
+
 - Check out VS Code submodule
 - Apply patches
 - Install dependencies
@@ -35,15 +37,18 @@ ci/
 - Generate distributable files
 
 **Usage:**
+
 ```bash
 VERSION=4.10.0 ./ci/build/build-vscode.sh
 ```
 
 **Environment Variables:**
+
 - `VERSION` - Version to build (required)
 - `VSCODE_CACHE` - Cache directory for dependencies
 
 **Process:**
+
 1. Initialize VS Code submodule at `lib/vscode`
 2. Apply custom patches from `patches/`
 3. Run `yarn install` in VS Code directory
@@ -54,16 +59,19 @@ VERSION=4.10.0 ./ci/build/build-vscode.sh
 ---
 
 ### build-code-server.sh
+
 **Purpose:** Build code-server TypeScript code
 
 **Location:** `ci/build/build-code-server.sh:1`
 
 **Responsibilities:**
+
 - Compile TypeScript (src/ → out/)
 - Copy static assets
 - Generate source maps
 
 **Usage:**
+
 ```bash
 ./ci/build/build-code-server.sh
 ```
@@ -73,22 +81,26 @@ VERSION=4.10.0 ./ci/build/build-vscode.sh
 ---
 
 ### build-release.sh
+
 **Purpose:** Create release artifacts
 
 **Location:** `ci/build/build-release.sh:1`
 
 **Responsibilities:**
+
 - Build VS Code
 - Build code-server
 - Bundle dependencies
 - Create release tarball/ZIP
 
 **Usage:**
+
 ```bash
 VERSION=4.10.0 ./ci/build/build-release.sh
 ```
 
 **Output:**
+
 ```
 release/
 ├── code-server-4.10.0-linux-amd64.tar.gz
@@ -101,11 +113,13 @@ release/
 ---
 
 ### build-packages.sh
+
 **Purpose:** Create platform-specific packages
 
 **Location:** `ci/build/build-packages.sh:1`
 
 **Creates:**
+
 - `.deb` - Debian/Ubuntu packages
 - `.rpm` - RedHat/Fedora packages
 - `.apk` - Alpine Linux packages
@@ -113,6 +127,7 @@ release/
 - Homebrew formula
 
 **Usage:**
+
 ```bash
 VERSION=4.10.0 ./ci/build/build-packages.sh
 ```
@@ -124,11 +139,13 @@ VERSION=4.10.0 ./ci/build/build-packages.sh
 ---
 
 ### build-standalone-release.sh
+
 **Purpose:** Create standalone binaries
 
 **Location:** `ci/build/build-standalone-release.sh:1`
 
 **Responsibilities:**
+
 - Bundle Node.js runtime
 - Bundle all dependencies
 - Create single executable
@@ -138,11 +155,13 @@ VERSION=4.10.0 ./ci/build/build-packages.sh
 ---
 
 ### code-server.sh
+
 **Purpose:** Code-server launcher script
 
 **Location:** `ci/build/code-server.sh:1`
 
 **Responsibilities:**
+
 - Set up environment
 - Find Node.js
 - Launch code-server
@@ -152,11 +171,13 @@ VERSION=4.10.0 ./ci/build/build-packages.sh
 ---
 
 ### code-server@.service
+
 **Purpose:** systemd service template (system-wide)
 
 **Location:** `ci/build/code-server@.service:1`
 
 **Usage:**
+
 ```bash
 sudo systemctl enable --now code-server@username
 ```
@@ -166,11 +187,13 @@ sudo systemctl enable --now code-server@username
 ---
 
 ### code-server-user.service
+
 **Purpose:** systemd user service
 
 **Location:** `ci/build/code-server-user.service:1`
 
 **Usage:**
+
 ```bash
 systemctl --user enable --now code-server
 ```
@@ -180,11 +203,13 @@ systemctl --user enable --now code-server
 ---
 
 ### npm-postinstall.sh
+
 **Purpose:** NPM package postinstall script
 
 **Location:** `ci/build/npm-postinstall.sh:1`
 
 **Responsibilities:**
+
 - Download platform-specific binary
 - Extract to node_modules
 - Set permissions
@@ -192,11 +217,13 @@ systemctl --user enable --now code-server
 ---
 
 ### nfpm.yaml
+
 **Purpose:** Package metadata for nfpm
 
 **Location:** `ci/build/nfpm.yaml:1`
 
 **Contents:**
+
 - Package name and description
 - Dependencies
 - File locations
@@ -208,21 +235,25 @@ systemctl --user enable --now code-server
 ## Development Scripts (ci/dev/)
 
 ### watch.ts
+
 **Purpose:** Development file watcher
 
 **Location:** `ci/dev/watch.ts:1`
 
 **Responsibilities:**
+
 - Watch TypeScript files for changes
 - Recompile on change
 - Restart server automatically
 
 **Usage:**
+
 ```bash
 npm run watch
 ```
 
 **Features:**
+
 - Incremental compilation
 - Fast rebuilds
 - Automatic server restart
@@ -230,11 +261,13 @@ npm run watch
 ---
 
 ### test-unit.sh
+
 **Purpose:** Run unit tests
 
 **Location:** `ci/dev/test-unit.sh:1`
 
 **Usage:**
+
 ```bash
 ./ci/dev/test-unit.sh
 ```
@@ -244,11 +277,13 @@ npm run watch
 ---
 
 ### test-integration.sh
+
 **Purpose:** Run integration tests
 
 **Location:** `ci/dev/test-integration.sh:1`
 
 **Usage:**
+
 ```bash
 ./ci/dev/test-integration.sh
 ```
@@ -256,16 +291,19 @@ npm run watch
 ---
 
 ### test-e2e.sh
+
 **Purpose:** Run end-to-end tests
 
 **Location:** `ci/dev/test-e2e.sh:1`
 
 **Usage:**
+
 ```bash
 ./ci/dev/test-e2e.sh
 ```
 
 **Responsibilities:**
+
 - Start test code-server
 - Run Playwright tests
 - Generate test report
@@ -274,16 +312,19 @@ npm run watch
 ---
 
 ### test-scripts.sh
+
 **Purpose:** Test shell scripts with shellcheck
 
 **Location:** `ci/dev/test-scripts.sh:1`
 
 **Usage:**
+
 ```bash
 ./ci/dev/test-scripts.sh
 ```
 
 **Checks:**
+
 - Shell syntax errors
 - Common mistakes
 - Best practice violations
@@ -291,6 +332,7 @@ npm run watch
 ---
 
 ### test-native.sh
+
 **Purpose:** Test native module compilation
 
 **Location:** `ci/dev/test-native.sh:1`
@@ -300,6 +342,7 @@ npm run watch
 ---
 
 ### lint-scripts.sh
+
 **Purpose:** Lint shell scripts
 
 **Location:** `ci/dev/lint-scripts.sh:1`
@@ -309,11 +352,13 @@ npm run watch
 ---
 
 ### postinstall.sh
+
 **Purpose:** Development environment setup
 
 **Location:** `ci/dev/postinstall.sh:1`
 
 **Responsibilities:**
+
 - Initialize VS Code submodule
 - Install dependencies
 - Apply patches
@@ -324,11 +369,13 @@ npm run watch
 ---
 
 ### preinstall.js
+
 **Purpose:** Check system requirements
 
 **Location:** `ci/dev/preinstall.js:1`
 
 **Checks:**
+
 - Node.js version
 - npm version
 - Required tools (git, python, make)
@@ -336,11 +383,13 @@ npm run watch
 ---
 
 ### gen_icons.sh
+
 **Purpose:** Generate PWA icons
 
 **Location:** `ci/dev/gen_icons.sh:1`
 
 **Generates:**
+
 - favicon.ico
 - PWA icons (192x192, 512x512)
 - Maskable icons
@@ -348,6 +397,7 @@ npm run watch
 ---
 
 ### doctoc.sh
+
 **Purpose:** Generate table of contents for markdown files
 
 **Location:** `ci/dev/doctoc.sh:1`
@@ -355,6 +405,7 @@ npm run watch
 **Tool:** doctoc
 
 **Usage:**
+
 ```bash
 ./ci/dev/doctoc.sh
 ```
@@ -364,11 +415,13 @@ npm run watch
 ## CI Step Scripts (ci/steps/)
 
 ### steps-lib.sh
+
 **Purpose:** Shared functions for CI steps
 
 **Location:** `ci/steps/steps-lib.sh:1`
 
 **Functions:**
+
 - `log()` - Log messages
 - `error()` - Log errors and exit
 - `retry()` - Retry commands with backoff
@@ -377,22 +430,26 @@ npm run watch
 ---
 
 ### docker-buildx-push.sh
+
 **Purpose:** Build and push multi-arch Docker images
 
 **Location:** `ci/steps/docker-buildx-push.sh:1`
 
 **Features:**
+
 - Multi-architecture builds (amd64, arm64)
 - BuildKit caching
 - Push to Docker Hub
 - Tag management
 
 **Usage:**
+
 ```bash
 VERSION=4.10.0 ./ci/steps/docker-buildx-push.sh
 ```
 
 **Builds:**
+
 - `codercom/code-server:4.10.0`
 - `codercom/code-server:latest`
 - `codercom/code-server:4.10`
@@ -401,17 +458,20 @@ VERSION=4.10.0 ./ci/steps/docker-buildx-push.sh
 ---
 
 ### publish-npm.sh
+
 **Purpose:** Publish to npm registry
 
 **Location:** `ci/steps/publish-npm.sh:1`
 
 **Responsibilities:**
+
 - Build package
 - Run tests
 - Publish to npm
 - Create git tag
 
 **Usage:**
+
 ```bash
 NPM_TOKEN=xxx ./ci/steps/publish-npm.sh
 ```
@@ -419,16 +479,19 @@ NPM_TOKEN=xxx ./ci/steps/publish-npm.sh
 ---
 
 ### brew-bump.sh
+
 **Purpose:** Update Homebrew formula
 
 **Location:** `ci/steps/brew-bump.sh:1`
 
 **Responsibilities:**
+
 - Update version in formula
 - Update SHA256 checksums
 - Create pull request to Homebrew
 
 **Usage:**
+
 ```bash
 VERSION=4.10.0 ./ci/steps/brew-bump.sh
 ```
@@ -438,6 +501,7 @@ VERSION=4.10.0 ./ci/steps/brew-bump.sh
 ## Docker Images (ci/release-image/)
 
 ### Dockerfile
+
 **Purpose:** Main production Docker image (Debian-based)
 
 **Location:** `ci/release-image/Dockerfile:1`
@@ -445,6 +509,7 @@ VERSION=4.10.0 ./ci/steps/brew-bump.sh
 **Base:** Debian Bullseye
 
 **Features:**
+
 - Multi-stage build
 - Minimal final image
 - Non-root user
@@ -452,10 +517,12 @@ VERSION=4.10.0 ./ci/steps/brew-bump.sh
 - Proper signal handling
 
 **Stages:**
+
 1. **Builder:** Compile code-server
 2. **Runtime:** Production image with compiled code
 
 **Installed Tools:**
+
 - Git
 - curl, wget
 - SSH
@@ -466,6 +533,7 @@ VERSION=4.10.0 ./ci/steps/brew-bump.sh
 ---
 
 ### Dockerfile.opensuse
+
 **Purpose:** OpenSUSE-based image
 
 **Location:** `ci/release-image/Dockerfile.opensuse:1`
@@ -475,6 +543,7 @@ VERSION=4.10.0 ./ci/steps/brew-bump.sh
 ---
 
 ### Dockerfile.fedora
+
 **Purpose:** Fedora-based image
 
 **Location:** `ci/release-image/Dockerfile.fedora:1`
@@ -484,17 +553,20 @@ VERSION=4.10.0 ./ci/steps/brew-bump.sh
 ---
 
 ### docker-bake.hcl
+
 **Purpose:** Docker Buildx bake configuration
 
 **Location:** `ci/release-image/docker-bake.hcl:1`
 
 **Defines:**
+
 - Multiple build targets
 - Platform specifications
 - Tag strategies
 - Build arguments
 
 **Usage:**
+
 ```bash
 docker buildx bake -f ci/release-image/docker-bake.hcl
 ```
@@ -502,17 +574,20 @@ docker buildx bake -f ci/release-image/docker-bake.hcl
 ---
 
 ### entrypoint.sh
+
 **Purpose:** Docker entrypoint script
 
 **Location:** `ci/release-image/entrypoint.sh:1`
 
 **Responsibilities:**
+
 - Set up user permissions
 - Initialize workspace
 - Configure environment
 - Launch code-server
 
 **Features:**
+
 - Supports running as root or non-root
 - Handles volume permissions
 - Passes signals correctly
@@ -520,11 +595,13 @@ docker buildx bake -f ci/release-image/docker-bake.hcl
 ---
 
 ### entrypoint-catatonit.sh
+
 **Purpose:** Entrypoint with catatonit (init system)
 
 **Location:** `ci/release-image/entrypoint-catatonit.sh:1`
 
 **Benefits:**
+
 - Proper PID 1 handling
 - Signal forwarding
 - Zombie process reaping
@@ -534,11 +611,13 @@ docker buildx bake -f ci/release-image/docker-bake.hcl
 ## Helm Chart (ci/helm-chart/)
 
 ### Chart.yaml
+
 **Purpose:** Helm chart metadata
 
 **Location:** `ci/helm-chart/Chart.yaml:1`
 
 **Contains:**
+
 - Chart name and version
 - App version
 - Description
@@ -547,11 +626,13 @@ docker buildx bake -f ci/release-image/docker-bake.hcl
 ---
 
 ### values.yaml
+
 **Purpose:** Default configuration values
 
 **Location:** `ci/helm-chart/values.yaml:1`
 
 **Configurable:**
+
 ```yaml
 replicaCount: 1
 
@@ -591,6 +672,7 @@ password: "your-password-here"
 ---
 
 ### templates/deployment.yaml
+
 **Purpose:** Kubernetes deployment template
 
 **Location:** `ci/helm-chart/templates/deployment.yaml:1`
@@ -600,6 +682,7 @@ password: "your-password-here"
 ---
 
 ### templates/service.yaml
+
 **Purpose:** Kubernetes service template
 
 **Location:** `ci/helm-chart/templates/service.yaml:1`
@@ -609,6 +692,7 @@ password: "your-password-here"
 ---
 
 ### templates/ingress.yaml
+
 **Purpose:** Kubernetes ingress template
 
 **Location:** `ci/helm-chart/templates/ingress.yaml:1`
@@ -618,6 +702,7 @@ password: "your-password-here"
 ---
 
 ### templates/pvc.yaml
+
 **Purpose:** Persistent volume claim template
 
 **Location:** `ci/helm-chart/templates/pvc.yaml:1`
@@ -627,6 +712,7 @@ password: "your-password-here"
 ---
 
 ### templates/secrets.yaml
+
 **Purpose:** Secrets template
 
 **Location:** `ci/helm-chart/templates/secrets.yaml:1`
@@ -638,11 +724,13 @@ password: "your-password-here"
 ## Shared Scripts
 
 ### lib.sh
+
 **Purpose:** Shared shell functions
 
 **Location:** `ci/lib.sh:1`
 
 **Functions:**
+
 - `pushd()` / `popd()` - Directory navigation with stack
 - `log()` - Logging with timestamps
 - `error()` - Error logging and exit
@@ -651,6 +739,7 @@ password: "your-password-here"
 - `version_gt()` - Version comparison
 
 **Usage:**
+
 ```bash
 source ci/lib.sh
 
@@ -664,11 +753,13 @@ extract "/tmp/file.tar.gz" "/opt/app"
 ## Configuration Files
 
 ### Caddyfile
+
 **Purpose:** Caddy reverse proxy configuration
 
 **Location:** `ci/Caddyfile:1`
 
 **Example:**
+
 ```
 code-server.example.com {
   reverse_proxy localhost:8080
@@ -683,6 +774,7 @@ code-server.example.com {
 ```
 
 **Features:**
+
 - Automatic HTTPS
 - WebSocket support
 - Compression
@@ -697,6 +789,7 @@ code-server.example.com {
 Workflows typically include:
 
 1. **Build & Test**
+
    ```yaml
    - name: Build
      run: ./ci/build/build-release.sh
@@ -709,6 +802,7 @@ Workflows typically include:
    ```
 
 2. **Release**
+
    ```yaml
    - name: Create Release
      run: ./ci/build/build-packages.sh
@@ -734,6 +828,7 @@ Workflows typically include:
 ## Build Process Flow
 
 ### Development Build
+
 ```
 npm install
   ↓
@@ -747,6 +842,7 @@ out/ (compiled code)
 ```
 
 ### Release Build
+
 ```
 ci/build/build-release.sh
   ↓
@@ -762,6 +858,7 @@ release/ (release artifacts)
 ```
 
 ### Package Build
+
 ```
 ci/build/build-packages.sh
   ↓
@@ -775,6 +872,7 @@ dist/ (packages)
 ```
 
 ### Docker Build
+
 ```
 ci/steps/docker-buildx-push.sh
   ↓
@@ -790,16 +888,19 @@ Push to registry
 ## Platform-Specific Notes
 
 ### Linux
+
 - Uses systemd services
 - Supports multiple package formats
 - Requires build tools (make, gcc, python)
 
 ### macOS
+
 - Uses launchd instead of systemd
 - Homebrew formula available
 - Code signing recommended
 
 ### Windows
+
 - Requires Visual Studio Build Tools
 - Uses NSIS installer (if applicable)
 - Different path separators in scripts
@@ -809,6 +910,7 @@ Push to registry
 ## Best Practices
 
 ### Shell Scripts
+
 1. **Use set -euo pipefail** - Fail fast
 2. **Quote variables** - Prevent word splitting
 3. **Check dependencies** - Verify tools exist
@@ -816,6 +918,7 @@ Push to registry
 5. **Handle errors** - Proper error messages
 
 ### Docker
+
 1. **Multi-stage builds** - Smaller final images
 2. **Non-root user** - Security
 3. **Health checks** - Container monitoring
@@ -823,6 +926,7 @@ Push to registry
 5. **Specific tags** - Don't use :latest in production
 
 ### CI/CD
+
 1. **Fail fast** - Stop on first error
 2. **Parallel jobs** - Speed up pipeline
 3. **Caching** - Cache dependencies
@@ -836,6 +940,7 @@ Push to registry
 ### Build Failures
 
 **VS Code build fails:**
+
 ```bash
 # Clean and rebuild
 rm -rf lib/vscode/node_modules
@@ -844,6 +949,7 @@ git submodule update --init
 ```
 
 **Native module compilation fails:**
+
 ```bash
 # Install build tools
 # Ubuntu/Debian:
@@ -856,6 +962,7 @@ xcode-select --install
 ### Docker Build Issues
 
 **Multi-arch build fails:**
+
 ```bash
 # Set up buildx
 docker buildx create --use
@@ -863,6 +970,7 @@ docker buildx inspect --bootstrap
 ```
 
 **Push fails:**
+
 ```bash
 # Login to registry
 docker login

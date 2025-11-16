@@ -41,9 +41,21 @@
         <!-- Header -->
         <header class="login-header">
           <div class="logo-container">
-            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M3 3h18v18H3V3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <svg
+              class="logo-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 3h18v18H3V3z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
           <h1 class="login-title">{{WELCOME_TEXT}}</h1>
@@ -83,8 +95,18 @@
                 data-toggle-password
               >
                 <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
                 </svg>
               </button>
             </div>
@@ -102,17 +124,13 @@
 
         <!-- Footer -->
         <footer class="login-footer">
-          <p class="footer-text">
-            Secured with end-to-end encryption
-          </p>
+          <p class="footer-text">Secured with end-to-end encryption</p>
         </footer>
       </div>
 
       <!-- Help text -->
       <aside class="help-text" role="complementary">
-        <p>
-          <strong>Need help?</strong> Contact your system administrator if you've forgotten your password.
-        </p>
+        <p><strong>Need help?</strong> Contact your system administrator if you've forgotten your password.</p>
       </aside>
     </main>
 
@@ -125,84 +143,87 @@
     </div>
 
     <script>
-      (function() {
-        'use strict';
+      ;(function () {
+        "use strict"
 
         // Set href for cookie path
-        const hrefInput = document.getElementById('href');
+        const hrefInput = document.getElementById("href")
         if (hrefInput) {
-          hrefInput.value = location.href;
+          hrefInput.value = location.href
         }
 
         // Password toggle
-        const toggleButtons = document.querySelectorAll('[data-toggle-password]');
-        toggleButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            const input = button.closest('.input-wrapper').querySelector('input');
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
-            button.setAttribute('aria-label',
-              type === 'password' ? 'Show password' : 'Hide password'
-            );
-          });
-        });
+        const toggleButtons = document.querySelectorAll("[data-toggle-password]")
+        toggleButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const input = button.closest(".input-wrapper").querySelector("input")
+            const type = input.getAttribute("type") === "password" ? "text" : "password"
+            input.setAttribute("type", type)
+            button.setAttribute("aria-label", type === "password" ? "Show password" : "Hide password")
+          })
+        })
 
         // Form submission
-        const form = document.querySelector('.login-form');
-        const loadingOverlay = document.getElementById('loading-overlay');
+        const form = document.querySelector(".login-form")
+        const loadingOverlay = document.getElementById("loading-overlay")
 
         if (form) {
-          form.addEventListener('submit', (e) => {
-            const password = document.getElementById('password').value;
+          form.addEventListener("submit", (e) => {
+            const password = document.getElementById("password").value
 
             if (!password) {
-              e.preventDefault();
-              showError('Please enter your password');
-              return;
+              e.preventDefault()
+              showError("Please enter your password")
+              return
             }
 
             // Show loading
             if (loadingOverlay) {
-              loadingOverlay.setAttribute('aria-hidden', 'false');
-              loadingOverlay.style.display = 'flex';
+              loadingOverlay.setAttribute("aria-hidden", "false")
+              loadingOverlay.style.display = "flex"
             }
-          });
+          })
         }
 
-        // Error display
+        // Error display - optimized to prevent layout thrashing
         function showError(message) {
-          const passwordField = document.getElementById('password');
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'error-message';
-          errorDiv.id = 'password-error';
-          errorDiv.textContent = message;
-          errorDiv.setAttribute('role', 'alert');
+          const passwordField = document.getElementById("password")
 
-          // Remove existing error
-          const existingError = document.getElementById('password-error');
+          // Remove existing error first (batch DOM reads)
+          const existingError = document.getElementById("password-error")
           if (existingError) {
-            existingError.remove();
+            existingError.remove()
           }
 
-          passwordField.parentElement.appendChild(errorDiv);
-          passwordField.setAttribute('aria-invalid', 'true');
-          passwordField.focus();
+          // Create error element
+          const errorDiv = document.createElement("div")
+          errorDiv.className = "error-message"
+          errorDiv.id = "password-error"
+          errorDiv.textContent = message
+          errorDiv.setAttribute("role", "alert")
+
+          // Batch all DOM writes together
+          requestAnimationFrame(() => {
+            passwordField.setAttribute("aria-invalid", "true")
+            passwordField.parentElement.appendChild(errorDiv)
+            passwordField.focus()
+          })
         }
 
         // Auto-hide loading on error
-        if (document.querySelector('.error-message')) {
+        if (document.querySelector(".error-message")) {
           if (loadingOverlay) {
-            loadingOverlay.style.display = 'none';
+            loadingOverlay.style.display = "none"
           }
         }
 
         // Keyboard navigation enhancements
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && loadingOverlay && loadingOverlay.style.display !== 'none') {
-            loadingOverlay.style.display = 'none';
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && loadingOverlay && loadingOverlay.style.display !== "none") {
+            loadingOverlay.style.display = "none"
           }
-        });
-      })();
+        })
+      })()
     </script>
   </body>
 </html>

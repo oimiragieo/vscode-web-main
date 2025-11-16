@@ -1,4 +1,5 @@
 # VSCode Web IDE - Master Optimization Plan
+
 ## World-Class IDE Transformation Roadmap
 
 **Analysis Date:** November 15, 2025
@@ -11,6 +12,7 @@
 ## EXECUTIVE SUMMARY
 
 This master plan synthesizes findings from comprehensive audits across:
+
 - Architecture & Build Configuration
 - Performance Critical Paths
 - Resource Management (Memory, CPU, I/O)
@@ -27,15 +29,15 @@ This master plan synthesizes findings from comprehensive audits across:
 
 ## PERFORMANCE IMPACT SUMMARY
 
-| Category | Current Issues | Expected Improvement | Implementation Time |
-|----------|---------------|---------------------|---------------------|
-| **Critical Stability** | 3 crash risks | 70% risk reduction | 8-10 hours |
-| **Backend Performance** | 300-600ms latency | 50-70% faster | 25-30 hours |
-| **Frontend Loading** | ~55KB, 800ms FCP | 65-75% smaller, <300ms | 4-6 hours |
-| **UI Rendering** | Animation lag | 20-30% smoother | 1-2 hours |
-| **Network** | Connection issues | 2-3x at scale | 15-20 hours |
-| **Extension System** | Memory leaks | 40-60% memory savings | 12-15 hours |
-| **Resource Management** | Unbounded growth | 100MB+ memory saved | 15-20 hours |
+| Category                | Current Issues    | Expected Improvement   | Implementation Time |
+| ----------------------- | ----------------- | ---------------------- | ------------------- |
+| **Critical Stability**  | 3 crash risks     | 70% risk reduction     | 8-10 hours          |
+| **Backend Performance** | 300-600ms latency | 50-70% faster          | 25-30 hours         |
+| **Frontend Loading**    | ~55KB, 800ms FCP  | 65-75% smaller, <300ms | 4-6 hours           |
+| **UI Rendering**        | Animation lag     | 20-30% smoother        | 1-2 hours           |
+| **Network**             | Connection issues | 2-3x at scale          | 15-20 hours         |
+| **Extension System**    | Memory leaks      | 40-60% memory savings  | 12-15 hours         |
+| **Resource Management** | Unbounded growth  | 100MB+ memory saved    | 15-20 hours         |
 
 **TOTAL ESTIMATED EFFORT:** 80-103 hours (10-13 developer days)
 **TOTAL PERFORMANCE GAIN:** 3-5x faster, 50-70% more efficient
@@ -47,6 +49,7 @@ This master plan synthesizes findings from comprehensive audits across:
 ### 🚨 Priority 1: System Stability (8-10 hours)
 
 #### 1.1 Unhandled Promise Rejections → Process Crashes
+
 **File:** `src/node/routes/index.ts:70`
 **Impact:** Application crashes on file write errors
 **Fix Time:** 30 minutes
@@ -63,18 +66,21 @@ heart.beat().catch((err) => {
 ```
 
 #### 1.2 Session Store Unbounded Memory Growth → OOM Crashes
+
 **File:** `src/node/services/session/SessionStore.ts:35-167`
 **Impact:** Out of memory crashes under load
 **Fix Time:** 2-3 hours
 **Severity:** CRITICAL
 
 **Solution:**
+
 - Add hard session limit (10,000 sessions)
 - Monitor heap usage
 - Implement LRU eviction
 - Add aggressive cleanup on memory pressure
 
 #### 1.3 Audit Log Full File Reads → Memory Bloat
+
 **File:** `src/node/services/audit/AuditLogger.ts:75-135`
 **Impact:** OOM with large audit logs, slow queries
 **Fix Time:** 4-5 hours
@@ -83,6 +89,7 @@ heart.beat().catch((err) => {
 **Solution:** Implement streaming queries with early termination
 
 #### 1.4 Socket Proxy Memory Leaks → 100MB+ Leaks
+
 **File:** Multiple locations
 **Impact:** Unbounded memory growth over time
 **Fix Time:** 2 hours
@@ -97,15 +104,19 @@ heart.beat().catch((err) => {
 ### ⚡ Priority 2: Performance Bottlenecks (25-30 hours)
 
 #### 2.1 Authentication Performance (5-6 hours)
+
 **Files:** `src/node/routes/login.ts:73-123`, `src/node/util.ts:143-175`
 
 **Issues:**
+
 - Missing per-request auth cache → 50-100ms per auth check
 - Password hashing in main thread → CPU bottleneck
 - N+1 session lookups → 50-200ms per logout
 
 **Solutions:**
+
 1. **Per-request auth cache** (1 hour)
+
    ```typescript
    class RequestAuthCache {
      private cache = new Map<string, { valid: boolean; expires: number }>()
@@ -130,15 +141,19 @@ heart.beat().catch((err) => {
    - Expected: 100-150ms reduction per logout
 
 #### 2.2 I/O Optimization (6-8 hours)
+
 **Files:** Multiple routes and services
 
 **Issues:**
+
 - Heartbeat file I/O on every request → 5-10ms overhead
 - Settings file read on every request → 10ms overhead
 - Static files read from disk → Unnecessary I/O
 
 **Solutions:**
+
 1. **Heartbeat debouncing** (1 hour)
+
    ```typescript
    class DebouncedHeart {
      private pending = false
@@ -157,12 +172,14 @@ heart.beat().catch((err) => {
      }
    }
    ```
+
    Expected: 80-90% I/O reduction
 
 2. **Settings write debouncing** (1 hour)
    Expected: 10-20x fewer file operations
 
 3. **Static file caching** (1-2 hours)
+
    ```typescript
    const staticFileCache = new Map<string, Buffer>()
 
@@ -173,6 +190,7 @@ heart.beat().catch((err) => {
      return content
    }
    ```
+
    Expected: 5-10ms per request
 
 4. **Connection pooling** (3-4 hours)
@@ -180,15 +198,17 @@ heart.beat().catch((err) => {
    - Expected: 50-70% fewer connection errors
 
 #### 2.3 Algorithm Optimization (3-4 hours)
+
 **File:** `src/node/services/session/EditorSessionManager.ts`
 
 **Issue:** O(n²) path matching algorithm
 
 **Solution:**
+
 ```typescript
 // BEFORE: O(n² log n)
 const sessions = Array.from(this.sessions.values())
-  .filter(session => session.workspace.startsWith(path))
+  .filter((session) => session.workspace.startsWith(path))
   .sort((a, b) => b.lastAccessed - a.lastAccessed)
 
 // AFTER: O(n) with prefix tree
@@ -200,6 +220,7 @@ class SessionPrefixTree {
   }
 }
 ```
+
 Expected: 5-10ms improvement for 100+ sessions
 
 ---
@@ -209,12 +230,15 @@ Expected: 5-10ms improvement for 100+ sessions
 #### 3.1 Bundle Size Reduction (2-3 hours)
 
 **Quick Wins:**
+
 1. **Delete unused asset** (2 min) → -46KB
+
    ```bash
    rm src/browser/media/templates.png
    ```
 
 2. **Disable source maps in production** (5 min) → -30% JS
+
    ```json
    // tsconfig.production.json
    {
@@ -227,10 +251,13 @@ Expected: 5-10ms improvement for 100+ sessions
 3. **Add cache-control headers** (15 min) → Better browser caching
    ```typescript
    // src/node/routes/index.ts
-   router.use('/static', express.static('src/browser', {
-     maxAge: '1y',
-     immutable: true
-   }))
+   router.use(
+     "/static",
+     express.static("src/browser", {
+       maxAge: "1y",
+       immutable: true,
+     }),
+   )
    ```
 
 **Expected Total:** -47KB, 60-70% faster repeat visits
@@ -238,7 +265,9 @@ Expected: 5-10ms improvement for 100+ sessions
 #### 3.2 UI Rendering Optimization (1-2 hours)
 
 **Critical Fixes:**
+
 1. **Reduce blur filters** (15 min) → +20-30% FCP
+
    ```css
    .gradient-blob {
      filter: blur(40px); /* Was 80px */
@@ -251,10 +280,11 @@ Expected: 5-10ms improvement for 100+ sessions
    ```
 
 2. **Fix layout thrashing** (20 min) → +10-15ms interaction
+
    ```javascript
    // Batch all reads first, then all writes
-   const passwordField = document.getElementById('password')
-   const existingError = document.getElementById('password-error')
+   const passwordField = document.getElementById("password")
+   const existingError = document.getElementById("password-error")
 
    if (existingError) existingError.remove()
    errorDiv.textContent = message
@@ -266,7 +296,7 @@ Expected: 5-10ms improvement for 100+ sessions
 3. **Use CSS class toggles** (10 min) → Prevent forced reflows
    ```javascript
    // Instead of: loadingOverlay.style.display = 'flex'
-   loadingOverlay.classList.add('visible')
+   loadingOverlay.classList.add("visible")
    ```
 
 **Expected Total:** 15-25% rendering performance improvement
@@ -275,32 +305,29 @@ Expected: 5-10ms improvement for 100+ sessions
 
 ```typescript
 // src/browser/serviceWorker.ts
-const CACHE_NAME = 'vscode-web-v1'
-const STATIC_ASSETS = [
-  '/static/css/design-system.css',
-  '/static/css/modern-login.css',
-  '/static/media/favicon.ico',
-]
+const CACHE_NAME = "vscode-web-v1"
+const STATIC_ASSETS = ["/static/css/design-system.css", "/static/css/modern-login.css", "/static/media/favicon.ico"]
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-  )
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)))
 })
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request).then(fetchResponse => {
-        if (event.request.url.includes('/static/')) {
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, fetchResponse.clone())
-            return fetchResponse
-          })
-        }
-        return fetchResponse
-      })
-    })
+    caches.match(event.request).then((response) => {
+      return (
+        response ||
+        fetch(event.request).then((fetchResponse) => {
+          if (event.request.url.includes("/static/")) {
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, fetchResponse.clone())
+              return fetchResponse
+            })
+          }
+          return fetchResponse
+        })
+      )
+    }),
   )
 })
 ```
@@ -312,11 +339,13 @@ self.addEventListener('fetch', (event) => {
 ### 🔌 Priority 4: Extension System (12-15 hours)
 
 #### 4.1 Memory Limit Enforcement (2-3 hours)
+
 **File:** Extension hosting code
 
 **Issue:** Memory limits defined but not enforced
 
 **Solution:**
+
 ```typescript
 class ExtensionMemoryMonitor {
   private limits = new Map<string, number>() // extensionId -> limit in MB
@@ -327,11 +356,11 @@ class ExtensionMemoryMonitor {
     setInterval(() => {
       const usage = this.getMemoryUsage(extensionId)
       if (usage > limit * 0.9) {
-        this.emit('warning', { extensionId, usage, limit })
+        this.emit("warning", { extensionId, usage, limit })
       }
       if (usage > limit) {
         this.killExtension(extensionId)
-        this.emit('killed', { extensionId, usage, limit })
+        this.emit("killed", { extensionId, usage, limit })
       }
     }, 10000) // Check every 10s
   }
@@ -343,6 +372,7 @@ class ExtensionMemoryMonitor {
 **Issue:** 7-57ms per API call due to message-passing overhead
 
 **Solution:**
+
 ```typescript
 class MessageCoalescer {
   private queue: Message[] = []
@@ -363,7 +393,7 @@ class MessageCoalescer {
     if (this.queue.length === 0) return
 
     // Send batched messages
-    postMessage({ type: 'batch', messages: this.queue })
+    postMessage({ type: "batch", messages: this.queue })
     this.queue = []
   }
 }
@@ -374,6 +404,7 @@ class MessageCoalescer {
 #### 4.3 Code Caching & Predictive Loading (3-4 hours)
 
 **Solution:**
+
 ```typescript
 class ExtensionPreloader {
   private cache = new Map<string, any>()
@@ -399,6 +430,7 @@ class ExtensionPreloader {
 **Issue:** 40-60% storage duplication in multi-user mode
 
 **Solution:**
+
 - Implement shared extension cache across users
 - Per-user configuration overlays
 - Expected: 40-60% storage reduction
@@ -408,11 +440,13 @@ class ExtensionPreloader {
 ### 🌐 Priority 5: Network Optimization (15-20 hours)
 
 #### 5.1 HTTP Connection Pooling (3-4 hours)
+
 **File:** Proxy configuration
 
 **Solution:**
+
 ```typescript
-import { Agent } from 'http'
+import { Agent } from "http"
 
 const agent = new Agent({
   keepAlive: true,
@@ -432,6 +466,7 @@ const proxy = httpProxy.createProxyServer({
 #### 5.2 Request Timeout Handling (2-3 hours)
 
 **Solution:**
+
 ```typescript
 class TimeoutManager {
   async fetchWithTimeout(url: string, timeout = 30000) {
@@ -443,7 +478,7 @@ class TimeoutManager {
       clearTimeout(timeoutId)
       return response
     } catch (err) {
-      if (err.name === 'AbortError') {
+      if (err.name === "AbortError") {
         throw new Error(`Request timeout after ${timeout}ms`)
       }
       throw err
@@ -455,17 +490,20 @@ class TimeoutManager {
 #### 5.3 Brotli Compression (2-3 hours)
 
 **Solution:**
-```typescript
-import compression from 'compression'
 
-router.use(compression({
-  threshold: 1024, // Only compress > 1KB
-  level: 6, // Balance speed/ratio
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) return false
-    return compression.filter(req, res)
-  }
-}))
+```typescript
+import compression from "compression"
+
+router.use(
+  compression({
+    threshold: 1024, // Only compress > 1KB
+    level: 6, // Balance speed/ratio
+    filter: (req, res) => {
+      if (req.headers["x-no-compression"]) return false
+      return compression.filter(req, res)
+    },
+  }),
+)
 
 // Pre-compress static assets during build
 // Add .br files alongside .js/.css
@@ -476,15 +514,19 @@ router.use(compression({
 #### 5.4 HTTP/2 Support (4-5 hours)
 
 **Solution:**
-```typescript
-import http2 from 'http2'
-import { readFileSync } from 'fs'
 
-const server = http2.createSecureServer({
-  key: readFileSync('server.key'),
-  cert: readFileSync('server.cert'),
-  allowHTTP1: true, // Fallback to HTTP/1.1
-}, router)
+```typescript
+import http2 from "http2"
+import { readFileSync } from "fs"
+
+const server = http2.createSecureServer(
+  {
+    key: readFileSync("server.key"),
+    cert: readFileSync("server.cert"),
+    allowHTTP1: true, // Fallback to HTTP/1.1
+  },
+  router,
+)
 ```
 
 **Expected:** 30-40% faster parallel resource loading
@@ -492,6 +534,7 @@ const server = http2.createSecureServer({
 #### 5.5 Request Batching & Deduplication (4-5 hours)
 
 **Solution:**
+
 ```typescript
 class RequestBatcher {
   private pending = new Map<string, Promise<any>>()
@@ -525,29 +568,29 @@ class RequestBatcher {
 #### 6.1 Prometheus Metrics (4-5 hours)
 
 ```typescript
-import promClient from 'prom-client'
+import promClient from "prom-client"
 
 // Register metrics
 const httpRequestDuration = new promClient.Histogram({
-  name: 'http_request_duration_ms',
-  help: 'HTTP request latency',
-  labelNames: ['method', 'route', 'status'],
+  name: "http_request_duration_ms",
+  help: "HTTP request latency",
+  labelNames: ["method", "route", "status"],
   buckets: [10, 50, 100, 500, 1000, 5000],
 })
 
 const activeConnections = new promClient.Gauge({
-  name: 'active_connections',
-  help: 'Number of active connections',
+  name: "active_connections",
+  help: "Number of active connections",
 })
 
 const sessionStoreSize = new promClient.Gauge({
-  name: 'session_store_size',
-  help: 'Number of sessions in store',
+  name: "session_store_size",
+  help: "Number of sessions in store",
 })
 
 // Metrics endpoint
-router.get('/metrics', async (req, res) => {
-  res.set('Content-Type', promClient.register.contentType)
+router.get("/metrics", async (req, res) => {
+  res.set("Content-Type", promClient.register.contentType)
   res.end(await promClient.register.metrics())
 })
 ```
@@ -555,6 +598,7 @@ router.get('/metrics', async (req, res) => {
 #### 6.2 Performance Monitoring Dashboard (4-5 hours)
 
 **Metrics to Track:**
+
 - Request latency (p50, p95, p99)
 - Memory usage (heap, RSS)
 - Session store size
@@ -564,6 +608,7 @@ router.get('/metrics', async (req, res) => {
 - Error rates
 
 **Alerting Rules:**
+
 - Heap usage > 80%
 - Request latency p95 > 1s
 - Error rate > 1%
@@ -576,7 +621,7 @@ router.get('/metrics', async (req, res) => {
 #### 7.1 Rate Limiting Improvements (2-3 hours)
 
 ```typescript
-import rateLimit from 'express-rate-limit'
+import rateLimit from "express-rate-limit"
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -584,40 +629,42 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   handler: (req, res) => {
     res.status(429).json({
-      error: 'Too many login attempts, please try again later',
+      error: "Too many login attempts, please try again later",
     })
   },
 })
 
-router.post('/login', loginLimiter, loginHandler)
+router.post("/login", loginLimiter, loginHandler)
 ```
 
 #### 7.2 Security Headers (1-2 hours)
 
 ```typescript
-import helmet from 'helmet'
+import helmet from "helmet"
 
-router.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-eval'"], // VSCode needs eval
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'ws:', 'wss:'],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'self'"],
+router.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-eval'"], // VSCode needs eval
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'self'"],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-}))
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  }),
+)
 ```
 
 #### 7.3 Extension Signature Verification (3-4 hours)
@@ -652,6 +699,7 @@ router.use(helmet({
 ## IMPLEMENTATION ROADMAP
 
 ### Week 1: Critical Stability
+
 **Focus:** Fix crash risks and critical bugs
 **Effort:** 8-10 hours
 **Impact:** 70% risk reduction
@@ -662,11 +710,13 @@ router.use(helmet({
 - [ ] Fix socket proxy memory leaks
 
 ### Week 2-3: Performance Optimization
+
 **Focus:** Backend and frontend performance
 **Effort:** 35-42 hours
 **Impact:** 50-70% performance improvement
 
 **Week 2:**
+
 - [ ] Implement auth caching
 - [ ] Add worker pool for password hashing
 - [ ] Batch session lookups
@@ -675,6 +725,7 @@ router.use(helmet({
 - [ ] Add static file caching
 
 **Week 3:**
+
 - [ ] Optimize path matching algorithm
 - [ ] Reduce bundle size (delete unused, disable source maps)
 - [ ] Add cache-control headers
@@ -682,17 +733,20 @@ router.use(helmet({
 - [ ] Implement Service Worker caching
 
 ### Week 4-5: Extension & Network
+
 **Focus:** Extension system and network optimization
 **Effort:** 27-35 hours
 **Impact:** 40-60% resource efficiency
 
 **Week 4:**
+
 - [ ] Enforce extension memory limits
 - [ ] Implement message coalescing
 - [ ] Add extension code caching
 - [ ] Implement predictive loading
 
 **Week 5:**
+
 - [ ] Add HTTP connection pooling
 - [ ] Implement request timeouts
 - [ ] Add Brotli compression
@@ -700,6 +754,7 @@ router.use(helmet({
 - [ ] Add request batching/deduplication
 
 ### Week 6: Monitoring & Security
+
 **Focus:** Observability and security hardening
 **Effort:** 14-18 hours
 **Impact:** Production readiness
@@ -715,6 +770,7 @@ router.use(helmet({
 ## TESTING STRATEGY
 
 ### Performance Testing
+
 ```bash
 # Load testing with artillery
 artillery quick --duration 60 --rate 100 http://localhost:8080
@@ -728,20 +784,22 @@ node --prof-process isolate-*.log > profile.txt
 ```
 
 ### Benchmarks to Track
-| Metric | Current | Target | Test Method |
-|--------|---------|--------|-------------|
-| Login latency | 200-300ms | <100ms | Artillery |
-| FCP (login page) | 800ms | <300ms | Lighthouse |
-| Bundle size | 55KB | <20KB | webpack-bundle-analyzer |
-| Memory (100 users) | ~500MB | <300MB | Load test + heap snapshot |
-| Extension activation | 150ms | <50ms | Custom benchmark |
-| API latency p95 | 500ms | <200ms | Prometheus |
+
+| Metric               | Current   | Target | Test Method               |
+| -------------------- | --------- | ------ | ------------------------- |
+| Login latency        | 200-300ms | <100ms | Artillery                 |
+| FCP (login page)     | 800ms     | <300ms | Lighthouse                |
+| Bundle size          | 55KB      | <20KB  | webpack-bundle-analyzer   |
+| Memory (100 users)   | ~500MB    | <300MB | Load test + heap snapshot |
+| Extension activation | 150ms     | <50ms  | Custom benchmark          |
+| API latency p95      | 500ms     | <200ms | Prometheus                |
 
 ---
 
 ## SUCCESS METRICS
 
 ### Performance KPIs
+
 - ✅ **Response time p95:** <200ms (currently 500ms)
 - ✅ **Login latency:** <100ms (currently 200-300ms)
 - ✅ **First Contentful Paint:** <300ms (currently 800ms)
@@ -751,12 +809,14 @@ node --prof-process isolate-*.log > profile.txt
 - ✅ **Repeat visit load:** <100ms (currently 800ms)
 
 ### Reliability KPIs
+
 - ✅ **Error rate:** <0.1% (currently ~1%)
 - ✅ **Memory leak rate:** 0 (currently growing)
 - ✅ **Process crashes:** 0 (currently vulnerable)
 - ✅ **Session store growth:** Bounded (currently unbounded)
 
 ### Efficiency KPIs
+
 - ✅ **CPU usage:** <50% under load
 - ✅ **Memory efficiency:** <3MB per session
 - ✅ **Network efficiency:** 40-45% bandwidth reduction
@@ -767,17 +827,20 @@ node --prof-process isolate-*.log > profile.txt
 ## RISK ASSESSMENT
 
 ### High Risk Changes
+
 1. **HTTP/2 Migration** - Requires SSL, potential compatibility issues
 2. **Worker Pool Implementation** - Threading complexity
 3. **Database Migration** - Data persistence risk
 
 **Mitigation:**
+
 - Feature flags for gradual rollout
 - Comprehensive testing in staging
 - Rollback plans for each change
 - Canary deployments
 
 ### Low Risk Changes
+
 1. **Cache header additions** - Purely additive
 2. **Static file caching** - In-memory only
 3. **UI rendering fixes** - CSS/JS optimizations
@@ -788,6 +851,7 @@ node --prof-process isolate-*.log > profile.txt
 ## MONITORING & VALIDATION
 
 ### Pre-Implementation Baseline
+
 ```bash
 # Capture baseline metrics
 curl http://localhost:8080/metrics > baseline-metrics.txt
@@ -800,6 +864,7 @@ lighthouse http://localhost:8080/login --output json > baseline-lighthouse.json
 ```
 
 ### Post-Implementation Validation
+
 ```bash
 # Compare metrics
 curl http://localhost:8080/metrics > optimized-metrics.txt
@@ -817,12 +882,14 @@ lighthouse http://localhost:8080/login --output json > optimized-lighthouse.json
 ## RESOURCE REQUIREMENTS
 
 ### Development Resources
+
 - **Senior Backend Engineer:** 40-50 hours
 - **Frontend Engineer:** 10-15 hours
 - **DevOps Engineer:** 15-20 hours
 - **QA Engineer:** 20-25 hours
 
 ### Infrastructure
+
 - **Staging Environment:** For testing and validation
 - **Monitoring Stack:** Prometheus + Grafana
 - **Load Testing Tools:** Artillery, k6
@@ -835,6 +902,7 @@ lighthouse http://localhost:8080/login --output json > optimized-lighthouse.json
 This comprehensive optimization plan transforms the VSCode Web IDE from a solid foundation into a world-class, enterprise-grade development environment.
 
 **Key Takeaways:**
+
 1. **Critical stability fixes** prevent crashes and memory leaks
 2. **Performance optimizations** deliver 3-5x improvement across the stack
 3. **Resource efficiency** reduces memory footprint by 50-70%
@@ -842,6 +910,7 @@ This comprehensive optimization plan transforms the VSCode Web IDE from a solid 
 5. **Security enhancements** harden the application against attacks
 
 **Implementation Phases:**
+
 - **Week 1:** Stability (CRITICAL)
 - **Weeks 2-3:** Performance (HIGH)
 - **Weeks 4-5:** Efficiency (MEDIUM)

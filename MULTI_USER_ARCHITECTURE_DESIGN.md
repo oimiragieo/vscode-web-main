@@ -1,4 +1,5 @@
 # Multi-User Architecture Design
+
 ## VSCode Web IDE - Single & Multi-User Deployment Modes
 
 **Design Date:** 2025-11-15
@@ -42,6 +43,7 @@ This document outlines the architecture for supporting **two distinct deployment
 ## 2. Design Goals
 
 ### Single-User Mode Goals
+
 - ✅ Maintain current simplicity and performance
 - ✅ Zero additional dependencies
 - ✅ Single-password authentication
@@ -49,6 +51,7 @@ This document outlines the architecture for supporting **two distinct deployment
 - ✅ Minimal memory footprint
 
 ### Multi-User Mode Goals
+
 - ✅ **Complete user isolation** (processes, filesystems, state)
 - ✅ **Scalable authentication** (user database, sessions, tokens)
 - ✅ **Resource management** (quotas, limits, cleanup)
@@ -78,21 +81,21 @@ export CODE_SERVER_DEPLOYMENT_MODE=multi
 **Configuration file (.code-server.yaml):**
 
 ```yaml
-deployment-mode: multi  # single | multi
+deployment-mode: multi # single | multi
 
 # Multi-user specific settings
 multi-user:
   auth:
-    provider: database  # database | ldap | oauth | saml
+    provider: database # database | ldap | oauth | saml
     database:
-      type: sqlite  # sqlite | postgres | mysql
+      type: sqlite # sqlite | postgres | mysql
       path: /data/users.db
     session:
-      store: redis  # memory | redis | database
-      ttl: 86400  # 24 hours
+      store: redis # memory | redis | database
+      ttl: 86400 # 24 hours
 
   isolation:
-    strategy: directory  # directory | container | process
+    strategy: directory # directory | container | process
     base-path: /data/users
 
   limits:
@@ -110,18 +113,18 @@ multi-user:
 
 ### 3.2 Mode Comparison
 
-| Feature | Single-User Mode | Multi-User Mode |
-|---------|-----------------|-----------------|
-| **Authentication** | Single password | User database + sessions |
-| **User Isolation** | None (shared) | Complete isolation |
-| **File System** | Shared directories | Per-user directories |
-| **Settings** | Global | Per-user |
-| **Extensions** | Global | Per-user or shared |
-| **Resource Limits** | None | Enforced quotas |
-| **Session Management** | Cookie-based | Token + session store |
-| **Scalability** | Single instance | Horizontal scaling |
-| **Admin Interface** | None | Admin dashboard |
-| **Audit Logging** | Basic | Comprehensive |
+| Feature                | Single-User Mode   | Multi-User Mode          |
+| ---------------------- | ------------------ | ------------------------ |
+| **Authentication**     | Single password    | User database + sessions |
+| **User Isolation**     | None (shared)      | Complete isolation       |
+| **File System**        | Shared directories | Per-user directories     |
+| **Settings**           | Global             | Per-user                 |
+| **Extensions**         | Global             | Per-user or shared       |
+| **Resource Limits**    | None               | Enforced quotas          |
+| **Session Management** | Cookie-based       | Token + session store    |
+| **Scalability**        | Single instance    | Horizontal scaling       |
+| **Admin Interface**    | None               | Admin dashboard          |
+| **Audit Logging**      | Basic              | Comprehensive            |
 
 ---
 
@@ -152,12 +155,14 @@ multi-user:
 ```
 
 **Pros:**
+
 - ✅ Easiest migration from current architecture
 - ✅ Low memory overhead
 - ✅ Simple deployment (no orchestration)
 - ✅ Fast session switching
 
 **Cons:**
+
 - ❌ Shared VS Code module (potential state leakage)
 - ❌ Single point of failure
 - ❌ Limited horizontal scaling
@@ -203,6 +208,7 @@ multi-user:
 ```
 
 **Pros:**
+
 - ✅ **Complete isolation** (process, network, filesystem)
 - ✅ **Resource limits** enforced by container runtime
 - ✅ **Security**: kernel-level isolation
@@ -211,6 +217,7 @@ multi-user:
 - ✅ **Easy cleanup**: terminate container = cleanup all resources
 
 **Cons:**
+
 - ❌ Higher resource overhead (container per user)
 - ❌ Requires Docker/Podman or Kubernetes
 - ❌ More complex deployment
@@ -243,12 +250,14 @@ multi-user:
 ```
 
 **Pros:**
+
 - ✅ Better isolation than single process
 - ✅ Lighter than container-per-user
 - ✅ Dynamic pool scaling
 - ✅ Load distribution
 
 **Cons:**
+
 - ❌ More complex than Options A or B
 - ❌ Still shares process between users
 - ❌ Requires IPC between master and workers
@@ -269,16 +278,19 @@ multi-user:
 ## 5. Recommended Architecture
 
 ### Phase 1: Session-Based Multi-User (Quick Win)
+
 - **Implementation Time:** 2-3 weeks
 - **Use Case:** Teams of 5-20 users, internal deployments
 - **Architecture:** Option A (Session-Based Isolation)
 
 ### Phase 2: Container-Based Multi-User (Production)
+
 - **Implementation Time:** 4-6 weeks
 - **Use Case:** Production SaaS, 20+ users, cloud deployment
 - **Architecture:** Option B (Container-Per-User)
 
 ### Phase 3: Optimization & Scaling (Future)
+
 - **Implementation Time:** 6-8 weeks
 - **Use Case:** Enterprise, 100+ users, multi-region
 - **Architecture:** Hybrid (Gateway + Containers + Auto-scaling)
@@ -290,6 +302,7 @@ multi-user:
 ### **Phase 1: Core Multi-User Foundation (Week 1-3)**
 
 #### Week 1: Authentication & Session Management
+
 - [ ] User database schema (SQLite initially, Postgres-ready)
 - [ ] User CRUD operations (create, read, update, delete)
 - [ ] Password hashing with Argon2 (already exists, extend for per-user)
@@ -299,6 +312,7 @@ multi-user:
 - [ ] Session middleware (replace single-password auth)
 
 #### Week 2: User Isolation
+
 - [ ] Per-user directory structure
   ```
   /data/users/{user-id}/
@@ -314,6 +328,7 @@ multi-user:
 - [ ] Workspace isolation
 
 #### Week 3: Resource Management & Admin
+
 - [ ] Resource quota enforcement
   - Max sessions per user
   - Storage limits
@@ -332,6 +347,7 @@ multi-user:
 ### **Phase 2: Container-Based Isolation (Week 4-9)**
 
 #### Week 4-5: Container Infrastructure
+
 - [ ] Dockerfile for user containers
   - Minimal Alpine-based image
   - Pre-installed VSCode server
@@ -349,6 +365,7 @@ multi-user:
   - Reverse proxy routing
 
 #### Week 6-7: Gateway Service
+
 - [ ] Gateway/router service
   - Session routing to containers
   - WebSocket proxy
@@ -363,6 +380,7 @@ multi-user:
   - Failover
 
 #### Week 8-9: Orchestration & Scaling
+
 - [ ] Kubernetes manifests (if using K8s)
   - Deployment configs
   - Service definitions
@@ -380,6 +398,7 @@ multi-user:
 ### **Phase 3: Production Hardening (Week 10-14)**
 
 #### Week 10: Security
+
 - [ ] OAuth/SAML integration
 - [ ] RBAC (Role-Based Access Control)
 - [ ] Audit logging
@@ -389,6 +408,7 @@ multi-user:
 - [ ] Vulnerability scanning
 
 #### Week 11: Monitoring & Observability
+
 - [ ] Metrics collection
   - User activity
   - Resource usage
@@ -398,6 +418,7 @@ multi-user:
 - [ ] Dashboard (Grafana/custom)
 
 #### Week 12: Performance Optimization
+
 - [ ] Connection pooling
 - [ ] Caching strategies
 - [ ] Database query optimization
@@ -405,6 +426,7 @@ multi-user:
 - [ ] Resource pre-allocation
 
 #### Week 13-14: Testing & Documentation
+
 - [ ] Load testing
 - [ ] Security testing
 - [ ] Integration tests
@@ -422,11 +444,11 @@ multi-user:
 // src/node/services/auth/AuthService.ts
 
 export interface User {
-  id: string              // UUID
-  username: string        // unique
-  email: string          // unique
-  passwordHash: string   // Argon2
-  roles: string[]        // ['user', 'admin']
+  id: string // UUID
+  username: string // unique
+  email: string // unique
+  passwordHash: string // Argon2
+  roles: string[] // ['user', 'admin']
   createdAt: Date
   updatedAt: Date
   lastLogin: Date
@@ -435,14 +457,14 @@ export interface User {
 }
 
 export interface Session {
-  id: string              // Session token (JWT or UUID)
+  id: string // Session token (JWT or UUID)
   userId: string
   createdAt: Date
   expiresAt: Date
   lastActivity: Date
   ipAddress: string
   userAgent: string
-  containerId?: string    // For container mode
+  containerId?: string // For container mode
   metadata: Record<string, any>
 }
 
@@ -450,7 +472,7 @@ export class AuthService {
   constructor(
     private userRepo: UserRepository,
     private sessionStore: SessionStore,
-    private config: AuthConfig
+    private config: AuthConfig,
   ) {}
 
   // User management
@@ -500,9 +522,15 @@ export interface SessionStore {
 }
 
 // Implementations:
-export class MemorySessionStore implements SessionStore { /* ... */ }
-export class RedisSessionStore implements SessionStore { /* ... */ }
-export class DatabaseSessionStore implements SessionStore { /* ... */ }
+export class MemorySessionStore implements SessionStore {
+  /* ... */
+}
+export class RedisSessionStore implements SessionStore {
+  /* ... */
+}
+export class DatabaseSessionStore implements SessionStore {
+  /* ... */
+}
 ```
 
 ### 7.3 User Isolation Manager
@@ -548,9 +576,15 @@ export interface ResourceLimits {
 }
 
 // Implementations:
-export class DirectoryIsolationStrategy implements IsolationStrategy { /* ... */ }
-export class ContainerIsolationStrategy implements IsolationStrategy { /* ... */ }
-export class ProcessIsolationStrategy implements IsolationStrategy { /* ... */ }
+export class DirectoryIsolationStrategy implements IsolationStrategy {
+  /* ... */
+}
+export class ContainerIsolationStrategy implements IsolationStrategy {
+  /* ... */
+}
+export class ProcessIsolationStrategy implements IsolationStrategy {
+  /* ... */
+}
 ```
 
 ### 7.4 Container Orchestrator (Phase 2)
@@ -582,7 +616,7 @@ export interface Container {
   userId: string
   sessionId: string
   image: string
-  status: 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
+  status: "starting" | "running" | "stopping" | "stopped" | "error"
   createdAt: Date
   ports: { host: number; container: number }[]
   volumes: VolumeMount[]
@@ -591,9 +625,15 @@ export interface Container {
 }
 
 // Implementations:
-export class DockerOrchestrator implements ContainerOrchestrator { /* ... */ }
-export class KubernetesOrchestrator implements ContainerOrchestrator { /* ... */ }
-export class LocalProcessOrchestrator implements ContainerOrchestrator { /* ... */ }
+export class DockerOrchestrator implements ContainerOrchestrator {
+  /* ... */
+}
+export class KubernetesOrchestrator implements ContainerOrchestrator {
+  /* ... */
+}
+export class LocalProcessOrchestrator implements ContainerOrchestrator {
+  /* ... */
+}
 ```
 
 ### 7.5 Gateway Service (Phase 2)
@@ -606,7 +646,7 @@ export class GatewayService {
     private authService: AuthService,
     private sessionStore: SessionStore,
     private orchestrator: ContainerOrchestrator,
-    private config: GatewayConfig
+    private config: GatewayConfig,
   ) {}
 
   // Request routing
@@ -623,7 +663,7 @@ export class GatewayService {
 }
 
 export interface RouteTarget {
-  type: 'local' | 'container'
+  type: "local" | "container"
   host: string
   port: number
   path: string
@@ -660,7 +700,7 @@ export class ResourceManager {
 
 export interface ResourceUsage {
   userId: string
-  storage: { used: number; limit: number }  // bytes
+  storage: { used: number; limit: number } // bytes
   sessions: { active: number; limit: number }
   connections: { current: number; limit: number }
   cpu?: { percent: number; limit: number }
@@ -684,11 +724,13 @@ export interface QuotaStatus {
 ### 8.1 Authentication Security
 
 **Single-User Mode:**
+
 - ✅ Argon2 password hashing (current)
 - ✅ Rate limiting on login (current)
 - ✅ Secure cookie handling (current)
 
 **Multi-User Mode:**
+
 - ✅ Per-user password hashing (Argon2)
 - ✅ JWT tokens with expiration
 - ✅ Refresh token rotation
@@ -701,6 +743,7 @@ export interface QuotaStatus {
 ### 8.2 Isolation Security
 
 **Directory-Based Isolation:**
+
 - ⚠️ Relies on OS-level file permissions
 - ⚠️ Potential for path traversal attacks
 - ⚠️ Shared process memory
@@ -708,6 +751,7 @@ export interface QuotaStatus {
 - ✅ Chroot jails (optional)
 
 **Container-Based Isolation:**
+
 - ✅ Kernel-level isolation (namespaces, cgroups)
 - ✅ Separate network namespaces
 - ✅ Read-only root filesystem
@@ -729,6 +773,7 @@ export interface QuotaStatus {
 ### 8.4 Audit Logging
 
 **Events to Log:**
+
 - User authentication (login, logout, failed attempts)
 - User management (create, update, delete)
 - Session events (create, expire, revoke)
@@ -738,6 +783,7 @@ export interface QuotaStatus {
 - Security events (quota exceeded, suspicious activity)
 
 **Log Format:**
+
 ```json
 {
   "timestamp": "2025-11-15T10:30:00Z",
@@ -796,11 +842,13 @@ server {
 ### 9.2 Database Scaling
 
 **User Database:**
+
 - SQLite: Single-user or small teams (<100 users)
 - PostgreSQL: Production deployments (with connection pooling)
 - Read replicas for read-heavy operations
 
 **Session Store:**
+
 - Redis Cluster for high availability
 - Redis Sentinel for automatic failover
 - TTL-based auto-cleanup
@@ -808,6 +856,7 @@ server {
 ### 9.3 Container Pool Management
 
 **Pre-warming Strategy:**
+
 ```typescript
 class ContainerPool {
   private warmPool: Container[] = []
@@ -829,16 +878,16 @@ class ContainerPool {
 
 ### 9.4 Performance Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Login Response Time** | < 500ms | Auth + session creation |
-| **IDE Load Time** | < 2s | Single-user mode |
-| **IDE Load Time** | < 5s | Multi-user (container startup) |
-| **WebSocket Latency** | < 50ms | Terminal/file operations |
-| **Container Startup** | < 3s | Cold start |
-| **Container Startup** | < 1s | Warm pool |
-| **Max Concurrent Users** | 100+ | Per gateway instance |
-| **Max Sessions Per User** | 5 | Configurable |
+| Metric                    | Target  | Notes                          |
+| ------------------------- | ------- | ------------------------------ |
+| **Login Response Time**   | < 500ms | Auth + session creation        |
+| **IDE Load Time**         | < 2s    | Single-user mode               |
+| **IDE Load Time**         | < 5s    | Multi-user (container startup) |
+| **WebSocket Latency**     | < 50ms  | Terminal/file operations       |
+| **Container Startup**     | < 3s    | Cold start                     |
+| **Container Startup**     | < 1s    | Warm pool                      |
+| **Max Concurrent Users**  | 100+    | Per gateway instance           |
+| **Max Sessions Per User** | 5       | Configurable                   |
 
 ---
 
@@ -851,12 +900,14 @@ class ContainerPool {
 **Steps:**
 
 1. **Backup Current Data**
+
    ```bash
    cp -r ~/.local/share/code-server ~/.local/share/code-server.backup
    cp -r ~/.config/code-server ~/.config/code-server.backup
    ```
 
 2. **Update Configuration**
+
    ```yaml
    # .code-server.yaml
    deployment-mode: multi
@@ -869,11 +920,13 @@ class ContainerPool {
    ```
 
 3. **Create Admin User**
+
    ```bash
    code-server user create --username admin --email admin@example.com --role admin
    ```
 
 4. **Migrate Existing Data** (optional)
+
    ```bash
    # Assign current data to admin user
    code-server migrate-data --from-single-user --to-user admin
@@ -891,6 +944,7 @@ class ContainerPool {
 **Steps:**
 
 1. **Install Container Runtime**
+
    ```bash
    # Docker
    curl -fsSL https://get.docker.com | sh
@@ -900,22 +954,25 @@ class ContainerPool {
    ```
 
 2. **Build User Container Image**
+
    ```bash
    docker build -t code-server-user:latest -f Dockerfile.user .
    ```
 
 3. **Update Configuration**
+
    ```yaml
    multi-user:
      isolation:
-       strategy: container  # Changed from 'directory'
+       strategy: container # Changed from 'directory'
        container:
-         runtime: docker  # or podman
+         runtime: docker # or podman
          image: code-server-user:latest
          network: bridge
    ```
 
 4. **Migrate User Data to Volumes**
+
    ```bash
    # For each user
    docker volume create user-<user-id>-data
@@ -948,7 +1005,7 @@ cert: false
 
 ```yaml
 bind-addr: 0.0.0.0:3000
-auth: none  # Auth handled by multi-user system
+auth: none # Auth handled by multi-user system
 deployment-mode: multi
 cert: true
 cert-path: /etc/ssl/certs/code-server.crt
@@ -961,7 +1018,7 @@ multi-user:
       type: sqlite
       path: /var/lib/code-server/users.db
     session:
-      store: memory  # OK for single instance
+      store: memory # OK for single instance
       ttl: 86400
 
   isolation:
@@ -984,7 +1041,7 @@ multi-user:
 bind-addr: 0.0.0.0:3000
 auth: none
 deployment-mode: multi
-cert: false  # Handled by reverse proxy
+cert: false # Handled by reverse proxy
 
 multi-user:
   auth:
@@ -995,12 +1052,12 @@ multi-user:
       port: 5432
       database: code_server
       username: code_server
-      password: ${DB_PASSWORD}  # From environment
+      password: ${DB_PASSWORD} # From environment
     session:
       store: redis
       host: redis.internal
       port: 6379
-      ttl: 43200  # 12 hours
+      ttl: 43200 # 12 hours
 
   isolation:
     strategy: container
@@ -1051,6 +1108,7 @@ multi-user:
 ### 12.1 Metrics to Track
 
 **System Metrics:**
+
 - Active users count
 - Active sessions count
 - Container count (running, stopped, total)
@@ -1059,6 +1117,7 @@ multi-user:
 - Response time (p50, p95, p99)
 
 **User Metrics:**
+
 - Login success/failure rate
 - Session duration
 - Active connections per user
@@ -1066,6 +1125,7 @@ multi-user:
 - Extension count per user
 
 **Infrastructure Metrics:**
+
 - Container startup time
 - Container health status
 - Database connection pool usage
@@ -1077,50 +1137,50 @@ multi-user:
 ```typescript
 // src/node/services/metrics/MetricsExporter.ts
 
-import { Registry, Counter, Gauge, Histogram } from 'prom-client'
+import { Registry, Counter, Gauge, Histogram } from "prom-client"
 
 export class MetricsExporter {
   private registry = new Registry()
 
   // Counters
   private loginAttempts = new Counter({
-    name: 'code_server_login_attempts_total',
-    help: 'Total login attempts',
-    labelNames: ['status']  // success, failure
+    name: "code_server_login_attempts_total",
+    help: "Total login attempts",
+    labelNames: ["status"], // success, failure
   })
 
   private sessionCreated = new Counter({
-    name: 'code_server_sessions_created_total',
-    help: 'Total sessions created'
+    name: "code_server_sessions_created_total",
+    help: "Total sessions created",
   })
 
   // Gauges
   private activeUsers = new Gauge({
-    name: 'code_server_active_users',
-    help: 'Current active users'
+    name: "code_server_active_users",
+    help: "Current active users",
   })
 
   private activeSessions = new Gauge({
-    name: 'code_server_active_sessions',
-    help: 'Current active sessions'
+    name: "code_server_active_sessions",
+    help: "Current active sessions",
   })
 
   private activeContainers = new Gauge({
-    name: 'code_server_active_containers',
-    help: 'Current active containers',
-    labelNames: ['status']  // running, starting, stopping
+    name: "code_server_active_containers",
+    help: "Current active containers",
+    labelNames: ["status"], // running, starting, stopping
   })
 
   // Histograms
   private requestDuration = new Histogram({
-    name: 'code_server_request_duration_seconds',
-    help: 'Request duration in seconds',
-    labelNames: ['method', 'route', 'status']
+    name: "code_server_request_duration_seconds",
+    help: "Request duration in seconds",
+    labelNames: ["method", "route", "status"],
   })
 
   private containerStartupDuration = new Histogram({
-    name: 'code_server_container_startup_seconds',
-    help: 'Container startup duration in seconds'
+    name: "code_server_container_startup_seconds",
+    help: "Container startup duration in seconds",
   })
 
   getMetrics(): string {
@@ -1134,18 +1194,21 @@ export class MetricsExporter {
 ## 13. Testing Strategy
 
 ### 13.1 Unit Tests
+
 - Authentication service
 - Session management
 - User isolation
 - Resource limits enforcement
 
 ### 13.2 Integration Tests
+
 - Login/logout flow
 - Multi-user concurrent access
 - Container lifecycle
 - Database operations
 
 ### 13.3 Load Tests
+
 ```bash
 # Example using k6
 k6 run --vus 50 --duration 5m load-test.js
@@ -1157,6 +1220,7 @@ k6 run --vus 50 --duration 5m load-test.js
 ```
 
 ### 13.4 Security Tests
+
 - Authentication bypass attempts
 - Path traversal attempts
 - Resource exhaustion attacks
@@ -1170,7 +1234,7 @@ k6 run --vus 50 --duration 5m load-test.js
 ### 14.1 Docker Compose (Development/Small Team)
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   gateway:
@@ -1227,36 +1291,36 @@ spec:
         app: code-server-gateway
     spec:
       containers:
-      - name: gateway
-        image: code-server-gateway:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: DEPLOYMENT_MODE
-          value: "multi"
-        - name: DB_HOST
-          value: "postgres-service"
-        - name: REDIS_HOST
-          value: "redis-service"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: gateway
+          image: code-server-gateway:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DEPLOYMENT_MODE
+              value: "multi"
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: REDIS_HOST
+              value: "redis-service"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 
 ---
 # gateway-service.yaml
@@ -1268,10 +1332,10 @@ spec:
   selector:
     app: code-server-gateway
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 3000
-  sessionAffinity: ClientIP  # Session stickiness
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  sessionAffinity: ClientIP # Session stickiness
 
 ---
 # ingress.yaml
@@ -1286,20 +1350,20 @@ metadata:
     nginx.ingress.kubernetes.io/websocket-services: "code-server-gateway"
 spec:
   tls:
-  - hosts:
-    - ide.example.com
-    secretName: code-server-tls
+    - hosts:
+        - ide.example.com
+      secretName: code-server-tls
   rules:
-  - host: ide.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: code-server-gateway
-            port:
-              number: 80
+    - host: ide.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: code-server-gateway
+                port:
+                  number: 80
 ```
 
 ---
@@ -1309,6 +1373,7 @@ spec:
 ### Summary
 
 This architecture design provides:
+
 1. ✅ **Two clear deployment modes** (single-user, multi-user)
 2. ✅ **Phased implementation** (directory → container isolation)
 3. ✅ **Production-ready** (security, scalability, monitoring)
@@ -1318,18 +1383,21 @@ This architecture design provides:
 ### Recommended Approach
 
 **For MVP (Weeks 1-3):**
+
 - Implement Session-Based Multi-User (Option A)
 - SQLite + in-memory sessions
 - Directory-based isolation
 - Basic admin API
 
 **For Production (Weeks 4-9):**
+
 - Migrate to Container-Based (Option B)
 - Postgres + Redis
 - Docker orchestration
 - Full monitoring
 
 **For Scale (Weeks 10+):**
+
 - Kubernetes deployment
 - Auto-scaling
 - Multi-region
