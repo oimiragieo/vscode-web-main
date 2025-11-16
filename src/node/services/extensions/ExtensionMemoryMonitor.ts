@@ -3,8 +3,8 @@
  * Enforces memory limits and prevents OOM crashes from extensions
  */
 
-import { EventEmitter } from "events"
 import { logger } from "@coder/logger"
+import { EventEmitter } from "events"
 
 export interface MemoryUsage {
   rss: number // Resident Set Size (total memory)

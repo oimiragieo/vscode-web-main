@@ -8,8 +8,8 @@ import * as os from "os"
 import * as path from "path"
 import safeCompare from "safe-compare"
 import * as util from "util"
-import { getPasswordWorkerPool } from "./workers/PasswordWorkerPool"
 import xdgBasedir from "xdg-basedir"
+import { getPasswordWorkerPool } from "./workers/PasswordWorkerPool"
 
 export interface Paths {
   data: string

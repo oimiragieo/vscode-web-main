@@ -3,8 +3,8 @@
  * Prevents hanging requests and improves error handling
  */
 
-import { IncomingMessage, ServerResponse } from "http"
 import { Request, Response, NextFunction } from "express"
+import { IncomingMessage, ServerResponse } from "http"
 
 export interface TimeoutOptions {
   /** Timeout in milliseconds (default: 30000ms = 30s) */

@@ -3,8 +3,8 @@
  * Validates Redis batch get/delete operations reduce latency by 100-150ms
  */
 
-import { RedisSessionStore, type RedisClient } from "../../../src/node/services/session/SessionStore"
 import type { Session } from "../../../src/node/services/session/Session"
+import { RedisSessionStore, type RedisClient } from "../../../src/node/services/session/SessionStore"
 
 describe("Batch Session Operations (100-150ms reduction)", () => {
   describe("Mock Redis Client", () => {

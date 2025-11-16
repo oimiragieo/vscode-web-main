@@ -4,6 +4,13 @@
  */
 
 import { EventEmitter } from "events"
+import {
+  ExtensionCodeCache,
+  ExtensionPreloader,
+  SharedExtensionManager,
+  type CachedExtension,
+  type ExtensionInfo,
+} from "../../../src/node/services/extensions/ExtensionCache"
 import { ExtensionMemoryMonitor } from "../../../src/node/services/extensions/ExtensionMemoryMonitor"
 import {
   MessageCoalescer,
@@ -13,13 +20,6 @@ import {
   type Message,
   type BatchMessage,
 } from "../../../src/node/services/extensions/MessageCoalescer"
-import {
-  ExtensionCodeCache,
-  ExtensionPreloader,
-  SharedExtensionManager,
-  type CachedExtension,
-  type ExtensionInfo,
-} from "../../../src/node/services/extensions/ExtensionCache"
 
 describe("Week 4 Extension Optimizations", () => {
   describe("Extension Memory Monitoring", () => {

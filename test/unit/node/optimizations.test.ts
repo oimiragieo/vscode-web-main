@@ -4,11 +4,11 @@
  */
 
 import { logger } from "@coder/logger"
+import type { Request } from "express"
 import { readFile, writeFile, stat } from "fs/promises"
 import { Heart } from "../../../src/node/heart"
 import { authenticated } from "../../../src/node/http"
 import { clean, mockLogger, tmpdir } from "../../utils/helpers"
-import type { Request } from "express"
 
 const mockIsActive = (resolveTo: boolean) => jest.fn().mockResolvedValue(resolveTo)
 

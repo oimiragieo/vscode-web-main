@@ -3,8 +3,8 @@
  * Tracks security-relevant events and user actions
  */
 
-import * as fs from "fs/promises"
 import * as fsSync from "fs"
+import * as fs from "fs/promises"
 import * as path from "path"
 import * as readline from "readline"
 import { AuditEvent, AuditEventType } from "../types"

@@ -3,25 +3,25 @@
  * Validates Prometheus metrics, rate limiting, security headers, and extension verification
  */
 
+import type { Request, Response, NextFunction } from "express"
 import {
   MetricsRegistry,
   getMetricsRegistry,
   metricsMiddleware,
   collectSystemMetrics,
 } from "../../../src/node/services/monitoring/PrometheusMetrics"
-import { RateLimiter, CompositeRateLimiter, RateLimitPresets } from "../../../src/node/services/security/RateLimiter"
-import {
-  SecurityHeadersMiddleware,
-  SecurityPresets,
-  securityHeaders,
-} from "../../../src/node/services/security/SecurityHeaders"
 import {
   ExtensionSignatureVerifier,
   ExtensionSignatureGenerator,
   type SignatureInfo,
   type TrustedPublisher,
 } from "../../../src/node/services/security/ExtensionSignatureVerifier"
-import type { Request, Response, NextFunction } from "express"
+import { RateLimiter, CompositeRateLimiter, RateLimitPresets } from "../../../src/node/services/security/RateLimiter"
+import {
+  SecurityHeadersMiddleware,
+  SecurityPresets,
+  securityHeaders,
+} from "../../../src/node/services/security/SecurityHeaders"
 
 describe("Week 6 Monitoring & Security Optimizations", () => {
   describe("Prometheus Metrics", () => {

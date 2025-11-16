@@ -3,9 +3,9 @@
  * Provides extensibility and modularity
  */
 
+import { Logger } from "@coder/logger"
 import { EventEmitter } from "events"
 import { Express } from "express"
-import { Logger } from "@coder/logger"
 
 export interface PluginMetadata {
   name: string

@@ -3,8 +3,8 @@
  * Handles user environment setup and resource isolation
  */
 
-import * as path from "path"
 import * as fs from "fs/promises"
+import * as path from "path"
 import { ResourceLimits, ResourceType, ResourceUsage, QuotaStatus, UserEnvironment } from "../types"
 
 export interface IsolationStrategy {

@@ -3,9 +3,9 @@
  * Provides CSRF protection, security headers, and input sanitization
  */
 
-import { Request, Response, NextFunction } from "express"
-import crypto from "crypto"
 import { logger } from "@coder/logger"
+import crypto from "crypto"
+import { Request, Response, NextFunction } from "express"
 
 /**
  * Generate CSRF token
