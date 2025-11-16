@@ -3,8 +3,10 @@
  * Handles user authentication, session management, and token generation
  */
 
-import { randomUUID } from "crypto"
 import * as argon2 from "argon2"
+import { randomUUID } from "crypto"
+import { AuditLogger } from "../audit/AuditLogger"
+import { SessionStore } from "../session/SessionStore"
 import {
   User,
   Session,
@@ -17,9 +19,7 @@ import {
   SessionInfo,
   AuditEventType,
 } from "../types"
-import { SessionStore } from "../session/SessionStore"
 import { UserRepository } from "./UserRepository"
-import { AuditLogger } from "../audit/AuditLogger"
 
 export interface AuthServiceConfig {
   sessionTTL: number // seconds
@@ -450,7 +450,7 @@ export class AuthService {
       const hasUppercase = /[A-Z]/.test(password)
       const hasLowercase = /[a-z]/.test(password)
       const hasDigit = /\d/.test(password)
-      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+      const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
 
       if (!hasUppercase || !hasLowercase || !hasDigit || !hasSpecial) {
         throw new Error(

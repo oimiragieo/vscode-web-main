@@ -4,8 +4,8 @@
  * Expected: 200-400ms reduction per auth sequence
  */
 
-import { parentPort } from "worker_threads"
 import * as argon2 from "argon2"
+import { parentPort } from "worker_threads"
 
 interface WorkerMessage {
   id: string

@@ -5,10 +5,10 @@
 
 import { promises as fs } from "fs"
 import * as path from "path"
-import { MemorySessionStore } from "../../../src/node/services/session/SessionStore"
 import { FileAuditLogger } from "../../../src/node/services/audit/AuditLogger"
-import { clean, tmpdir } from "../../utils/helpers"
+import { MemorySessionStore } from "../../../src/node/services/session/SessionStore"
 import type { Session, AuditEvent } from "../../../src/node/services/types"
+import { clean, tmpdir } from "../../utils/helpers"
 
 describe("Week 1 Critical Stability Fixes POC Tests", () => {
   const testName = "stabilityTests"

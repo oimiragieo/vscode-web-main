@@ -1,6 +1,6 @@
 import http from "http"
-import https from "https"
 import proxyServer from "http-proxy"
+import https from "https"
 import { HttpCode } from "../common/http"
 
 // OPTIMIZATION: HTTP connection pooling (50-70% fewer connection errors, 20-30ms faster)

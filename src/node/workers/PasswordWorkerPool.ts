@@ -4,9 +4,9 @@
  * Prevents main thread blocking during argon2 hash/verify operations
  */
 
-import { Worker } from "worker_threads"
-import * as path from "path"
 import * as os from "os"
+import * as path from "path"
+import { Worker } from "worker_threads"
 
 interface PendingRequest {
   resolve: (value: string | boolean) => void

@@ -5,9 +5,9 @@
 
 import { promises as fs } from "fs"
 import * as path from "path"
-import { PasswordWorkerPool } from "../../../src/node/workers/PasswordWorkerPool"
 import { SettingsProvider } from "../../../src/node/settings"
 import { RequestBatcher } from "../../../src/node/utils/RequestBatcher"
+import { PasswordWorkerPool } from "../../../src/node/workers/PasswordWorkerPool"
 import { clean, tmpdir } from "../../utils/helpers"
 
 describe("Week 2-3 Performance Optimizations POC Tests", () => {
