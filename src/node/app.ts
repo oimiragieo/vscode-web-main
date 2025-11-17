@@ -13,6 +13,7 @@ import { disposer } from "./http"
 import { isNodeJSErrnoException } from "./util"
 import { EditorSessionManager, makeEditorSessionManagerServer } from "./vscodeSocket"
 import { handleUpgrade } from "./wsRouter"
+import { setupSecurity } from "./security-integration"
 
 type SocketOptions = { socket: string; "socket-mode"?: string }
 type ListenOptions = DefaultedArgs | SocketOptions
@@ -70,6 +71,14 @@ export const listen = async (server: http.Server, opts: ListenOptions) => {
  */
 export const createApp = async (args: DefaultedArgs): Promise<App> => {
   const router = express()
+
+  // SECURITY: Apply security headers middleware
+  // Adds CSP, X-Frame-Options, X-Content-Type-Options, etc.
+  setupSecurity(router, {
+    // Enable HSTS only if using HTTPS
+    enableHSTS: !!args.cert,
+    hstsMaxAge: 31536000, // 1 year
+  })
 
   // OPTIMIZATION: Enhanced compression with Brotli support (40-45% bandwidth reduction)
   router.use(

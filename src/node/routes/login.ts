@@ -27,7 +27,16 @@ export class RateLimiter {
 }
 
 const getRoot = async (req: Request, error?: Error): Promise<string> => {
-  const content = await fs.readFile(path.join(rootPath, "src/browser/pages/login.html"), "utf8")
+  // INTEGRATED: Use modern-login.html (previously orphaned)
+  // Falls back to login.html if modern version not found
+  let loginPage = "modern-login.html"
+  try {
+    await fs.access(path.join(rootPath, "src/browser/pages/modern-login.html"))
+  } catch {
+    loginPage = "login.html" // Fallback to old login if modern not found
+  }
+
+  const content = await fs.readFile(path.join(rootPath, "src/browser/pages", loginPage), "utf8")
   const locale = req.args["locale"] || "en"
   i18n.changeLanguage(locale)
   const appName = req.args["app-name"] || "code-server"
