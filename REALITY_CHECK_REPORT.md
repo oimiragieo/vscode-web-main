@@ -22,6 +22,7 @@ This report provides a detailed comparison between what the documentation claims
 ### 🔴 SEVERITY: HIGH - Core Infrastructure Missing
 
 #### 1. VSCode Submodule is NOT Initialized
+
 - **Claim:** Project includes full VSCode integration via git submodule
 - **Reality:** `/home/user/vscode-web-main/lib/vscode/` directory does NOT exist
 - **Status:** ❌ BROKEN
@@ -33,6 +34,7 @@ This report provides a detailed comparison between what the documentation claims
   ```
 
 #### 2. NPM Package Name Mismatch
+
 - **Claim (README.md lines 176-215):** Package is available as `@vscode-web-ide/core`
 - **Reality (package.json line 2):** Package name is `code-server`
 - **Status:** ❌ FICTIONAL
@@ -52,22 +54,26 @@ This report provides a detailed comparison between what the documentation claims
 #### ✅ Modern Login Page - EXISTS BUT NOT USED
 
 **Files:**
+
 - `/home/user/vscode-web-main/src/browser/pages/modern-login.html` (EXISTS)
 - `/home/user/vscode-web-main/src/browser/pages/modern-login.css` (EXISTS)
 - `/home/user/vscode-web-main/src/browser/pages/design-system.css` (EXISTS)
 
 **Actual Usage:**
+
 ```typescript
 // src/node/routes/login.ts:30
 const content = await fs.readFile(path.join(rootPath, "src/browser/pages/login.html"), "utf8")
 ```
 
 **Status:** ❌ NOT USED
+
 - Modern login page exists with 200+ lines of beautiful HTML/CSS
 - Login route uses **login.html** instead
 - modern-login.html is completely orphaned
 
 **Documentation Claims:**
+
 - README.md line 265: "modern-login.html - New login page"
 - claude.md line 1482: "pages/modern-login.html - Modern login page with accessibility features"
 
@@ -82,12 +88,14 @@ const content = await fs.readFile(path.join(rootPath, "src/browser/pages/login.h
 **Status:** ❌ NOT USED IN PRODUCTION
 
 **Evidence:**
+
 ```bash
 $ grep -r "from.*plugin" --include="*.ts" src/
 # No results in production code
 ```
 
 **Only Import Found:**
+
 ```typescript
 // src/core/plugin.ts:48 - Only referenced by itself
 export class PluginManager {
@@ -97,12 +105,14 @@ export class PluginManager {
 ```
 
 **Documentation Claims:**
+
 - README.md lines 193-215: Full plugin system with code examples
 - README.md line 256: "plugin.ts - Plugin architecture"
 - claude.md lines 300-379: Extensive plugin documentation
 - README.md lines 175-215: Integration examples using `createIDEMiddleware` and `WebIDE`
 
 **Search for Integration:**
+
 ```bash
 $ grep -r "createIDEMiddleware\|WebIDE\|PluginManager\|BasePlugin" --include="*.ts" src/
 # No matches in production code
@@ -121,6 +131,7 @@ $ grep -r "createIDEMiddleware\|WebIDE\|PluginManager\|BasePlugin" --include="*.
 **Status:** ⚠️ NOT USED IN PRODUCTION
 
 **Evidence:**
+
 ```bash
 $ grep -r "import.*security" --include="*.ts" src/
 # No results in production src/
@@ -130,12 +141,14 @@ test/unit/node/week6-monitoring-security.test.ts
 ```
 
 **Implementation Details:**
+
 - CSRF Protection class (fully implemented)
 - Security Headers middleware (fully implemented)
 - Input validation utilities (fully implemented)
 - Rate limiting (fully implemented)
 
 **Documentation Claims:**
+
 - README.md line 258: "security.ts - Security middleware"
 - README.md lines 30-36: "CSRF Protection, Security Headers, Input Sanitization, Rate Limiting, Argon2 Hashing"
 - claude.md lines 385-413: "Built-In Security (src/core/security.ts)"
@@ -149,6 +162,7 @@ test/unit/node/week6-monitoring-security.test.ts
 #### ❌ MULTI-USER SERVICES - COMPREHENSIVE CODE, ZERO INTEGRATION
 
 **Files Exist:**
+
 ```
 src/node/services/
 ├── types.ts (400+ lines)
@@ -168,6 +182,7 @@ Total: 4,905 lines of TypeScript code
 ```
 
 **Integration Status:**
+
 ```bash
 $ grep -r "AuthService\|UserRepository\|MultiUserService" --include="*.ts" src/
 # No matches in production code
@@ -177,12 +192,14 @@ $ grep -r "deployment-mode\|multi-user-config" src/node/cli.ts
 ```
 
 **Documentation Claims:**
+
 - claude.md lines 1293-1466: Complete multi-user documentation
 - claude.md lines 229-237: Multi-user services table
 - claude.md lines 426-430: CLI flags `--deployment-mode` and `--multi-user-config`
 - README.md lines 89-93: "INTEGRATION_GUIDE.md - Complete integration examples"
 
 **Reality Check:**
+
 ```bash
 $ ls -la INTEGRATION_GUIDE.md
 ls: cannot access 'INTEGRATION_GUIDE.md': No such file or directory
@@ -194,6 +211,7 @@ ls: cannot access 'ANALYSIS_REPORT.md': No such file or directory
 **Status:** ❌ COMPLETELY FICTIONAL INTEGRATION
 
 Nearly 5,000 lines of well-written multi-user code exists, but:
+
 - Not imported anywhere
 - No CLI flags to enable it
 - No routes registered
@@ -207,10 +225,12 @@ Nearly 5,000 lines of well-written multi-user code exists, but:
 #### ❌ MONITORING DASHBOARD - EXISTS BUT NO ROUTE
 
 **Files:**
+
 - `/home/user/vscode-web-main/src/browser/pages/monitoring-dashboard.html` (EXISTS)
 - `/home/user/vscode-web-main/src/node/services/monitoring/PrometheusMetrics.ts` (EXISTS)
 
 **Route Check:**
+
 ```typescript
 // src/node/routes/index.ts - No monitoring routes registered
 app.router.use("/healthz", health.router)
@@ -222,6 +242,7 @@ app.router.use("/", vscode.router)
 ```
 
 **Search for Integration:**
+
 ```bash
 $ grep -r "monitoring-dashboard\|/metrics" --include="*.ts" src/
 src/node/services/monitoring/PrometheusMetrics.ts:    // Only mentioned in file itself
@@ -230,6 +251,7 @@ src/node/services/monitoring/PrometheusMetrics.ts:    // Only mentioned in file 
 **Status:** ❌ NOT ACCESSIBLE
 
 **Documentation Claims:**
+
 - claude.md lines 1036-1053: "Monitoring Dashboard (src/browser/pages/monitoring-dashboard.html)"
 - claude.md lines 1031-1045: "Prometheus Metrics (/metrics endpoint)"
 
@@ -246,6 +268,7 @@ src/node/services/monitoring/PrometheusMetrics.ts:    // Only mentioned in file 
 **File:** `/home/user/vscode-web-main/src/node/workers/PasswordWorkerPool.ts` (exists)
 
 **Integration:**
+
 ```typescript
 // src/node/util.ts:12
 import { getPasswordWorkerPool } from "./workers/PasswordWorkerPool"
@@ -264,6 +287,7 @@ const isPasswordValid = await workerPool.verifyPassword(password, hashedPassword
 **File:** `/home/user/vscode-web-main/src/node/settings.ts`
 
 **Implementation:**
+
 ```typescript
 // Lines 9-15: Debouncing implementation
 private pendingSettings: Partial<T> | null = null
@@ -280,6 +304,7 @@ private readonly debounceDelay = 1000 // 1 second
 **File:** `/home/user/vscode-web-main/src/node/app.ts`
 
 **Implementation:**
+
 ```typescript
 // Lines 74-88: Brotli compression configuration
 router.use(
@@ -292,7 +317,7 @@ router.use(
         [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
       },
     },
-  })
+  }),
 )
 ```
 
@@ -305,6 +330,7 @@ router.use(
 **File:** `/home/user/vscode-web-main/src/node/app.ts`
 
 **Implementation:**
+
 ```typescript
 // Line 6: Import http2
 import http2 from "http2"
@@ -324,6 +350,7 @@ const server = args.cert
 **File:** `/home/user/vscode-web-main/src/node/utils/RequestBatcher.ts` (exists)
 
 **Integration Check:**
+
 ```bash
 $ grep -r "import.*RequestBatcher" --include="*.ts" src/
 # No matches in production code
@@ -336,6 +363,7 @@ $ grep -r "import.*RequestBatcher" --include="*.ts" src/
 ##### ❌ Extension Optimizations - EXISTS BUT NOT USED
 
 **Files:**
+
 - `/home/user/vscode-web-main/src/node/services/extensions/ExtensionMemoryMonitor.ts`
 - `/home/user/vscode-web-main/src/node/services/extensions/MessageCoalescer.ts`
 - `/home/user/vscode-web-main/src/node/services/extensions/ExtensionCache.ts`
@@ -347,6 +375,7 @@ $ grep -r "import.*RequestBatcher" --include="*.ts" src/
 ##### ❌ Rate Limiter & Security Headers - EXISTS BUT NOT USED
 
 **Files:**
+
 - `/home/user/vscode-web-main/src/node/services/security/RateLimiter.ts`
 - `/home/user/vscode-web-main/src/node/services/security/SecurityHeaders.ts`
 - `/home/user/vscode-web-main/src/node/services/security/ExtensionSignatureVerifier.ts`
@@ -362,12 +391,14 @@ $ grep -r "import.*RequestBatcher" --include="*.ts" src/
 #### ❌ REFERENCED FILES MISSING
 
 **README.md Claims (lines 89-93):**
+
 ```markdown
 - **[Integration Guide](INTEGRATION_GUIDE.md)** - Complete integration examples
 - **[Analysis Report](ANALYSIS_REPORT.md)** - Detailed codebase analysis
 ```
 
 **Reality:**
+
 ```bash
 $ ls -la INTEGRATION_GUIDE.md ANALYSIS_REPORT.md
 ls: cannot access 'INTEGRATION_GUIDE.md': No such file or directory
@@ -375,6 +406,7 @@ ls: cannot access 'ANALYSIS_REPORT.md': No such file or directory
 ```
 
 **However, they DO exist in docs/architecture/:**
+
 ```bash
 $ ls -la docs/architecture/IMPLEMENTATION_GUIDE.md
 -rw-r--r-- 1 root root 25711 Nov 16 03:37 docs/architecture/IMPLEMENTATION_GUIDE.md
@@ -389,6 +421,7 @@ The files exist but in a different location than claimed.
 #### ✅ ARCHITECTURE DOCS - EXIST AND COMPREHENSIVE
 
 **Files:**
+
 ```bash
 docs/architecture/
 ├── AI_WEBSITE_IDE_INTEGRATION.md (28 KB)
@@ -414,6 +447,7 @@ These are high-quality, detailed architectural documents. However, they describe
 #### ✅ POC TESTS EXIST BUT ARE ISOLATED
 
 **Test Files:**
+
 ```
 test/unit/node/
 ├── week2-performance.test.ts (94 tests)
@@ -429,6 +463,7 @@ Total: 423 POC tests
 These are **proof-of-concept tests** that test the services in isolation. They don't test integration with the main application because there is no integration.
 
 **Documentation Claims:**
+
 - claude.md line 1137: "All optimizations validated with comprehensive POC tests"
 - claude.md lines 1142-1146: "Total: 100+ comprehensive POC tests"
 
@@ -440,17 +475,17 @@ These are **proof-of-concept tests** that test the services in isolation. They d
 
 ### ✅ Features That Actually Work
 
-| Feature | File | Status | Integrated |
-|---------|------|--------|------------|
-| Password Worker Pool | `src/node/workers/PasswordWorkerPool.ts` | ✅ Working | ✅ Yes |
-| Settings Debouncing | `src/node/settings.ts` | ✅ Working | ✅ Yes |
-| Brotli Compression | `src/node/app.ts` | ✅ Working | ✅ Yes |
-| HTTP/2 Support | `src/node/app.ts` | ✅ Working | ✅ Yes |
-| Service Worker | `src/browser/serviceWorker.ts` | ✅ Working | ✅ Yes |
-| Basic Rate Limiting | `src/node/routes/login.ts` | ✅ Working | ✅ Yes |
-| Dockerfile.optimized | `Dockerfile.optimized` | ✅ Exists | ✅ Yes |
-| docker-compose.yml | `docker-compose.yml` | ✅ Exists | ✅ Yes |
-| Architecture Docs | `docs/architecture/*.md` | ✅ Exists | N/A |
+| Feature              | File                                     | Status     | Integrated |
+| -------------------- | ---------------------------------------- | ---------- | ---------- |
+| Password Worker Pool | `src/node/workers/PasswordWorkerPool.ts` | ✅ Working | ✅ Yes     |
+| Settings Debouncing  | `src/node/settings.ts`                   | ✅ Working | ✅ Yes     |
+| Brotli Compression   | `src/node/app.ts`                        | ✅ Working | ✅ Yes     |
+| HTTP/2 Support       | `src/node/app.ts`                        | ✅ Working | ✅ Yes     |
+| Service Worker       | `src/browser/serviceWorker.ts`           | ✅ Working | ✅ Yes     |
+| Basic Rate Limiting  | `src/node/routes/login.ts`               | ✅ Working | ✅ Yes     |
+| Dockerfile.optimized | `Dockerfile.optimized`                   | ✅ Exists  | ✅ Yes     |
+| docker-compose.yml   | `docker-compose.yml`                     | ✅ Exists  | ✅ Yes     |
+| Architecture Docs    | `docs/architecture/*.md`                 | ✅ Exists  | N/A        |
 
 **Count: 9 actual working features**
 
@@ -458,17 +493,17 @@ These are **proof-of-concept tests** that test the services in isolation. They d
 
 ### ❌ Features That Are Orphaned Code
 
-| Feature | File(s) | Lines of Code | Used In Production? |
-|---------|---------|---------------|---------------------|
-| Plugin System | `src/core/plugin.ts` | 184 | ❌ No |
-| Security Module | `src/core/security.ts` | 316 | ❌ No (only tests) |
-| Modern Login Page | `src/browser/pages/modern-login.*` | 200+ | ❌ No |
-| Multi-User Services | `src/node/services/*` | 4,905 | ❌ No |
-| Monitoring Dashboard | `src/browser/pages/monitoring-dashboard.html` | - | ❌ No |
-| Prometheus Metrics | `src/node/services/monitoring/PrometheusMetrics.ts` | - | ❌ No (only tests) |
-| Request Batcher | `src/node/utils/RequestBatcher.ts` | - | ❌ No |
-| Extension Optimizations | `src/node/services/extensions/*.ts` | - | ❌ No (only tests) |
-| Advanced Security | `src/node/services/security/*.ts` | - | ❌ No (only tests) |
+| Feature                 | File(s)                                             | Lines of Code | Used In Production? |
+| ----------------------- | --------------------------------------------------- | ------------- | ------------------- |
+| Plugin System           | `src/core/plugin.ts`                                | 184           | ❌ No               |
+| Security Module         | `src/core/security.ts`                              | 316           | ❌ No (only tests)  |
+| Modern Login Page       | `src/browser/pages/modern-login.*`                  | 200+          | ❌ No               |
+| Multi-User Services     | `src/node/services/*`                               | 4,905         | ❌ No               |
+| Monitoring Dashboard    | `src/browser/pages/monitoring-dashboard.html`       | -             | ❌ No               |
+| Prometheus Metrics      | `src/node/services/monitoring/PrometheusMetrics.ts` | -             | ❌ No (only tests)  |
+| Request Batcher         | `src/node/utils/RequestBatcher.ts`                  | -             | ❌ No               |
+| Extension Optimizations | `src/node/services/extensions/*.ts`                 | -             | ❌ No (only tests)  |
+| Advanced Security       | `src/node/services/security/*.ts`                   | -             | ❌ No (only tests)  |
 
 **Count: ~6,000 lines of orphaned code**
 
@@ -476,15 +511,15 @@ These are **proof-of-concept tests** that test the services in isolation. They d
 
 ### ❌ Features That Are Completely Fictional
 
-| Feature | Claimed Location | Reality |
-|---------|------------------|---------|
-| NPM Package `@vscode-web-ide/core` | README.md lines 176-215 | Package is named `code-server` |
-| INTEGRATION_GUIDE.md (root) | README.md line 91 | Exists at `docs/architecture/IMPLEMENTATION_GUIDE.md` |
-| ANALYSIS_REPORT.md | README.md line 92 | Does not exist |
-| VSCode Submodule | `lib/vscode/` | Directory does not exist |
-| Multi-user CLI flags | claude.md lines 426-430 | Flags don't exist in CLI |
-| `/metrics` endpoint | claude.md line 1036 | Route not registered |
-| `/monitoring-dashboard` route | claude.md line 1050 | Route not registered |
+| Feature                            | Claimed Location        | Reality                                               |
+| ---------------------------------- | ----------------------- | ----------------------------------------------------- |
+| NPM Package `@vscode-web-ide/core` | README.md lines 176-215 | Package is named `code-server`                        |
+| INTEGRATION_GUIDE.md (root)        | README.md line 91       | Exists at `docs/architecture/IMPLEMENTATION_GUIDE.md` |
+| ANALYSIS_REPORT.md                 | README.md line 92       | Does not exist                                        |
+| VSCode Submodule                   | `lib/vscode/`           | Directory does not exist                              |
+| Multi-user CLI flags               | claude.md lines 426-430 | Flags don't exist in CLI                              |
+| `/metrics` endpoint                | claude.md line 1036     | Route not registered                                  |
+| `/monitoring-dashboard` route      | claude.md line 1050     | Route not registered                                  |
 
 **Count: 7 completely fictional features**
 
@@ -493,6 +528,7 @@ These are **proof-of-concept tests** that test the services in isolation. They d
 ## Git History Analysis
 
 **Recent Commits:**
+
 ```
 e59d809 Merge pull request #18 - AI website integration docs
 f644849 Fix: Make postinstall.sh executable
@@ -506,6 +542,7 @@ e5f0b15 Implement Week 1 critical stability fixes
 ```
 
 **Pattern Observed:**
+
 - Multiple commits claim to "implement" features
 - However, implementations are in isolated files and tests
 - No integration commits
@@ -560,6 +597,7 @@ e5f0b15 Implement Week 1 critical stability fixes
 #### Quick Wins (Actually Deliverable)
 
 1. **Use the modern login page:**
+
    ```typescript
    // src/node/routes/login.ts:30
    // Change from:
@@ -569,6 +607,7 @@ e5f0b15 Implement Week 1 critical stability fixes
    ```
 
 2. **Add monitoring dashboard route:**
+
    ```typescript
    // src/node/routes/index.ts
    app.router.get("/monitoring", async (req, res) => {
@@ -637,6 +676,7 @@ This codebase exhibits a pattern of **"documentation-driven development" taken t
 ### Is It Malicious?
 
 **No.** This appears to be:
+
 1. Aggressive planning/prototyping
 2. Proof-of-concept development
 3. Documentation-first approach

@@ -20,6 +20,7 @@ This is a **fork of code-server** (the upstream project that lets you run VS Cod
 ### ⚠️ What's Experimental/Incomplete
 
 The following exist in the codebase but are **NOT integrated** into the main application:
+
 - Plugin system (`src/core/plugin.ts`) - Code exists but not used
 - Enhanced security middleware (`src/core/security.ts`) - Only used in tests
 - Multi-user architecture (~5,000 lines of code) - Complete scaffolding, zero integration
@@ -32,11 +33,13 @@ The following exist in the codebase but are **NOT integrated** into the main app
 Before you start, you need:
 
 1. **Node.js 22.x** (exact version required)
+
    ```bash
    node --version  # Must be v22.x.x
    ```
 
 2. **Git with submodules**
+
    ```bash
    git --version  # Any recent version
    ```
@@ -89,6 +92,7 @@ npm run build:vscode
 ```
 
 **Expected output:**
+
 - Lots of TypeScript compilation messages
 - Final message about build completion
 - Creates `lib/vscode/out` directory
@@ -101,6 +105,7 @@ npm run build
 ```
 
 **Expected output:**
+
 - Creates `out/` directory with compiled JavaScript
 - No TypeScript errors
 
@@ -124,11 +129,13 @@ export PASSWORD=your-secure-password
 ### Step 7: Access the IDE
 
 Open your browser to:
+
 ```
 http://localhost:8080
 ```
 
 **Login with:**
+
 - The password you set in the `PASSWORD` environment variable
 
 ## Quick Start with Docker (Easier!)
@@ -185,6 +192,7 @@ disable-telemetry: true
 ### Issue: "lib/vscode/package.json is missing"
 
 **Solution:** Initialize the VS Code submodule:
+
 ```bash
 git submodule update --init --recursive
 ```
@@ -192,6 +200,7 @@ git submodule update --init --recursive
 ### Issue: "Cannot find module '@coder/logger'"
 
 **Solution:** Install dependencies:
+
 ```bash
 npm install
 ```
@@ -199,6 +208,7 @@ npm install
 ### Issue: Build fails with "out of memory"
 
 **Solution:** Increase Node.js memory:
+
 ```bash
 export NODE_OPTIONS="--max-old-space-size=8192"
 npm run build:vscode
@@ -207,6 +217,7 @@ npm run build:vscode
 ### Issue: "EACCES: permission denied"
 
 **Solution:** Don't run as root. If on Linux:
+
 ```bash
 sudo chown -R $USER:$USER ~/.config/code-server
 ```
@@ -272,11 +283,13 @@ npm run lint:scripts
 ## Key Differences from Upstream code-server
 
 This fork includes:
+
 - ✅ **HTTP/2 and Brotli compression** - Better performance
 - ✅ **Settings debouncing** - Reduces disk I/O
 - ⚠️ **Experimental features in progress** - See REALITY_CHECK_REPORT.md
 
 This fork does NOT include (yet):
+
 - ❌ Multi-user support (code exists but not integrated)
 - ❌ Plugin system (code exists but not integrated)
 - ❌ Enhanced security middleware (code exists but not integrated)
