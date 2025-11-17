@@ -1,5 +1,13 @@
 # VSCode Web IDE - Codebase Documentation
 
+> **📋 Documentation Status Indicators:**
+>
+> - ✅ **Working** - Feature is implemented and integrated, ready to use
+> - 🚧 **Built** - Code exists but requires integration work
+> - 📋 **Planned** - Documented design but not yet implemented
+>
+> For complete feature status analysis, see [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md)
+
 ## Overview
 
 This is a production-ready web-based IDE built on top of VSCode, designed to run in the browser with full VS Code functionality. The project enables remote development, collaborative coding, and cloud-based development environments.
@@ -13,14 +21,16 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 
 ### Deployment Modes
 
-**Single-User Mode (Default):**
+**Single-User Mode (Default) ✅:**
 
 - Lightweight, simple deployment for personal use
 - Single password authentication
 - Shared resources (settings, extensions)
 - Zero overhead, backward compatible
 
-**Multi-User Mode (New):**
+**Multi-User Mode 🚧 (Code exists, integration needed):**
+
+**Status:** Complete implementation exists (~5,000 lines) but requires integration work (6-8 weeks). See [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md#6-multi-user-services-) for details.
 
 - Enterprise-ready deployment for multiple concurrent users
 - Complete user isolation (processes, filesystems, state)
@@ -30,7 +40,7 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 - Comprehensive audit logging
 - Horizontal scaling support
 
-**See:** [docs/architecture/MULTI_USER_README.md](docs/architecture/MULTI_USER_README.md) for complete multi-user documentation
+**See:** [docs/architecture/MULTI_USER_README.md](docs/architecture/MULTI_USER_README.md) for complete multi-user documentation (design spec)
 
 ---
 
@@ -38,9 +48,11 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 
 ### Two Approaches for Extensions
 
-#### 1. **Code-Server Plugins** (Server-Side Extensions)
+#### 1. **Code-Server Plugins** (Server-Side Extensions) 🚧
 
 Modern plugin system for extending the server with new capabilities:
+
+**Status:** Plugin system is fully implemented (`src/core/plugin.ts`, 185 lines) but not yet integrated. See [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md#5-plugin-system-) for integration roadmap.
 
 - Add custom HTTP/WebSocket routes
 - Create new API endpoints
@@ -272,20 +284,29 @@ Response to Client
 
 \*Redirects to `/login` if not authenticated
 
-### Multi-User API Endpoints (NEW)
+### Monitoring Endpoints ✅ (NEW - Integrated)
 
-| Endpoint                            | Method | Auth  | Purpose               |
-| ----------------------------------- | ------ | ----- | --------------------- |
-| `/api/users/me`                     | GET    | Yes   | Get current user info |
-| `/api/users`                        | GET    | Admin | List all users        |
-| `/api/users`                        | POST   | Admin | Create new user       |
-| `/api/users/:userId`                | PUT    | Admin | Update user           |
-| `/api/users/:userId`                | DELETE | Admin | Delete user           |
-| `/api/users/me/sessions`            | GET    | Yes   | List active sessions  |
-| `/api/users/me/sessions/:sessionId` | DELETE | Yes   | Revoke session        |
-| `/api/users/me/usage`               | GET    | Yes   | Get resource usage    |
+| Endpoint                | Method | Auth | Purpose                                 |
+| ----------------------- | ------ | ---- | --------------------------------------- |
+| `/metrics`              | GET    | No   | Prometheus metrics (Grafana compatible) |
+| `/monitoring-dashboard` | GET    | No   | Real-time metrics dashboard (HTML)      |
 
-**Note:** Multi-user endpoints are only available when `deployment-mode: multi` is configured.
+### Multi-User API Endpoints 🚧 (Planned - Code exists but not integrated)
+
+**Status:** Multi-user services are implemented (~5,000 lines) but NOT integrated. See [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md) for integration roadmap.
+
+| Endpoint                            | Method | Auth  | Status     | Purpose               |
+| ----------------------------------- | ------ | ----- | ---------- | --------------------- |
+| `/api/users/me`                     | GET    | Yes   | 📋 Planned | Get current user info |
+| `/api/users`                        | GET    | Admin | 📋 Planned | List all users        |
+| `/api/users`                        | POST   | Admin | 📋 Planned | Create new user       |
+| `/api/users/:userId`                | PUT    | Admin | 📋 Planned | Update user           |
+| `/api/users/:userId`                | DELETE | Admin | 📋 Planned | Delete user           |
+| `/api/users/me/sessions`            | GET    | Yes   | 📋 Planned | List active sessions  |
+| `/api/users/me/sessions/:sessionId` | DELETE | Yes   | 📋 Planned | Revoke session        |
+| `/api/users/me/usage`               | GET    | Yes   | 📋 Planned | Get resource usage    |
+
+**Note:** Multi-user endpoints require integration work (6-8 weeks). Code exists in `src/node/services/` but no CLI flags or routes are currently registered.
 
 ### WebSocket Endpoints
 
@@ -419,15 +440,21 @@ export class MyPlugin extends BasePlugin {
 
 **Key Flags:**
 
-- `--bind-addr` - Server address (default: 127.0.0.1:8080)
-- `--auth` - Authentication type (password|none)
-- `--password` - Set password
-- `--cert/--cert-key` - HTTPS certificates
-- `--user-data-dir` - User data directory
-- `--extensions-dir` - Extensions directory
-- `--disable-telemetry` - Privacy mode
-- `--deployment-mode` - Deployment mode (single|multi) **NEW**
-- `--multi-user-config` - Multi-user configuration file path **NEW**
+- `--bind-addr` - Server address (default: 127.0.0.1:8080) ✅
+- `--auth` - Authentication type (password|none) ✅
+- `--password` - Set password ✅
+- `--cert/--cert-key` - HTTPS certificates ✅
+- `--user-data-dir` - User data directory ✅
+- `--extensions-dir` - Extensions directory ✅
+- `--disable-telemetry` - Privacy mode ✅
+- `--deployment-mode` - Deployment mode (single|multi) 📋 **PLANNED** (not yet implemented)
+- `--multi-user-config` - Multi-user configuration file path 📋 **PLANNED** (not yet implemented)
+
+**Legend:**
+
+- ✅ Working and available now
+- 🚧 Built but needs integration
+- 📋 Planned for future implementation
 
 ### Environment Variables (.env)
 

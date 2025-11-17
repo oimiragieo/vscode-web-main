@@ -12,6 +12,7 @@ import { AuthType, DefaultedArgs } from "../cli"
 import { commit, rootPath } from "../constants"
 import { Heart } from "../heart"
 import { redirect } from "../http"
+import { metricsHandler } from "../services/monitoring/PrometheusMetrics"
 import { CoderSettings, SettingsProvider } from "../settings"
 import { UpdateProvider } from "../update"
 import { getMediaMime, paths } from "../util"
@@ -185,6 +186,18 @@ export const register = async (
 
   app.router.use("/healthz", health.router)
   app.wsRouter.use("/healthz", health.wsRouter.router)
+
+  // MONITORING: Prometheus metrics endpoint (Week 6 optimization)
+  // Exposes metrics in Prometheus format for Grafana dashboards
+  app.router.get("/metrics", metricsHandler)
+
+  // MONITORING: Dashboard for visualizing metrics in browser
+  app.router.get("/monitoring-dashboard", async (req, res) => {
+    const dashboardPath = path.resolve(rootPath, "src/browser/pages/monitoring-dashboard.html")
+    const { content, mimeType } = await getCachedFile(dashboardPath)
+    res.set("Content-Type", mimeType)
+    res.send(content)
+  })
 
   if (args.auth === AuthType.Password) {
     app.router.use("/login", login.router)

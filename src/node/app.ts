@@ -10,10 +10,10 @@ import { Disposable } from "../common/emitter"
 import * as util from "../common/util"
 import { DefaultedArgs } from "./cli"
 import { disposer } from "./http"
+import { setupSecurity } from "./security-integration"
 import { isNodeJSErrnoException } from "./util"
 import { EditorSessionManager, makeEditorSessionManagerServer } from "./vscodeSocket"
 import { handleUpgrade } from "./wsRouter"
-import { setupSecurity } from "./security-integration"
 
 type SocketOptions = { socket: string; "socket-mode"?: string }
 type ListenOptions = DefaultedArgs | SocketOptions
