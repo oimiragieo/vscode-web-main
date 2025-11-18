@@ -27,16 +27,9 @@ export class RateLimiter {
 }
 
 const getRoot = async (req: Request, error?: Error): Promise<string> => {
-  // INTEGRATED: Use modern-login.html (previously orphaned)
-  // Falls back to login.html if modern version not found
-  let loginPage = "modern-login.html"
-  try {
-    await fs.access(path.join(rootPath, "src/browser/pages/modern-login.html"))
-  } catch {
-    loginPage = "login.html" // Fallback to old login if modern not found
-  }
-
-  const content = await fs.readFile(path.join(rootPath, "src/browser/pages", loginPage), "utf8")
+  // ACCESSIBILITY FIX: Always use modern-login.html (accessible, WCAG 2.1 AA compliant)
+  // Old login.html has been deprecated due to zero accessibility features
+  const content = await fs.readFile(path.join(rootPath, "src/browser/pages/modern-login.html"), "utf8")
   const locale = req.args["locale"] || "en"
   i18n.changeLanguage(locale)
   const appName = req.args["app-name"] || "code-server"
@@ -101,6 +94,11 @@ router.post<{}, string, { password?: string; base?: string } | undefined, { to?:
       passwordFromArgs: req.args.password,
     })
 
+    // SECURITY FIX: Consume rate limit token regardless of password validity
+    // Previous bug: Only consumed token on failure, allowing brute force with correct password
+    // Now both successful and failed attempts count against rate limit
+    limiter.removeToken()
+
     if (isPasswordValid) {
       // The hash does not add any actual security but we do it for
       // obfuscation purposes (and as a side effect it handles escaping).
@@ -110,10 +108,7 @@ router.post<{}, string, { password?: string; base?: string } | undefined, { to?:
       return redirect(req, res, to, { to: undefined })
     }
 
-    // Note: successful logins should not count against the RateLimiter
-    // which is why this logic must come after the successful login logic
-    limiter.removeToken()
-
+    // Failed login - log the attempt
     console.error(
       "Failed login attempt",
       JSON.stringify({

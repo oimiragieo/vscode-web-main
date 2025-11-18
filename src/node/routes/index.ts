@@ -11,7 +11,7 @@ import { App } from "../app"
 import { AuthType, DefaultedArgs } from "../cli"
 import { commit, rootPath } from "../constants"
 import { Heart } from "../heart"
-import { redirect } from "../http"
+import { authenticated, redirect } from "../http"
 import { metricsHandler } from "../services/monitoring/PrometheusMetrics"
 import { CoderSettings, SettingsProvider } from "../settings"
 import { UpdateProvider } from "../update"
@@ -188,11 +188,21 @@ export const register = async (
   app.wsRouter.use("/healthz", health.wsRouter.router)
 
   // MONITORING: Prometheus metrics endpoint (Week 6 optimization)
+  // SECURITY FIX: Added authentication requirement to prevent information disclosure
   // Exposes metrics in Prometheus format for Grafana dashboards
-  app.router.get("/metrics", metricsHandler)
+  app.router.get("/metrics", async (req, res, next) => {
+    if (args.auth === AuthType.Password && !(await authenticated(req))) {
+      return redirect(req, res, "/login", { to: req.originalUrl })
+    }
+    return metricsHandler(req, res, next)
+  })
 
   // MONITORING: Dashboard for visualizing metrics in browser
+  // SECURITY FIX: Added authentication requirement to prevent unauthorized access
   app.router.get("/monitoring-dashboard", async (req, res) => {
+    if (args.auth === AuthType.Password && !(await authenticated(req))) {
+      return redirect(req, res, "/login", { to: req.originalUrl })
+    }
     const dashboardPath = path.resolve(rootPath, "src/browser/pages/monitoring-dashboard.html")
     const { content, mimeType } = await getCachedFile(dashboardPath)
     res.set("Content-Type", mimeType)
