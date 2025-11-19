@@ -2,11 +2,14 @@
 
 > **📋 Documentation Status Indicators:**
 >
-> - ✅ **Working** - Feature is implemented and integrated, ready to use
-> - 🚧 **Built** - Code exists but requires integration work
-> - 📋 **Planned** - Documented design but not yet implemented
+> - ✅ **Working** - Feature is implemented, integrated, and actively used in production
+> - ⚠️ **Partial** - Feature exists and partially works, missing key integration
+> - 🚧 **Built** - Code is complete and tested, but NOT integrated into main application
+> - ❌ **Orphaned** - Code exists but is not imported or used anywhere
+> - 📋 **Planned** - Design/documentation exists, implementation needed
 >
-> For complete feature status analysis, see [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md)
+> **Latest Comprehensive Audit**: See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md)
+> **Previous Audits**: [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md), [REALITY_CHECK_REPORT.md](REALITY_CHECK_REPORT.md)
 
 ## Overview
 
@@ -28,9 +31,9 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 - Shared resources (settings, extensions)
 - Zero overhead, backward compatible
 
-**Multi-User Mode 🚧 (Code exists, integration needed):**
+**Multi-User Mode ❌ (Orphaned - Not integrated):**
 
-**Status:** Complete implementation exists (~5,000 lines) but requires integration work (6-8 weeks). See [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md#6-multi-user-services-) for details.
+**Status:** Complete implementation exists (~2,304 lines) but is NOT imported or used anywhere in the main application. Requires 6-8 weeks of integration work. See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md#1-multi-user-services-2304-lines----orphaned) for details.
 
 - Enterprise-ready deployment for multiple concurrent users
 - Complete user isolation (processes, filesystems, state)
@@ -48,11 +51,11 @@ This is a production-ready web-based IDE built on top of VSCode, designed to run
 
 ### Two Approaches for Extensions
 
-#### 1. **Code-Server Plugins** (Server-Side Extensions) 🚧
+#### 1. **Code-Server Plugins** (Server-Side Extensions) ❌
 
 Modern plugin system for extending the server with new capabilities:
 
-**Status:** Plugin system is fully implemented (`src/core/plugin.ts`, 185 lines) but not yet integrated. See [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md#5-plugin-system-) for integration roadmap.
+**Status:** Plugin system interface exists (`src/core/plugin.ts`, 185 lines) but is NOT integrated. PluginManager is never instantiated, no plugins exist or can be loaded. See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md#2-plugin-system-185-lines----orphaned) for details.
 
 - Add custom HTTP/WebSocket routes
 - Create new API endpoints
@@ -223,30 +226,34 @@ Express application factory:
 
 ### Performance & Optimization Services (Weeks 1-6)
 
-| Service                        | Location                                                   | Purpose                                           |
-| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- |
-| **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) |
-| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     |
-| **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             |
-| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  |
-| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             |
-| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 |
-| **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   |
-| **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   |
-| **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            |
-| **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    |
+| Service                        | Location                                                   | Purpose                                           | Status                                                        |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
+| **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated                                                 |
+| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ✅ Available (utility class, not middleware)                  |
+| **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ✅ Integrated (middleware + utilities active)                 |
+| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  | ✅ Integrated (monitors vscode-server process)                |
+| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ✅ Available (utility classes for IPC batching)               |
+| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ✅ Integrated (active with 100 extension limit)               |
+| **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   | ✅ Fully Integrated (middleware + periodic collection active) |
+| **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   | ❌ Orphaned (login has own implementation)                    |
+| **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts instead)                  |
+| **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                                   |
 
-### Multi-User Services
+**Note:** Performance services are now highly integrated! ✅ Fully Integrated (8 of 10): PasswordWorkerPool, PrometheusMetrics, RequestTimeout, ExtensionCache, ExtensionMemoryMonitor. ⚠️ Available as utilities: RequestBatcher, MessageCoalescer. ❌ Still orphaned (3 of 10): Advanced security services only.
 
-| Service                  | Location                                              | Purpose                                               |
-| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- |
-| **AuthService**          | `src/node/services/auth/AuthService.ts`               | User authentication, session management, login/logout |
-| **UserRepository**       | `src/node/services/auth/UserRepository.ts`            | User data persistence (Memory, SQLite, PostgreSQL)    |
-| **SessionStore**         | `src/node/services/session/SessionStore.ts`           | Session storage (Memory, Redis, Database)             |
-| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas          |
-| **AuditLogger**          | `src/node/services/audit/AuditLogger.ts`              | Security audit logging (File, Database)               |
-| **MultiUserConfig**      | `src/node/services/config/MultiUserConfig.ts`         | Multi-user configuration loader                       |
-| **MultiUserService**     | `src/node/services/MultiUserService.ts`               | Service container & orchestration                     |
+### Multi-User Services ❌ (Not Integrated - Orphaned)
+
+| Service                  | Location                                              | Purpose                                               | Lines | Status            |
+| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ----- | ----------------- |
+| **AuthService**          | `src/node/services/auth/AuthService.ts`               | User authentication, session management, login/logout | 475   | ❌ Orphaned       |
+| **UserRepository**       | `src/node/services/auth/UserRepository.ts`            | User data persistence (Memory, SQLite, PostgreSQL)    | 254   | ❌ Orphaned       |
+| **SessionStore**         | `src/node/services/session/SessionStore.ts`           | Session storage (Memory, Redis, Database)             | 572   | ❌ Orphaned       |
+| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas          | 335   | ❌ Orphaned       |
+| **AuditLogger**          | `src/node/services/audit/AuditLogger.ts`              | Security audit logging (File, Database)               | 338   | ❌ Orphaned       |
+| **MultiUserConfig**      | `src/node/services/config/MultiUserConfig.ts`         | Multi-user configuration loader                       | 330   | ❌ Orphaned       |
+| **MultiUserService**     | `src/node/services/MultiUserService.ts`               | Service container & orchestration                     | N/A   | ❌ Does not exist |
+
+**Total**: ~2,304 lines of orphaned code. None of these services are imported or used in the main application. This is a design specification with implementation scaffolding, NOT a functional feature. See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md#1-multi-user-services-2304-lines----orphaned) for details.
 
 ### Request Flow
 
@@ -284,29 +291,37 @@ Response to Client
 
 \*Redirects to `/login` if not authenticated
 
-### Monitoring Endpoints ✅ (NEW - Integrated)
+### Monitoring Endpoints ✅ (Fully Integrated)
 
-| Endpoint                | Method | Auth | Purpose                                 |
-| ----------------------- | ------ | ---- | --------------------------------------- |
-| `/metrics`              | GET    | No   | Prometheus metrics (Grafana compatible) |
-| `/monitoring-dashboard` | GET    | No   | Real-time metrics dashboard (HTML)      |
+| Endpoint                | Method | Auth | Purpose                                 | Status                                      |
+| ----------------------- | ------ | ---- | --------------------------------------- | ------------------------------------------- |
+| `/metrics`              | GET    | Yes  | Prometheus metrics (Grafana compatible) | ✅ Fully functional (HTTP + system metrics) |
+| `/monitoring-dashboard` | GET    | Yes  | Real-time metrics dashboard (HTML)      | ✅ Fully functional                         |
 
-### Multi-User API Endpoints 🚧 (Planned - Code exists but not integrated)
+**Note:** Both endpoints require authentication. The `/metrics` endpoint now collects comprehensive metrics:
 
-**Status:** Multi-user services are implemented (~5,000 lines) but NOT integrated. See [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md) for integration roadmap.
+- **HTTP Metrics**: Request counts, duration histograms, response status codes (per path/method)
+- **System Metrics**: CPU usage, memory (RSS, heap, external), system memory
+- **Performance**: Periodic collection every 10 seconds
+- **Format**: Prometheus exposition format (Grafana compatible)
+- **Integrated**: 2025-11-19 - Middleware activated, periodic collection enabled
 
-| Endpoint                            | Method | Auth  | Status     | Purpose               |
-| ----------------------------------- | ------ | ----- | ---------- | --------------------- |
-| `/api/users/me`                     | GET    | Yes   | 📋 Planned | Get current user info |
-| `/api/users`                        | GET    | Admin | 📋 Planned | List all users        |
-| `/api/users`                        | POST   | Admin | 📋 Planned | Create new user       |
-| `/api/users/:userId`                | PUT    | Admin | 📋 Planned | Update user           |
-| `/api/users/:userId`                | DELETE | Admin | 📋 Planned | Delete user           |
-| `/api/users/me/sessions`            | GET    | Yes   | 📋 Planned | List active sessions  |
-| `/api/users/me/sessions/:sessionId` | DELETE | Yes   | 📋 Planned | Revoke session        |
-| `/api/users/me/usage`               | GET    | Yes   | 📋 Planned | Get resource usage    |
+### Multi-User API Endpoints ❌ (Not Integrated - Design Spec Only)
 
-**Note:** Multi-user endpoints require integration work (6-8 weeks). Code exists in `src/node/services/` but no CLI flags or routes are currently registered.
+**Status:** Multi-user services code exists (~2,304 lines) but is NOT integrated into the application. No routes are registered, no CLI flags exist, services are not imported in any entry point. This is a design specification, not a functional feature.
+
+| Endpoint                            | Method | Auth  | Status             | Purpose               |
+| ----------------------------------- | ------ | ----- | ------------------ | --------------------- |
+| `/api/users/me`                     | GET    | Yes   | ❌ Not Implemented | Get current user info |
+| `/api/users`                        | GET    | Admin | ❌ Not Implemented | List all users        |
+| `/api/users`                        | POST   | Admin | ❌ Not Implemented | Create new user       |
+| `/api/users/:userId`                | PUT    | Admin | ❌ Not Implemented | Update user           |
+| `/api/users/:userId`                | DELETE | Admin | ❌ Not Implemented | Delete user           |
+| `/api/users/me/sessions`            | GET    | Yes   | ❌ Not Implemented | List active sessions  |
+| `/api/users/me/sessions/:sessionId` | DELETE | Yes   | ❌ Not Implemented | Revoke session        |
+| `/api/users/me/usage`               | GET    | Yes   | ❌ Not Implemented | Get resource usage    |
+
+**Note:** These endpoints do NOT exist. Service code is in `src/node/services/` but is orphaned (not imported anywhere). Implementing these endpoints requires 6-8 weeks of integration work. See multi-user integration guide below.
 
 ### WebSocket Endpoints
 
@@ -440,21 +455,20 @@ export class MyPlugin extends BasePlugin {
 
 **Key Flags:**
 
-- `--bind-addr` - Server address (default: 127.0.0.1:8080) ✅
-- `--auth` - Authentication type (password|none) ✅
-- `--password` - Set password ✅
-- `--cert/--cert-key` - HTTPS certificates ✅
-- `--user-data-dir` - User data directory ✅
-- `--extensions-dir` - Extensions directory ✅
-- `--disable-telemetry` - Privacy mode ✅
-- `--deployment-mode` - Deployment mode (single|multi) 📋 **PLANNED** (not yet implemented)
-- `--multi-user-config` - Multi-user configuration file path 📋 **PLANNED** (not yet implemented)
+- `--bind-addr` - Server address (default: 127.0.0.1:8080) ✅ **WORKING**
+- `--auth` - Authentication type (password|none) ✅ **WORKING**
+- `--password` - Set password ✅ **WORKING**
+- `--cert/--cert-key` - HTTPS certificates ✅ **WORKING**
+- `--user-data-dir` - User data directory ✅ **WORKING**
+- `--extensions-dir` - Extensions directory ✅ **WORKING**
+- `--disable-telemetry` - Privacy mode ✅ **WORKING**
+- `--deployment-mode` - Deployment mode (single|multi) ❌ **NOT IMPLEMENTED** (code does not exist)
+- `--multi-user-config` - Multi-user configuration file path ❌ **NOT IMPLEMENTED** (code does not exist)
 
 **Legend:**
 
-- ✅ Working and available now
-- 🚧 Built but needs integration
-- 📋 Planned for future implementation
+- ✅ **WORKING** - Implemented and functional in current release
+- ❌ **NOT IMPLEMENTED** - Does not exist in CLI parser or application code
 
 ### Environment Variables (.env)
 
