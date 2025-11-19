@@ -14,19 +14,23 @@ This document details the critical security and accessibility fixes applied duri
 ## Fixes Applied (Week 1 Priority)
 
 ### 1. ✅ Fixed Logout CSRF Vulnerability
+
 **Severity:** CRITICAL - Security
 **File:** `src/node/routes/logout.ts`
 
 **Problem:**
+
 - Logout was a GET request, vulnerable to CSRF attacks
 - Malicious websites could log users out via: `<img src="https://your-ide.com/logout">`
 
 **Solution:**
+
 - Changed primary logout to POST request
 - Added deprecated GET support with console warning for backwards compatibility
 - Moved to body parameter instead of query parameter
 
 **Code Changes:**
+
 ```typescript
 // NEW: Primary route (POST)
 router.post("/", async (req, res) => {
@@ -43,25 +47,30 @@ router.get("/", async (req, res) => {
 ```
 
 **Impact:**
+
 - Prevents cross-site logout attacks
 - Maintains backwards compatibility during migration
 
 ---
 
 ### 2. ✅ Fixed Rate Limiter Asymmetric Bug
+
 **Severity:** HIGH - Security
 **File:** `src/node/routes/login.ts` (lines 104-107)
 
 **Problem:**
+
 - Rate limiter only consumed tokens on failed login attempts
 - Attackers could brute force with correct password without slowdown
 - Created asymmetric information leak (timing attack)
 
 **Solution:**
+
 - Moved `limiter.removeToken()` to execute BEFORE password check
 - Both successful and failed attempts now count against rate limit
 
 **Code Changes:**
+
 ```typescript
 // BEFORE (vulnerable):
 if (isPasswordValid) {
@@ -80,46 +89,52 @@ if (isPasswordValid) {
 ```
 
 **Impact:**
+
 - Prevents brute force attacks even with correct password
 - Eliminates timing-based information disclosure
 
 ---
 
 ### 3. ✅ Removed CSP unsafe-inline Vulnerability
+
 **Severity:** HIGH - Security
 **File:** `src/browser/pages/modern-login.html` (line 8)
 
 **Problem:**
+
 - Content Security Policy included `unsafe-inline` in `style-src`
 - Defeats CSP protection against style injection attacks
 - No inline styles were actually being used
 
 **Solution:**
+
 - Removed `'unsafe-inline'` from CSP header
 - All styles already externalized to CSS files
 
 **Code Changes:**
+
 ```html
 <!-- BEFORE (vulnerable): -->
-<meta http-equiv="Content-Security-Policy"
-  content="... style-src 'self' 'unsafe-inline'; ..." />
+<meta http-equiv="Content-Security-Policy" content="... style-src 'self' 'unsafe-inline'; ..." />
 
 <!-- AFTER (secure): -->
-<meta http-equiv="Content-Security-Policy"
-  content="... style-src 'self'; ..." />
+<meta http-equiv="Content-Security-Policy" content="... style-src 'self'; ..." />
 ```
 
 **Impact:**
+
 - Hardens CSP against style injection attacks
 - No functional impact (no inline styles exist)
 
 ---
 
 ### 4. ✅ Protected Monitoring Routes with Authentication
+
 **Severity:** MEDIUM - Security (Information Disclosure)
 **Files:** `src/node/routes/index.ts` (lines 193-210)
 
 **Problem:**
+
 - `/metrics` endpoint accessible without authentication
 - `/monitoring-dashboard` accessible without authentication
 - Could leak sensitive information:
@@ -129,11 +144,13 @@ if (isPasswordValid) {
   - Request patterns
 
 **Solution:**
+
 - Added authentication check before allowing access
 - Redirects unauthenticated users to login page
 - Preserves original URL for post-login redirect
 
 **Code Changes:**
+
 ```typescript
 // Added authentication wrapper to both routes:
 app.router.get("/metrics", async (req, res, next) => {
@@ -152,6 +169,7 @@ app.router.get("/monitoring-dashboard", async (req, res) => {
 ```
 
 **Impact:**
+
 - Prevents unauthorized access to metrics
 - Protects against information disclosure
 - Maintains security posture consistency
@@ -159,12 +177,15 @@ app.router.get("/monitoring-dashboard", async (req, res) => {
 ---
 
 ### 5. ✅ Removed Inaccessible Old Login Page
+
 **Severity:** CRITICAL - Accessibility
 **Files:**
+
 - `src/browser/pages/login.html` → **Deprecated**
 - `src/node/routes/login.ts` (lines 29-32)
 
 **Problem:**
+
 - Old `login.html` had ZERO accessibility features:
   - No ARIA labels
   - No screen reader support
@@ -175,11 +196,13 @@ app.router.get("/monitoring-dashboard", async (req, res) => {
 - Fallback logic created confusion
 
 **Solution:**
+
 - Renamed `login.html` to `login.html.deprecated`
 - Removed fallback logic in route handler
 - Always uses `modern-login.html` (WCAG 2.1 AA compliant)
 
 **Code Changes:**
+
 ```typescript
 // BEFORE:
 let loginPage = "modern-login.html"
@@ -195,6 +218,7 @@ const content = await fs.readFile(path.join(rootPath, "src/browser/pages/modern-
 ```
 
 **Impact:**
+
 - Ensures all users can log in (including screen reader users)
 - Eliminates WCAG 2.1 AA violation
 - Reduces legal risk
@@ -207,6 +231,7 @@ const content = await fs.readFile(path.join(rootPath, "src/browser/pages/modern-
 ### Security Testing
 
 1. **Logout CSRF Test:**
+
    ```bash
    # Should NOT log user out (POST required):
    curl -X GET http://localhost:8080/logout
@@ -218,6 +243,7 @@ const content = await fs.readFile(path.join(rootPath, "src/browser/pages/modern-
    ```
 
 2. **Rate Limiter Test:**
+
    ```bash
    # Attempt 15 logins in quick succession with correct password
    # Should hit rate limit after 12-14 attempts
@@ -264,11 +290,13 @@ const content = await fs.readFile(path.join(rootPath, "src/browser/pages/modern-
 If you have custom integrations that use GET `/logout`, update to POST:
 
 **Before:**
+
 ```html
 <a href="/logout">Logout</a>
 ```
 
 **After:**
+
 ```html
 <form action="/logout" method="POST" style="display:inline">
   <button type="submit">Logout</button>
@@ -276,10 +304,11 @@ If you have custom integrations that use GET `/logout`, update to POST:
 ```
 
 Or use JavaScript:
+
 ```javascript
 async function logout() {
-  await fetch('/logout', { method: 'POST' })
-  window.location.href = '/'
+  await fetch("/logout", { method: "POST" })
+  window.location.href = "/"
 }
 ```
 
@@ -287,13 +316,13 @@ async function logout() {
 
 ## Files Modified
 
-| File | Lines Changed | Type of Change |
-|------|--------------|----------------|
-| `src/node/routes/logout.ts` | +18 | Security fix |
-| `src/node/routes/login.ts` | -8, +3 | Security + Accessibility |
-| `src/browser/pages/modern-login.html` | -1 | Security (CSP) |
-| `src/node/routes/index.ts` | +9, +1 import | Security (auth) |
-| `src/browser/pages/login.html` | renamed | Accessibility |
+| File                                  | Lines Changed | Type of Change           |
+| ------------------------------------- | ------------- | ------------------------ |
+| `src/node/routes/logout.ts`           | +18           | Security fix             |
+| `src/node/routes/login.ts`            | -8, +3        | Security + Accessibility |
+| `src/browser/pages/modern-login.html` | -1            | Security (CSP)           |
+| `src/node/routes/index.ts`            | +9, +1 import | Security (auth)          |
+| `src/browser/pages/login.html`        | renamed       | Accessibility            |
 
 **Total:** 5 files, ~30 lines modified
 
@@ -301,13 +330,13 @@ async function logout() {
 
 ## Before vs After Security Posture
 
-| Vulnerability | Before | After |
-|--------------|--------|-------|
-| Logout CSRF | ❌ Vulnerable | ✅ Protected |
-| Rate Limit Bypass | ❌ Vulnerable | ✅ Fixed |
-| CSP Style Injection | ❌ Vulnerable | ✅ Protected |
+| Vulnerability           | Before         | After            |
+| ----------------------- | -------------- | ---------------- |
+| Logout CSRF             | ❌ Vulnerable  | ✅ Protected     |
+| Rate Limit Bypass       | ❌ Vulnerable  | ✅ Fixed         |
+| CSP Style Injection     | ❌ Vulnerable  | ✅ Protected     |
 | Metrics Info Disclosure | ❌ Unprotected | ✅ Auth Required |
-| Login Accessibility | ❌ WCAG Fail | ✅ WCAG AA Pass |
+| Login Accessibility     | ❌ WCAG Fail   | ✅ WCAG AA Pass  |
 
 ---
 
@@ -337,6 +366,7 @@ async function logout() {
 ## Verification
 
 All changes have been applied and are ready for:
+
 1. Code review
 2. Security testing
 3. Accessibility testing

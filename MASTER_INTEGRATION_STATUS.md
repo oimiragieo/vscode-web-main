@@ -1,4 +1,5 @@
 # Master Integration Status & Gap Analysis
+
 **Generated:** 2025-11-18
 **Repository:** vscode-web-main (code-server fork)
 **Analysis Type:** Complete codebase walkthrough with documentation verification
@@ -17,54 +18,54 @@ This document provides the **definitive status** of all features, integrations, 
 
 ## Integration Status Matrix
 
-| Feature | Code Exists | Integrated | Working | Documentation Accurate |
-|---------|-------------|------------|---------|----------------------|
-| **Core Functionality** |
-| VS Code in Browser | ✅ | ✅ | ✅ | ✅ |
-| Password Authentication | ✅ | ✅ | ✅ | ✅ |
-| Argon2 Password Hashing | ✅ | ✅ | ✅ | ✅ |
-| Worker Pool for Hashing | ✅ | ✅ | ✅ | ✅ |
+| Feature                       | Code Exists | Integrated | Working | Documentation Accurate       |
+| ----------------------------- | ----------- | ---------- | ------- | ---------------------------- |
+| **Core Functionality**        |
+| VS Code in Browser            | ✅          | ✅         | ✅      | ✅                           |
+| Password Authentication       | ✅          | ✅         | ✅      | ✅                           |
+| Argon2 Password Hashing       | ✅          | ✅         | ✅      | ✅                           |
+| Worker Pool for Hashing       | ✅          | ✅         | ✅      | ✅                           |
 | **Performance Optimizations** |
-| Brotli Compression | ✅ | ✅ | ✅ | ✅ |
-| HTTP/2 Support | ✅ | ✅ | ✅ | ✅ |
-| Settings Debouncing | ✅ | ✅ | ✅ | ✅ |
-| Service Worker | ✅ | ✅ | ✅ | ✅ |
-| Static File Caching | ✅ | ✅ | ✅ | ✅ |
-| **UI/UX** |
-| Modern Login Page | ✅ | ✅ | ✅ | ❌ (docs say not integrated) |
-| Old Login Page | ✅ | ✅ | ⚠️ | ❌ (accessibility issues) |
-| Design System CSS | ✅ | ✅ | ✅ | ✅ |
-| Error Pages | ✅ | ✅ | ✅ | ✅ |
-| **Monitoring** |
-| Prometheus Metrics | ✅ | ✅ | ✅ | ❌ (docs say not integrated) |
-| /metrics Endpoint | ✅ | ✅ | ✅ | ❌ (docs say not integrated) |
-| Monitoring Dashboard | ✅ | ✅ | ✅ | ❌ (docs say not integrated) |
-| **Security** |
-| Security Headers | ✅ | ✅ | ✅ | ❌ (docs say not integrated) |
-| HSTS | ✅ | ✅ | ✅ | ✅ |
-| Login Rate Limiting | ✅ | ✅ | ⚠️ | ⚠️ (has bugs) |
-| CSRF Protection (Core) | ✅ | ❌ | ❌ | ⚠️ (code exists, not used) |
-| Advanced Rate Limiting | ✅ | ❌ | ❌ | ❌ |
-| Input Sanitization Utils | ✅ | ⚠️ | ⚠️ | ❌ |
-| **Multi-User Services** |
-| AuthService | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| UserRepository | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| SessionStore | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| AuditLogger | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| UserIsolationManager | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| MultiUserConfig | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| **Plugin System** |
-| Plugin Architecture | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| PluginManager | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| BasePlugin | ✅ | ❌ | ❌ | ⚠️ (aspirational docs) |
-| **Extension Optimizations** |
-| ExtensionMemoryMonitor | ✅ | ❌ | ❌ | ❌ |
-| MessageCoalescer | ✅ | ❌ | ❌ | ❌ |
-| ExtensionCache | ✅ | ❌ | ❌ | ❌ |
-| **Deployment** |
-| Dockerfile.optimized | ✅ | ✅ | ✅ | ✅ |
-| docker-compose.yml | ✅ | ✅ | ✅ | ✅ |
-| Health Checks | ✅ | ✅ | ✅ | ✅ |
+| Brotli Compression            | ✅          | ✅         | ✅      | ✅                           |
+| HTTP/2 Support                | ✅          | ✅         | ✅      | ✅                           |
+| Settings Debouncing           | ✅          | ✅         | ✅      | ✅                           |
+| Service Worker                | ✅          | ✅         | ✅      | ✅                           |
+| Static File Caching           | ✅          | ✅         | ✅      | ✅                           |
+| **UI/UX**                     |
+| Modern Login Page             | ✅          | ✅         | ✅      | ❌ (docs say not integrated) |
+| Old Login Page                | ✅          | ✅         | ⚠️      | ❌ (accessibility issues)    |
+| Design System CSS             | ✅          | ✅         | ✅      | ✅                           |
+| Error Pages                   | ✅          | ✅         | ✅      | ✅                           |
+| **Monitoring**                |
+| Prometheus Metrics            | ✅          | ✅         | ✅      | ❌ (docs say not integrated) |
+| /metrics Endpoint             | ✅          | ✅         | ✅      | ❌ (docs say not integrated) |
+| Monitoring Dashboard          | ✅          | ✅         | ✅      | ❌ (docs say not integrated) |
+| **Security**                  |
+| Security Headers              | ✅          | ✅         | ✅      | ❌ (docs say not integrated) |
+| HSTS                          | ✅          | ✅         | ✅      | ✅                           |
+| Login Rate Limiting           | ✅          | ✅         | ⚠️      | ⚠️ (has bugs)                |
+| CSRF Protection (Core)        | ✅          | ❌         | ❌      | ⚠️ (code exists, not used)   |
+| Advanced Rate Limiting        | ✅          | ❌         | ❌      | ❌                           |
+| Input Sanitization Utils      | ✅          | ⚠️         | ⚠️      | ❌                           |
+| **Multi-User Services**       |
+| AuthService                   | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| UserRepository                | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| SessionStore                  | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| AuditLogger                   | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| UserIsolationManager          | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| MultiUserConfig               | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| **Plugin System**             |
+| Plugin Architecture           | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| PluginManager                 | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| BasePlugin                    | ✅          | ❌         | ❌      | ⚠️ (aspirational docs)       |
+| **Extension Optimizations**   |
+| ExtensionMemoryMonitor        | ✅          | ❌         | ❌      | ❌                           |
+| MessageCoalescer              | ✅          | ❌         | ❌      | ❌                           |
+| ExtensionCache                | ✅          | ❌         | ❌      | ❌                           |
+| **Deployment**                |
+| Dockerfile.optimized          | ✅          | ✅         | ✅      | ✅                           |
+| docker-compose.yml            | ✅          | ✅         | ✅      | ✅                           |
+| Health Checks                 | ✅          | ✅         | ✅      | ✅                           |
 
 **Legend:**
 ✅ = Fully working/accurate
@@ -78,9 +79,11 @@ This document provides the **definitive status** of all features, integrations, 
 The REALITY_CHECK_REPORT.md (dated 2025-11-17) contains **outdated information**. Here are the corrections:
 
 ### ❌ REPORT SAYS: "Modern Login Page - NOT USED"
+
 **✅ ACTUAL STATUS:** **INTEGRATED AND ACTIVE**
 
 **Evidence:**
+
 ```typescript
 // src/node/routes/login.ts:30-37
 let loginPage = "modern-login.html"
@@ -94,9 +97,11 @@ try {
 The modern login page IS the primary login page, with fallback to old only if modern doesn't exist.
 
 ### ❌ REPORT SAYS: "Security Module - NOT USED IN PRODUCTION"
+
 **✅ ACTUAL STATUS:** **INTEGRATED AND ACTIVE**
 
 **Evidence:**
+
 ```typescript
 // src/node/app.ts:76-81
 setupSecurity(router, {
@@ -111,9 +116,11 @@ app.use(securityHeaders())
 Security headers ARE applied to all requests in production.
 
 ### ❌ REPORT SAYS: "Monitoring Dashboard - NO ROUTE"
+
 **✅ ACTUAL STATUS:** **INTEGRATED WITH ROUTE**
 
 **Evidence:**
+
 ```typescript
 // src/node/routes/index.ts:195-200
 app.router.get("/monitoring-dashboard", async (req, res) => {
@@ -127,9 +134,11 @@ app.router.get("/monitoring-dashboard", async (req, res) => {
 Dashboard IS accessible at `/monitoring-dashboard`.
 
 ### ❌ REPORT SAYS: "/metrics endpoint - NOT REGISTERED"
+
 **✅ ACTUAL STATUS:** **INTEGRATED AND ACTIVE**
 
 **Evidence:**
+
 ```typescript
 // src/node/routes/index.ts:192
 app.router.get("/metrics", metricsHandler)
@@ -164,6 +173,7 @@ Metrics endpoint IS registered at `/metrics`.
 ### Tier 3: Unintegrated Code (Exists but Not Used) ❌
 
 **Multi-User Services (4,396 lines):**
+
 - AuthService.ts (350+ lines)
 - UserRepository.ts (200+ lines)
 - SessionStore.ts (400+ lines)
@@ -172,14 +182,17 @@ Metrics endpoint IS registered at `/metrics`.
 - MultiUserConfig.ts (250+ lines)
 
 **Plugin System (184 lines):**
+
 - plugin.ts - Complete implementation, never instantiated
 
 **Extension Optimizations:**
+
 - ExtensionMemoryMonitor.ts
 - MessageCoalescer.ts
 - ExtensionCache.ts
 
 **Advanced Security:**
+
 - RateLimiter.ts (advanced)
 - ExtensionSignatureVerifier.ts
 
@@ -192,6 +205,7 @@ Metrics endpoint IS registered at `/metrics`.
 **Problem:** Documentation describes aspirational state, not current state.
 
 **Files Affected:**
+
 - README.md - Claims features not actually integrated
 - REALITY_CHECK_REPORT.md - Outdated, says working features aren't integrated
 - GETTING_STARTED.md - Marks working features as experimental
@@ -205,11 +219,13 @@ Metrics endpoint IS registered at `/metrics`.
 **Problem:** Both modern and old login pages coexist.
 
 **Files:**
+
 - `src/browser/pages/login.html` - Old, inaccessible (fails WCAG AA)
 - `src/browser/pages/modern-login.html` - New, accessible
 - `src/node/routes/login.ts:30-37` - Fallback logic
 
 **Impact:**
+
 - Confusion about which is used
 - Old page has zero accessibility
 - Maintenance burden
@@ -221,6 +237,7 @@ Metrics endpoint IS registered at `/metrics`.
 **Problem:** CSRF class exists but only partially used.
 
 **Files:**
+
 - `src/core/security.ts` - CSRFProtection class (fully implemented)
 - `src/node/routes/login.ts` - No CSRF token
 - `src/node/routes/logout.ts` - No CSRF protection (GET request!)
@@ -243,7 +260,7 @@ if (isPasswordValid) {
 
 // Note: successful logins should not count against the RateLimiter
 // which is why this logic must come after the successful login logic
-limiter.removeToken()  // ❌ Only removes on FAILURE
+limiter.removeToken() // ❌ Only removes on FAILURE
 ```
 
 **Impact:** Allows brute force with correct password (no slowdown)
@@ -255,6 +272,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **Problem:** 4,396 lines of multi-user code exists but completely unintegrated.
 
 **What's Missing:**
+
 - No CLI flags to enable multi-user mode
 - No route registration
 - No imports in main application files
@@ -271,6 +289,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **File:** `src/core/plugin.ts` (184 lines)
 
 **What's Missing:**
+
 - No PluginManager instantiation in app.ts or main.ts
 - No plugin loading mechanism
 - No plugin registry
@@ -287,8 +306,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **File:** `src/browser/pages/modern-login.html:7`
 
 ```html
-<meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; style-src 'self' 'unsafe-inline'; ..." />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; ..." />
 ```
 
 **Impact:** Style injection attacks possible
@@ -302,6 +320,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **File:** `src/node/services/monitoring/PrometheusMetrics.ts`
 
 **What's Missing:**
+
 - No request latency tracking
 - No active connection count
 - No error rate metrics
@@ -318,6 +337,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **File:** `src/browser/pages/login.html`
 
 **Issues:**
+
 - No ARIA labels
 - No screen reader support
 - No keyboard navigation
@@ -333,6 +353,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **Problem:** No validation of environment variables or config file values.
 
 **Files:**
+
 - `src/node/cli.ts` - Parses config but doesn't validate
 - `src/node/main.ts` - Uses values without checking
 
@@ -347,6 +368,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 **From UX Analysis (see UX_ANALYSIS_REPORT.md for details):**
 
 ### Critical UX Issues (5)
+
 1. Old login page inaccessible (WCAG AA failure)
 2. CSP unsafe-inline vulnerability
 3. Asymmetric rate limiting (security bug)
@@ -354,6 +376,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 5. Dual login systems create confusion
 
 ### High Priority UX Issues (8)
+
 - Password recovery mechanism missing
 - Generic error messages with no guidance
 - Modern login references wrong aria-labelledby ID
@@ -364,9 +387,11 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - Logout CSRF vulnerability
 
 ### Medium Priority UX Issues (22)
+
 - See UX_ANALYSIS_SUMMARY.md for complete list
 
 ### Low Priority UX Issues (5)
+
 - Minor polish items
 
 **Total: 40 UX issues identified**
@@ -439,6 +464,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 ### Build System ✅
 
 **Working:**
+
 - `npm run build:vscode` - Compiles VS Code (10-30 min)
 - `npm run build` - Compiles TypeScript (1-2 min)
 - `npm run watch` - Development watch mode
@@ -446,6 +472,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - `npm run test:e2e` - E2E tests with Playwright
 
 **Issues:**
+
 - No build validation (doesn't check if build succeeded)
 - No pre-commit hooks
 - No automatic linting before build
@@ -453,12 +480,14 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 ### Docker Deployment ✅
 
 **Dockerfile.optimized:**
+
 - Multi-stage build ✅
 - Non-root user ✅
 - Health check ✅
 - Minimal attack surface ✅
 
 **docker-compose.yml:**
+
 - Resource limits ✅
 - Health checks ✅
 - Volume management ✅
@@ -474,18 +503,21 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 ### Test Coverage
 
 **Unit Tests:**
+
 - Common utilities: ✅ Covered
 - Node utilities: ✅ Covered
 - Optimizations: ✅ Covered (but testing isolated code)
 - Week 2-6 POC tests: ✅ Exist (423 tests)
 
 **E2E Tests:**
+
 - Login flow: ✅ Covered
 - Terminal: ✅ Covered
 - Extensions: ✅ Covered
 - File operations: ✅ Covered
 
 **Coverage Gap:**
+
 - No integration tests for multi-user services (they're not integrated)
 - No tests for plugin system (it's not integrated)
 - Security middleware tests exist but are isolated
@@ -499,6 +531,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 ### Existing Routes
 
 **Public Routes (no auth):**
+
 - `GET /login` - Login page
 - `POST /login` - Login submission
 - `GET /healthz` - Health check
@@ -506,6 +539,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - `GET /security.txt` - Security contact
 
 **Authenticated Routes:**
+
 - `GET /` - VS Code IDE
 - `GET /logout` - ⚠️ Should be POST
 - `GET /metrics` - ⚠️ Should be protected
@@ -607,7 +641,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
    - Add LRU eviction
 
 5. **Standardize Environment Variables** (3 hours)
-   - Choose consistent prefix (IDE_ vs none)
+   - Choose consistent prefix (IDE\_ vs none)
    - Update all code
    - Update docs
    - Add migration guide
@@ -648,6 +682,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 ## Success Metrics
 
 ### Security Metrics
+
 - [ ] Zero CSRF vulnerabilities
 - [ ] All state-changing operations require CSRF tokens
 - [ ] Rate limiting prevents brute force
@@ -655,6 +690,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - [ ] All sensitive routes protected
 
 ### Accessibility Metrics
+
 - [ ] WCAG 2.1 Level AA compliance
 - [ ] All forms have proper labels
 - [ ] All interactive elements keyboard accessible
@@ -662,6 +698,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - [ ] Color contrast ratios compliant
 
 ### Documentation Metrics
+
 - [ ] All features accurately documented
 - [ ] Experimental features clearly marked
 - [ ] Setup instructions complete and tested
@@ -669,6 +706,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - [ ] API fully documented
 
 ### Performance Metrics
+
 - [ ] Static cache has memory limits
 - [ ] All requests have timeouts
 - [ ] Metrics collected for key operations
@@ -676,6 +714,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 - [ ] Response times < 200ms (p95)
 
 ### Code Quality Metrics
+
 - [ ] Test coverage > 80%
 - [ ] All routes have JSDoc
 - [ ] No dead code (or moved to experimental branch)
@@ -687,6 +726,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 ## Files Requiring Immediate Attention
 
 ### Critical (Week 1)
+
 1. `src/node/routes/logout.ts` - Add CSRF, change to POST
 2. `src/node/routes/login.ts:104-115` - Fix rate limiter bug
 3. `src/browser/pages/modern-login.html:7` - Remove unsafe-inline
@@ -694,6 +734,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 5. `src/node/routes/index.ts:195,192` - Add auth protection
 
 ### High Priority (Week 2-3)
+
 6. `README.md` - Update to reflect actual state
 7. `REALITY_CHECK_REPORT.md` - Update or archive
 8. `GETTING_STARTED.md` - Mark experimental features
@@ -701,6 +742,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 10. `src/browser/pages/error.html` - Improve error messages
 
 ### Medium Priority (Week 4-6)
+
 11. `src/core/security.ts` - Integrate CSRF fully
 12. `src/node/services/monitoring/PrometheusMetrics.ts` - Add instrumentation
 13. `.env.example` - Standardize var names
@@ -714,6 +756,7 @@ limiter.removeToken()  // ❌ Only removes on FAILURE
 This codebase is in **better shape than the documentation suggests**. Many features are integrated and working that docs claim are not. However, there are critical security and accessibility issues that need immediate attention.
 
 **Current State:**
+
 - Core functionality: ✅ Solid
 - Performance: ✅ Well optimized
 - Security: ⚠️ Good foundation, critical bugs
@@ -722,12 +765,14 @@ This codebase is in **better shape than the documentation suggests**. Many featu
 - Multi-user/Plugin: ❌ Unintegrated scaffolding
 
 **Recommendation:**
+
 1. Fix critical security issues (Week 1)
 2. Update documentation to match reality (Week 2)
 3. Polish UX and integrate metrics (Week 3-6)
 4. Make architectural decision on multi-user/plugin (Month 2-3)
 
 **Estimated Effort:**
+
 - Critical fixes: 7 hours
 - High priority: 17 hours
 - Medium priority: 17 hours

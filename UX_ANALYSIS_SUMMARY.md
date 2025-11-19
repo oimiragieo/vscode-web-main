@@ -4,45 +4,50 @@
 
 ## Quick Stats
 
-| Category | Critical | High | Medium | Low | Total |
-|----------|----------|------|--------|-----|-------|
-| Login Flow | 0 | 2 | 2 | 1 | 5 |
-| Error Handling | 1 | 1 | 2 | 0 | 4 |
-| Accessibility | 1 | 2 | 3 | 0 | 6 |
-| Performance | 0 | 1 | 3 | 1 | 5 |
-| Configuration | 0 | 0 | 4 | 0 | 4 |
-| Documentation | 1 | 0 | 2 | 1 | 4 |
-| API/Routes | 0 | 0 | 3 | 2 | 5 |
-| Security | 2 | 2 | 3 | 0 | 7 |
-| **TOTALS** | **5** | **8** | **22** | **5** | **40** |
+| Category       | Critical | High  | Medium | Low   | Total  |
+| -------------- | -------- | ----- | ------ | ----- | ------ |
+| Login Flow     | 0        | 2     | 2      | 1     | 5      |
+| Error Handling | 1        | 1     | 2      | 0     | 4      |
+| Accessibility  | 1        | 2     | 3      | 0     | 6      |
+| Performance    | 0        | 1     | 3      | 1     | 5      |
+| Configuration  | 0        | 0     | 4      | 0     | 4      |
+| Documentation  | 1        | 0     | 2      | 1     | 4      |
+| API/Routes     | 0        | 0     | 3      | 2     | 5      |
+| Security       | 2        | 2     | 3      | 0     | 7      |
+| **TOTALS**     | **5**    | **8** | **22** | **5** | **40** |
 
 ## Top 5 Critical Issues
 
 ### 1. Old Login Page Inaccessible (WCAG AA Failure)
+
 **File:** `src/browser/pages/login.html`  
 **Problem:** Zero accessibility features; completely unusable by screen reader users  
 **Fix:** Disable immediately; use modern-login.html exclusively  
 **Time:** 1 hour
 
 ### 2. CSP unsafe-inline Vulnerability
+
 **File:** `src/browser/pages/modern-login.html` (Line 7)  
 **Problem:** Defeats CSP protection; allows style injection attacks  
 **Fix:** Remove 'unsafe-inline'; move styles to `<link>` tags  
 **Time:** 2 hours
 
 ### 3. Asymmetric Rate Limiting
+
 **File:** `src/node/routes/login.ts` (Lines 104-115)  
 **Problem:** Doesn't prevent brute force with correct password  
 **Fix:** Consume tokens for both success and failure  
 **Time:** 1 hour
 
 ### 4. No CSRF Token on Logout
+
 **File:** `src/node/routes/logout.ts`  
 **Problem:** User can be logged out by malicious website  
 **Fix:** Change to POST; add CSRF token  
 **Time:** 2 hours
 
 ### 5. Dual Login Systems (Incomplete Integration)
+
 **File:** `src/node/routes/login.ts` (Lines 29-37)  
 **Problem:** Modern and legacy versions create confusion and inefficiency  
 **Fix:** Remove fallback logic; commit to one version  
@@ -53,6 +58,7 @@
 ## Issue Breakdown by Category
 
 ### 1. LOGIN FLOW (5 issues)
+
 - Missing password recovery mechanism
 - Dual login systems with fallback logic
 - Rate limiting feedback doesn't show countdown
@@ -60,12 +66,14 @@
 - No loading state in old login
 
 ### 2. ERROR HANDLING (4 issues)
+
 - Generic error messages with no recovery guidance
 - Inconsistent styling between login versions
 - No error recovery suggestions after failed login
 - Service worker errors logged silently
 
 ### 3. ACCESSIBILITY (6 issues)
+
 - Old login lacks all ARIA attributes (CRITICAL)
 - Aria-labelledby references wrong ID
 - Hidden username field using conflicting patterns
@@ -74,6 +82,7 @@
 - Password toggle aria-label updates after type changes
 
 ### 4. PERFORMANCE (5 issues)
+
 - Static file cache never expires
 - Loading overlay not dismissible or timeout-able
 - No request timeout on login route
@@ -81,18 +90,21 @@
 - Monitoring dashboard unprotected
 
 ### 5. CONFIGURATION UX (4 issues)
+
 - Environment variable names inconsistent (IDE_PASSWORD vs PASSWORD)
 - No configuration validation on startup
 - Configuration precedence undocumented
 - CLI help doesn't explain security rationale
 
 ### 6. DOCUMENTATION UX (4 issues)
+
 - Experimental features not clearly marked throughout guide (CRITICAL)
 - No login troubleshooting FAQ
 - Security documentation incomplete
 - No architecture diagrams
 
 ### 7. API/ROUTE DESIGN (5 issues)
+
 - Inconsistent route naming conventions
 - No API versioning
 - Routes lack JSDoc documentation
@@ -100,6 +112,7 @@
 - CORS policy undocumented
 
 ### 8. SECURITY UX (7 issues)
+
 - **Password toggle race condition** - May briefly expose password
 - **CSP unsafe-inline** - Defeats security (CRITICAL)
 - **No CSRF on logout** - Users can be logged out remotely
@@ -113,6 +126,7 @@
 ## 30-Day Action Plan
 
 ### Week 1: Critical Security & Accessibility (40 hours)
+
 **Goal:** Fix CRITICAL vulnerabilities and accessibility failures
 
 - **Day 1-2 (16h):** Critical Security
@@ -133,6 +147,7 @@
   - Security testing
 
 ### Week 2: UX & Error Handling (40 hours)
+
 **Goal:** Improve user feedback and error recovery
 
 - **Day 6-7 (16h):** Error Handling
@@ -153,6 +168,7 @@
   - Document configuration precedence
 
 ### Week 3: Documentation (40 hours)
+
 **Goal:** Clear up confusion and provide user guidance
 
 - **Day 11-12 (16h):** Documentation Audit
@@ -173,6 +189,7 @@
   - Accessibility testing
 
 ### Week 4: Optimization & Monitoring (40 hours)
+
 **Goal:** Performance and observability improvements
 
 - **Day 16-17 (16h):** Performance
@@ -197,6 +214,7 @@
 ## Implementation Priority by Effort/Impact
 
 ### High Impact, Low Effort (Do First!)
+
 1. Disable old login.html
 2. Remove unsafe-inline from CSP
 3. Add X-Frame-Options header
@@ -205,6 +223,7 @@
 6. Fix aria-labelledby ID
 
 ### High Impact, Medium Effort (Do Second)
+
 1. Implement password reset workflow
 2. Add configuration validation
 3. Improve error messages
@@ -212,6 +231,7 @@
 5. Generate API docs
 
 ### Medium Impact, Low Effort (Quick Wins)
+
 1. Add error ID tracking
 2. Add rate limit countdown
 3. Fix aria-describedby timing
@@ -219,6 +239,7 @@
 5. Standardize env var names
 
 ### Lower Priority (Do Later)
+
 1. API versioning strategy
 2. Architecture diagrams
 3. Auth cache optimization
