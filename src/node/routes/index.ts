@@ -12,10 +12,11 @@ import { AuthType, DefaultedArgs } from "../cli"
 import { commit, rootPath } from "../constants"
 import { Heart } from "../heart"
 import { authenticated, redirect } from "../http"
-import { metricsHandler } from "../services/monitoring/PrometheusMetrics"
+import { metricsHandler, metricsMiddleware, startMetricsCollection } from "../services/monitoring/PrometheusMetrics"
 import { CoderSettings, SettingsProvider } from "../settings"
 import { UpdateProvider } from "../update"
 import { getMediaMime, paths } from "../util"
+import { requestTimeout } from "../utils/RequestTimeout"
 import type { WebsocketRequest } from "../wsRouter"
 import * as domainProxy from "./domainProxy"
 import { errorHandler, wsErrorHandler } from "./errors"
@@ -108,6 +109,32 @@ export const register = async (
 
   app.router.use(common)
   app.wsRouter.use(common)
+
+  // REQUEST TIMEOUT: Prevent hanging requests (Week 5 optimization)
+  // Automatically terminates requests that exceed 30 second threshold
+  app.router.use(
+    requestTimeout({
+      timeout: 30000, // 30 seconds
+      onTimeout: (req, res) => {
+        logger.warn(`Request timeout: ${req.method} ${req.path}`)
+        if (!res.headersSent) {
+          res.status(408).json({
+            error: "Request Timeout",
+            message: "Request exceeded 30 second timeout",
+            path: req.path,
+            method: req.method,
+          })
+        }
+      },
+    }),
+  )
+  logger.info("✅ Request timeout middleware activated (30s timeout)")
+
+  // METRICS: Activate HTTP request tracking middleware (Week 6 optimization)
+  // Collects request counts, duration histograms, and response status codes
+  // Metrics are exposed at /metrics endpoint in Prometheus format
+  app.router.use(metricsMiddleware())
+  logger.info("✅ Metrics middleware activated - HTTP request tracking enabled")
 
   app.router.use(/.*/, async (req, res, next) => {
     // If we're handling TLS ensure all requests are redirected to HTTPS.
@@ -234,10 +261,20 @@ export const register = async (
   app.router.use(errorHandler)
   app.wsRouter.use(wsErrorHandler)
 
+  // METRICS: Start periodic system metrics collection (every 10 seconds)
+  // Collects CPU, memory, and system resource metrics
+  const metricsInterval = startMetricsCollection(10000)
+  logger.info("✅ Periodic metrics collection started (10s interval)")
+
   return {
     disposeRoutes: () => {
       heart.dispose()
       vscode.dispose()
+      // Stop metrics collection on shutdown
+      if (metricsInterval) {
+        clearInterval(metricsInterval)
+        logger.info("Metrics collection stopped")
+      }
     },
     heart,
   }

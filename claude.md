@@ -226,20 +226,20 @@ Express application factory:
 
 ### Performance & Optimization Services (Weeks 1-6)
 
-| Service                        | Location                                                   | Purpose                                           | Status                                             |
-| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- |
-| **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated                                      |
-| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ❌ Orphaned                                        |
-| **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ❌ Orphaned                                        |
-| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  | ❌ Orphaned                                        |
-| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ❌ Orphaned                                        |
-| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ❌ Orphaned                                        |
-| **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   | ⚠️ Partial (endpoint works, middleware not active) |
-| **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   | ❌ Orphaned (login has own implementation)         |
-| **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts instead)       |
-| **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                        |
+| Service                        | Location                                                   | Purpose                                           | Status                                                        |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
+| **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated                                                 |
+| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ✅ Available (utility class, not middleware)                  |
+| **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ✅ Integrated (middleware + utilities active)                 |
+| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  | ❌ Orphaned                                                   |
+| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ❌ Orphaned                                                   |
+| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ❌ Orphaned                                                   |
+| **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   | ✅ Fully Integrated (middleware + periodic collection active) |
+| **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   | ❌ Orphaned (login has own implementation)                    |
+| **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts instead)                  |
+| **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                                   |
 
-**Note:** Most performance and security services (8 of 10) are orphaned - code exists but is not imported or used. Only PasswordWorkerPool is fully integrated. PrometheusMetrics endpoint works but middleware is not active.
+**Note:** Most performance services are now integrated! ✅ Integrated: PasswordWorkerPool, PrometheusMetrics (full), RequestTimeout middleware. ⚠️ Available as utilities: RequestBatcher. ❌ Still orphaned: Extension optimizations (6 of 10 services).
 
 ### Multi-User Services ❌ (Not Integrated - Orphaned)
 
@@ -291,14 +291,20 @@ Response to Client
 
 \*Redirects to `/login` if not authenticated
 
-### Monitoring Endpoints ⚠️ (Partially Integrated)
+### Monitoring Endpoints ✅ (Fully Integrated)
 
-| Endpoint                | Method | Auth | Purpose                                 | Status                                        |
-| ----------------------- | ------ | ---- | --------------------------------------- | --------------------------------------------- |
-| `/metrics`              | GET    | Yes  | Prometheus metrics (Grafana compatible) | ⚠️ Basic metrics only (middleware not active) |
-| `/monitoring-dashboard` | GET    | Yes  | Real-time metrics dashboard (HTML)      | ✅ Fully functional                           |
+| Endpoint                | Method | Auth | Purpose                                 | Status                                      |
+| ----------------------- | ------ | ---- | --------------------------------------- | ------------------------------------------- |
+| `/metrics`              | GET    | Yes  | Prometheus metrics (Grafana compatible) | ✅ Fully functional (HTTP + system metrics) |
+| `/monitoring-dashboard` | GET    | Yes  | Real-time metrics dashboard (HTML)      | ✅ Fully functional                         |
 
-**Note:** Both endpoints require authentication. The `/metrics` endpoint works but only returns basic system metrics (CPU, memory). HTTP request metrics are NOT collected because `metricsMiddleware()` is not activated. See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md#4-monitoring--metrics-298-lines----partially-integrated) for integration details.
+**Note:** Both endpoints require authentication. The `/metrics` endpoint now collects comprehensive metrics:
+
+- **HTTP Metrics**: Request counts, duration histograms, response status codes (per path/method)
+- **System Metrics**: CPU usage, memory (RSS, heap, external), system memory
+- **Performance**: Periodic collection every 10 seconds
+- **Format**: Prometheus exposition format (Grafana compatible)
+- **Integrated**: 2025-11-19 - Middleware activated, periodic collection enabled
 
 ### Multi-User API Endpoints ❌ (Not Integrated - Design Spec Only)
 
