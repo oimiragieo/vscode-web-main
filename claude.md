@@ -3,13 +3,13 @@
 > **📋 Documentation Status Indicators:**
 >
 > - ✅ **Working** - Feature is implemented, integrated, and actively used in production
-> - ⚠️ **Partial** - Feature exists and partially works, missing key integration
+> - ⚠️ **Available** - Feature is ready but not activated/used automatically
 > - 🚧 **Built** - Code is complete and tested, but NOT integrated into main application
 > - ❌ **Orphaned** - Code exists but is not imported or used anywhere
 > - 📋 **Planned** - Design/documentation exists, implementation needed
 >
-> **Latest Comprehensive Audit**: See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md)
-> **Previous Audits**: [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md), [REALITY_CHECK_REPORT.md](REALITY_CHECK_REPORT.md)
+> **Latest Comprehensive Audit**: See [CORRECTED_COMPREHENSIVE_AUDIT_2025-11-19.md](CORRECTED_COMPREHENSIVE_AUDIT_2025-11-19.md) (supersedes previous audit)
+> **Previous Audits**: [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md) (contains inaccuracies), [AUDIT_FINDINGS.md](AUDIT_FINDINGS.md), [REALITY_CHECK_REPORT.md](REALITY_CHECK_REPORT.md)
 
 ## Overview
 
@@ -226,20 +226,28 @@ Express application factory:
 
 ### Performance & Optimization Services (Weeks 1-6)
 
-| Service                        | Location                                                   | Purpose                                           | Status                                                        |
-| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
-| **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated                                                 |
-| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ✅ Available (utility class, not middleware)                  |
-| **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ✅ Integrated (middleware + utilities active)                 |
-| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  | ✅ Integrated (monitors vscode-server process)                |
-| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ✅ Available (utility classes for IPC batching)               |
-| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ✅ Integrated (active with 100 extension limit)               |
-| **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   | ✅ Fully Integrated (middleware + periodic collection active) |
-| **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   | ❌ Orphaned (login has own implementation)                    |
-| **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts instead)                  |
-| **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                                   |
+| Service                        | Location                                                   | Purpose                                           | Integration Status                                         |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated (util.ts:149,169)                            |
+| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ⚠️ Available (utility class, not activated as middleware)  |
+| **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ✅ Integrated (routes/index.ts:116-131)                    |
+| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection (512MB limit)    | ✅ Integrated (routes/index.ts:274)                        |
+| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ✅ Available (initialized but not auto-enabled for IPC)    |
+| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ✅ Integrated (routes/index.ts:274, 100 extension limit)   |
+| **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   | ✅ Fully Integrated (routes/index.ts:137,267)              |
+| **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   | ❌ Orphaned (login has custom implementation)              |
+| **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts via app.ts:78 instead) |
+| **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                                |
 
-**Note:** Performance services are now highly integrated! ✅ Fully Integrated (8 of 10): PasswordWorkerPool, PrometheusMetrics, RequestTimeout, ExtensionCache, ExtensionMemoryMonitor. ⚠️ Available as utilities: RequestBatcher, MessageCoalescer. ❌ Still orphaned (3 of 10): Advanced security services only.
+**Integration Summary:** ✅ **7 of 10 Fully Integrated** (PasswordWorkerPool, RequestTimeout, ExtensionMemoryMonitor, ExtensionCache, MessageCoalescer, PrometheusMetrics, plus security headers from core/security.ts). ⚠️ **1 Available** (RequestBatcher ready but not activated). ❌ **2 Orphaned** (Advanced security services RateLimiter and ExtensionSignatureVerifier not used).
+
+**Evidence:**
+
+- Extension optimizations initialized at `src/node/routes/index.ts:274` via `initializeExtensionOptimizations()`
+- Metrics middleware active at `src/node/routes/index.ts:137` via `metricsMiddleware()`
+- Periodic metrics collection at `src/node/routes/index.ts:267` via `startMetricsCollection(10000)`
+- Request timeout middleware at `src/node/routes/index.ts:116-131`
+- Security integration at `src/node/app.ts:78` via `setupSecurity()`
 
 ### Multi-User Services ❌ (Not Integrated - Orphaned)
 
@@ -293,18 +301,27 @@ Response to Client
 
 ### Monitoring Endpoints ✅ (Fully Integrated)
 
-| Endpoint                | Method | Auth | Purpose                                 | Status                                      |
-| ----------------------- | ------ | ---- | --------------------------------------- | ------------------------------------------- |
-| `/metrics`              | GET    | Yes  | Prometheus metrics (Grafana compatible) | ✅ Fully functional (HTTP + system metrics) |
-| `/monitoring-dashboard` | GET    | Yes  | Real-time metrics dashboard (HTML)      | ✅ Fully functional                         |
+| Endpoint                | Method | Auth | Purpose                                 | Integration                         |
+| ----------------------- | ------ | ---- | --------------------------------------- | ----------------------------------- |
+| `/metrics`              | GET    | Yes  | Prometheus metrics (Grafana compatible) | ✅ Active (routes/index.ts:221-226) |
+| `/monitoring-dashboard` | GET    | Yes  | Real-time metrics dashboard (HTML)      | ✅ Active (routes/index.ts:230-238) |
 
-**Note:** Both endpoints require authentication. The `/metrics` endpoint now collects comprehensive metrics:
+**Authentication:** Both endpoints require authentication (redirects to `/login` if not authenticated)
 
-- **HTTP Metrics**: Request counts, duration histograms, response status codes (per path/method)
-- **System Metrics**: CPU usage, memory (RSS, heap, external), system memory
-- **Performance**: Periodic collection every 10 seconds
-- **Format**: Prometheus exposition format (Grafana compatible)
-- **Integrated**: 2025-11-19 - Middleware activated, periodic collection enabled
+**Metrics Collection Status:**
+
+- ✅ **HTTP Request Tracking**: Middleware active at `routes/index.ts:137` via `metricsMiddleware()`
+- ✅ **System Metrics**: Periodic collection at `routes/index.ts:267` via `startMetricsCollection(10000)` every 10 seconds
+- ✅ **Extension Metrics**: Integrated via extension optimizations at `routes/index.ts:274`
+
+**Metrics Available:**
+
+- **HTTP**: `http_requests_total`, `http_request_duration_ms` (histogram), `http_responses_total` (per path, method, status)
+- **System**: `process_cpu_usage_percent`, `process_memory_rss_bytes`, `process_memory_heap_bytes`, `system_memory_free_bytes`
+- **Performance**: `active_connections`, `cache_hits_total`, `session_count`
+- **Extensions**: `extension_cache_size`, `extension_memory_usage_mb`, `extension_cache_hit_rate`
+
+**Format:** Prometheus exposition format (compatible with Grafana, Prometheus, DataDog, etc.)
 
 ### Multi-User API Endpoints ❌ (Not Integrated - Design Spec Only)
 

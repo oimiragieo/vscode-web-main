@@ -105,7 +105,11 @@ src/browser/
 
 **Purpose:** Legacy login page (original design)
 
-**Features:**
+**Status:** ❌ **DEPRECATED - NOT USED**
+
+The application now uses `modern-login.html` as confirmed in `src/node/routes/login.ts:32`.
+
+**Original Features (for reference):**
 
 - Simple, functional login form
 - Password input field
@@ -113,14 +117,7 @@ src/browser/
 - Error message display
 - Redirect on successful authentication
 
-**Template Variables:**
-
-- `{{BASE}}` - Base path for assets
-- `{{CS_STATIC_BASE}}` - Static asset base path
-- `{{ERROR}}` - Error message to display
-- `{{I18N_*}}` - Internationalization strings
-
-**Note:** Being replaced by modern-login.html for better UX
+**Migration:** Fully replaced by modern-login.html (WCAG 2.1 AA compliant, accessible design)
 
 ---
 
@@ -140,6 +137,10 @@ src/browser/
 ### modern-login.html
 
 **Purpose:** Modern redesigned login page with enhanced UX
+
+**Status:** ✅ **ACTIVE - CURRENTLY USED**
+
+Confirmed in use at `src/node/routes/login.ts:32` where the application loads `modern-login.html` instead of the legacy login page.
 
 **Features:**
 
