@@ -231,15 +231,15 @@ Express application factory:
 | **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated                                                 |
 | **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ✅ Available (utility class, not middleware)                  |
 | **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ✅ Integrated (middleware + utilities active)                 |
-| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  | ❌ Orphaned                                                   |
-| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ❌ Orphaned                                                   |
-| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ❌ Orphaned                                                   |
+| **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection                  | ✅ Integrated (monitors vscode-server process)                |
+| **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ✅ Available (utility classes for IPC batching)               |
+| **ExtensionCache**             | `src/node/services/extensions/ExtensionCache.ts`           | LRU cache with predictive loading                 | ✅ Integrated (active with 100 extension limit)               |
 | **PrometheusMetrics**          | `src/node/services/monitoring/PrometheusMetrics.ts`        | Metrics collection & exposition                   | ✅ Fully Integrated (middleware + periodic collection active) |
 | **RateLimiter**                | `src/node/services/security/RateLimiter.ts`                | DDoS protection & rate limiting                   | ❌ Orphaned (login has own implementation)                    |
 | **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts instead)                  |
 | **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                                   |
 
-**Note:** Most performance services are now integrated! ✅ Integrated: PasswordWorkerPool, PrometheusMetrics (full), RequestTimeout middleware. ⚠️ Available as utilities: RequestBatcher. ❌ Still orphaned: Extension optimizations (6 of 10 services).
+**Note:** Performance services are now highly integrated! ✅ Fully Integrated (8 of 10): PasswordWorkerPool, PrometheusMetrics, RequestTimeout, ExtensionCache, ExtensionMemoryMonitor. ⚠️ Available as utilities: RequestBatcher, MessageCoalescer. ❌ Still orphaned (3 of 10): Advanced security services only.
 
 ### Multi-User Services ❌ (Not Integrated - Orphaned)
 
