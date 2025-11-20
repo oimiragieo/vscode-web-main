@@ -1,58 +1,59 @@
-# VSCode Web IDE 🚀
+# VSCode Web Server
 
-**A modern, modular, and production-ready web-based IDE powered by VS Code.**
+**Run VS Code in your browser with enhanced security, performance optimizations, and production-ready deployment.**
 
-Run VS Code in your browser with enhanced security, professional UI, and easy integration into any application.
+A production-ready web-based VS Code server built on [code-server](https://github.com/coder/code-server) with security enhancements, performance optimizations, and modern deployment options.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen)](https://nodejs.org)
+[![Node Version](https://img.shields.io/badge/node-22.x-brightgreen)](https://nodejs.org)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://docker.com)
 
 ---
 
-## ✨ Features
+## Features
 
-### 🎨 Modern Professional UI
+### Core Functionality
 
-- **Beautiful Design**: Completely redesigned with modern aesthetics
-- **Responsive**: Works flawlessly on desktop, tablet, and mobile
-- **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation
-- **Dark Mode**: Auto-switching dark/light themes
-- **Smooth Animations**: Professional loading states and transitions
+- **Full VS Code Experience**: Complete VS Code running in your browser
+- **Terminal Access**: Integrated terminal with full shell access
+- **Extension Support**: Install and use VS Code extensions
+- **File Operations**: Full file system access and operations
+- **Port Forwarding**: Forward ports for web development
+- **Service Worker**: Offline capability and improved caching
 
-### 🔌 Modular Architecture
+### Security & Authentication
 
-- **Plugin System**: Extend functionality with custom plugins
-- **SDK Support**: Easy integration as NPM package
-- **Dependency Injection**: Clean, testable architecture
-- **Event-Driven**: Hook into lifecycle events
+- **Argon2 Password Hashing**: Industry-standard password security with worker pool for non-blocking operation
+- **Security Headers**: Comprehensive security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
+- **Rate Limiting**: Protection against brute-force attacks on login
+- **HTTPS/TLS Support**: Built-in support for custom SSL certificates
+- **Request Timeout Protection**: 30-second timeout to prevent resource exhaustion
 
-### 🔒 Enhanced Security
+### Performance Optimizations (Active)
 
-- **CSRF Protection**: Built-in token-based protection
-- **Security Headers**: CSP, HSTS, X-Frame-Options, and more
-- **Input Sanitization**: Comprehensive XSS prevention
-- **Rate Limiting**: Brute-force protection
-- **Argon2 Hashing**: Strong password hashing
+- **Brotli Compression**: 40-45% bandwidth reduction for faster load times
+- **HTTP/2 Support**: Modern protocol with HTTP/1.1 fallback
+- **Static File Caching**: Request deduplication for frequently accessed files
+- **Settings Debouncing**: 98% reduction in disk writes
+- **Request Batching**: Batched processing for static file requests
 
-### 📦 Easy Deployment
+### Monitoring & Observability
 
-- **Docker Ready**: Optimized multi-stage Dockerfile
-- **Kubernetes Support**: Helm charts and manifests
-- **Docker Compose**: Production-ready configuration
-- **Multi-Platform**: Linux, macOS, Windows support
-- **Cloud Native**: Works with AWS, GCP, Azure
+- **Prometheus Metrics**: `/metrics` endpoint for monitoring integration
+- **Health Checks**: `/healthz` endpoint for container orchestration
+- **Audit Logging**: File-based audit trail with daily rotation
+- **Performance Tracking**: HTTP request tracking and system metrics
 
-### ⚡ Performance Optimized
+### Deployment Ready
 
-- **Fast Loading**: Optimized bundle sizes
-- **Caching**: Smart caching strategies
-- **Health Checks**: Built-in health monitoring
-- **Resource Limits**: Configurable limits
+- **Docker**: Optimized multi-stage Dockerfile with security hardening
+- **Docker Compose**: Production-ready configuration with resource limits
+- **Kubernetes**: Full Helm chart with deployment manifests
+- **CI/CD**: Complete GitHub Actions workflows for build, test, and release
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Using Docker (Recommended)
 
@@ -62,7 +63,7 @@ git clone <repository-url>
 cd vscode-web-main
 
 # 2. Set your password
-echo "IDE_PASSWORD=your-secure-password" > .env
+echo "PASSWORD=your-secure-password" > .env
 
 # 3. Start with Docker Compose
 docker-compose up -d
@@ -73,55 +74,58 @@ docker-compose up -d
 ### Using NPM
 
 ```bash
-# 1. Install dependencies
+# 1. Install dependencies (Node 22 required)
 npm install
 
-# 2. Build
+# 2. Build VS Code and the server
 npm run build:vscode
 npm run build
 
-# 3. Start
+# 3. Start the server
 PASSWORD=your-password npm start
+
+# 4. Access at http://localhost:8080
 ```
 
 ---
 
-## 📖 Documentation
-
-- **[Integration Guide](INTEGRATION_GUIDE.md)** - Complete integration examples
-- **[Analysis Report](ANALYSIS_REPORT.md)** - Detailed codebase analysis
-- **[Configuration](.env.example)** - All configuration options
-
----
-
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
-Create a `.env` file (see `.env.example`):
+Create a `.env` file based on `.env.example`:
 
 ```bash
+# Server Configuration
 IDE_PORT=8080
+IDE_HOST=0.0.0.0
+
+# Authentication
 IDE_PASSWORD=your-secure-password
+
+# Features
 DISABLE_TELEMETRY=true
-APP_NAME=My IDE
+DISABLE_UPDATE_CHECK=true
+
+# Customization
+APP_NAME=My VS Code Server
 ```
 
 ### Configuration File
 
-Or use `config.yaml`:
+Alternatively, use a YAML config file:
 
 ```yaml
 bind-addr: 0.0.0.0:8080
 auth: password
-password: your-password
+password: your-secure-password
 disable-telemetry: true
-app-name: My IDE
+user-data-dir: ~/.local/share/code-server
 ```
 
 ---
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 ### Quick Deploy
 
@@ -130,299 +134,398 @@ docker run -d \
   -p 8080:8080 \
   -e PASSWORD=your-password \
   -v $(pwd)/workspace:/home/coder/project \
-  vscode-web-ide:latest
+  vscode-web:latest
 ```
 
-### With Docker Compose
-
-```yaml
-version: "3.8"
-services:
-  ide:
-    image: vscode-web-ide:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - PASSWORD=your-password
-    volumes:
-      - ./workspace:/home/coder/project
-      - vscode-data:/home/coder/.local/share/code-server
-volumes:
-  vscode-data:
-```
-
----
-
-## ☸️ Kubernetes Deployment
+### Build Your Own Image
 
 ```bash
-# 1. Create secret
-kubectl create secret generic ide-secrets \
-  --from-literal=password=your-password
+# Build optimized image
+docker build -f Dockerfile.optimized -t vscode-web:latest .
 
-# 2. Apply deployment
-kubectl apply -f k8s/
+# Run with custom configuration
+docker run -d \
+  --name vscode-web \
+  -p 8080:8080 \
+  -e PASSWORD=your-password \
+  -v ./workspace:/home/coder/project \
+  -v vscode-data:/home/coder/.local/share/code-server \
+  --security-opt no-new-privileges \
+  --read-only \
+  vscode-web:latest
+```
 
-# 3. Access via ingress
-# https://ide.yourdomain.com
+### Docker Compose
+
+The included `docker-compose.yml` provides:
+
+- Resource limits (2 CPU cores, 2GB RAM)
+- Health checks (30s interval)
+- Volume persistence
+- Security hardening
+- Optional nginx reverse proxy
+
+```bash
+docker-compose up -d
 ```
 
 ---
 
-## 🔌 Integration Examples
+## Kubernetes Deployment
 
-### Embed in Express App
+A production-ready Helm chart is available in `ci/helm-chart/`.
 
-```typescript
-import express from "express"
-import { createIDEMiddleware } from "@vscode-web-ide/core"
+```bash
+# 1. Create namespace
+kubectl create namespace code-server
 
-const app = express()
+# 2. Create password secret
+kubectl create secret generic code-server-secret \
+  --from-literal=password=your-secure-password \
+  -n code-server
 
-app.use(
-  "/ide",
-  createIDEMiddleware({
-    auth: { type: "password", password: "secret" },
-    basePath: "/ide",
-  }),
-)
+# 3. Install with Helm
+helm install code-server ./ci/helm-chart \
+  --namespace code-server \
+  --set persistence.enabled=true \
+  --set persistence.size=10Gi
 
-app.listen(3000)
+# 4. Access via service/ingress
+kubectl get svc -n code-server
 ```
 
-### Use Plugin System
-
-```typescript
-import { WebIDE, BasePlugin } from "@vscode-web-ide/core"
-
-class MyPlugin extends BasePlugin {
-  metadata = {
-    name: "my-plugin",
-    version: "1.0.0",
-  }
-
-  async init(context) {
-    context.app.use("/api/custom", this.customRoute)
-  }
-}
-
-const ide = new WebIDE({
-  port: 8080,
-  plugins: [new MyPlugin()],
-})
-
-await ide.start()
-```
+The Helm chart includes:
+- Deployment with configurable replicas
+- Persistent Volume Claims
+- Service and Ingress
+- ConfigMaps and Secrets
+- Resource limits and requests
+- Health checks and readiness probes
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────┐
-│         Modern UI Layer                 │
-│  (Design System + Accessibility)        │
-└─────────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────┐
-│       Plugin System & SDK               │
-│  (Modular, Extensible Architecture)     │
-└─────────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────┐
-│     Security & Middleware Layer         │
-│  (CSRF, Headers, Rate Limiting)         │
-└─────────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────┐
-│         Express Server                  │
-│  (HTTP + WebSocket Support)             │
-└─────────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────┐
-│         VS Code Integration             │
-│  (Full IDE Functionality)               │
-└─────────────────────────────────────────┘
-```
-
----
-
-## 📂 Project Structure
+## Project Structure
 
 ```
 vscode-web-main/
 ├── src/
-│   ├── core/               # Core SDK & Plugin System
-│   │   ├── plugin.ts       # Plugin architecture
-│   │   ├── config.ts       # Configuration management
-│   │   └── security.ts     # Security middleware
-│   ├── node/               # Backend code
-│   │   ├── routes/         # API routes
-│   │   └── middleware/     # Express middleware
-│   └── browser/            # Frontend code
-│       └── pages/          # UI pages & components
-│           ├── modern-login.html      # New login page
-│           ├── modern-login.css       # Modern styles
-│           └── design-system.css      # Design tokens
-├── docker-compose.yml      # Docker Compose config
-├── Dockerfile.optimized    # Optimized Docker build
-├── .env.example            # Environment template
-├── INTEGRATION_GUIDE.md    # Integration docs
-├── ANALYSIS_REPORT.md      # Technical analysis
-└── README.md               # This file
+│   ├── browser/              # Frontend assets
+│   │   ├── pages/           # HTML pages (modern login, error pages)
+│   │   ├── media/           # Images and icons
+│   │   └── serviceWorker.ts # Service worker for offline support
+│   │
+│   ├── node/                # Backend server
+│   │   ├── entry.ts        # Main entry point
+│   │   ├── app.ts          # Express app setup
+│   │   ├── cli.ts          # CLI argument parsing
+│   │   ├── routes/         # HTTP routes
+│   │   ├── services/       # Service layer (monitoring, audit, etc.)
+│   │   ├── utils/          # Request batching, timeouts
+│   │   └── workers/        # Argon2 worker pool
+│   │
+│   └── common/             # Shared utilities
+│
+├── test/                   # Comprehensive test suite
+│   ├── unit/              # Jest unit tests
+│   ├── integration/       # Integration tests
+│   └── e2e/               # Playwright E2E tests
+│
+├── ci/                     # CI/CD and deployment
+│   ├── build/             # Build scripts
+│   ├── dev/               # Development scripts
+│   ├── helm-chart/        # Kubernetes Helm chart
+│   └── steps/             # CI pipeline steps
+│
+├── docs/                   # Documentation
+├── .github/workflows/      # GitHub Actions CI/CD
+├── docker-compose.yml      # Docker Compose configuration
+├── Dockerfile.optimized    # Production Docker image
+└── package.json           # Dependencies and scripts
 ```
 
 ---
 
-## 🎯 Key Improvements
+## Architecture
 
-### ✅ What's Been Improved
-
-1. **Modular Architecture**
-   - Plugin system for extensibility
-   - Clean dependency injection
-   - SDK for easy integration
-
-2. **Modern UI**
-   - Professional design (2024 standards)
-   - Fully responsive and accessible
-   - Smooth animations and loading states
-   - Design system with CSS variables
-
-3. **Security Hardening**
-   - CSRF protection
-   - Comprehensive security headers
-   - Input sanitization
-   - Rate limiting
-   - Audit logging
-
-4. **Deployment Ready**
-   - Optimized Docker images
-   - Kubernetes manifests
-   - Docker Compose configs
-   - Environment-based configuration
-   - Health checks
-
-5. **Developer Experience**
-   - Complete documentation
-   - Integration examples
-   - Type-safe configuration
-   - Error handling
-   - Testing support
+```
+┌─────────────────────────────────────┐
+│      Modern Browser UI              │
+│  (Service Worker + Modern Login)    │
+└─────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────┐
+│     Security & Performance          │
+│  (Headers, Rate Limiting,           │
+│   Brotli, HTTP/2, Caching)          │
+└─────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────┐
+│     Express Server + Monitoring     │
+│  (Audit Logs, Prometheus Metrics)   │
+└─────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────┐
+│       VS Code Integration           │
+│  (Full IDE, Extensions, Terminal)   │
+└─────────────────────────────────────┘
+```
 
 ---
 
-## 🔐 Security
+## Security
 
-### Authentication
+### Implemented Security Features
 
-Supports multiple authentication methods:
+- **Password Security**: Argon2 hashing with worker pool
+- **Security Headers**:
+  - Content Security Policy (CSP)
+  - HTTP Strict Transport Security (HSTS)
+  - X-Frame-Options: SAMEORIGIN
+  - X-Content-Type-Options: nosniff
+  - X-XSS-Protection
+  - Referrer-Policy
+  - Permissions-Policy
+- **Rate Limiting**: Login protection (2 req/min + 12 req/hour)
+- **Request Timeout**: 30-second timeout to prevent hanging requests
+- **HTTPS/TLS**: Custom certificate support
+- **Audit Logging**: File-based audit trail with rotation
 
-- **Password** (default): Argon2-hashed passwords
-- **OAuth**: Integration-ready
-- **Custom**: Via plugin system
+### Security Best Practices
 
-### Security Features
+When deploying to production:
 
-- ✅ CSRF token protection
-- ✅ Content Security Policy
-- ✅ HTTP Strict Transport Security
-- ✅ X-Frame-Options protection
-- ✅ Input sanitization
-- ✅ Rate limiting
-- ✅ Secure session management
-
----
-
-## 📊 Performance
-
-### Benchmarks
-
-| Metric        | Before | After  |
-| ------------- | ------ | ------ |
-| Build time    | ~5 min | <2 min |
-| First load    | ~3s    | <1s    |
-| Bundle size   | ~50MB  | ~10MB  |
-| Test coverage | 60%    | 85%+   |
-
-### Optimizations
-
-- Multi-stage Docker builds
-- Code splitting
-- Template caching
-- Static asset caching
-- Gzip compression
+1. **Always use HTTPS** with valid certificates
+2. **Use strong passwords** (minimum 12 characters)
+3. **Keep dependencies updated** (use Dependabot)
+4. **Monitor audit logs** regularly
+5. **Set up resource limits** in Docker/K8s
+6. **Use secrets management** (not environment variables in production)
+7. **Enable rate limiting** on reverse proxy
 
 ---
 
-## 🧪 Testing
+## Performance
+
+### Active Optimizations
+
+| Feature | Implementation | Benefit |
+|---------|---------------|---------|
+| Brotli Compression | Enabled on all text content | 40-45% bandwidth reduction |
+| HTTP/2 | Active with fallback | Faster parallel requests |
+| Static File Caching | Request deduplication | Reduced disk I/O |
+| Settings Debouncing | 1-second debounce | 98% fewer disk writes |
+| Request Batching | Batched static files | Improved throughput |
+| Worker Pool | Argon2 hashing | Non-blocking auth |
+
+### Build Performance
 
 ```bash
-# Run unit tests
+# Production build
+npm run build:vscode  # ~2-3 minutes
+npm run build         # ~30 seconds
+
+# Development watch mode
+npm run watch         # Hot reload enabled
+```
+
+---
+
+## Testing
+
+Comprehensive test suite with 60%+ code coverage:
+
+```bash
+# Run all unit tests
 npm run test:unit
 
 # Run integration tests
 npm run test:integration
 
-# Run e2e tests
+# Run E2E tests (Playwright)
 npm run test:e2e
 
-# Check coverage
-npm run test:coverage
+# Run specific tests
+npm run test:scripts
+npm run test:native
+```
+
+### Test Coverage
+
+- **Unit Tests**: Core functionality, routes, services, utilities
+- **Integration Tests**: Extension installation, help commands
+- **E2E Tests**: Login, logout, terminal, extensions, file operations, webview
+
+Coverage reports are generated in the `coverage/` directory.
+
+---
+
+## Development
+
+### Prerequisites
+
+- Node.js 22.x
+- npm or yarn
+- Git
+
+### Development Workflow
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Build VS Code (first time only)
+npm run build:vscode
+
+# 3. Start development server with watch mode
+npm run watch
+
+# 4. Make changes and test
+npm run test:unit
+
+# 5. Lint and format
+npm run lint:ts
+npm run prettier
+```
+
+### Code Quality
+
+- **ESLint**: TypeScript linting with strict rules
+- **Prettier**: Code formatting (tabs, 120 char width)
+- **TypeScript**: Strict type checking
+- **Jest**: Unit and integration testing
+- **Playwright**: E2E testing
+
+---
+
+## Monitoring
+
+### Prometheus Metrics
+
+The `/metrics` endpoint exposes Prometheus-compatible metrics:
+
+```bash
+# Access metrics
+curl http://localhost:8080/metrics
+```
+
+Available metrics:
+- HTTP request duration
+- HTTP request count by status code
+- Active connections
+- System resource usage
+
+### Monitoring Dashboard
+
+Access the built-in monitoring dashboard at:
+
+```
+http://localhost:8080/monitoring-dashboard
+```
+
+### Health Checks
+
+```bash
+# Health check endpoint
+curl http://localhost:8080/healthz
+
+# Response: { "status": "ok" }
 ```
 
 ---
 
-## 🤝 Contributing
+## CI/CD
+
+GitHub Actions workflows handle:
+
+- **Build**: Compile and test on every push
+- **Test**: Unit, integration, and E2E tests
+- **Security**: CodeQL analysis and Trivy container scanning
+- **Release**: Automated releases with semantic versioning
+- **Publish**: Docker image publishing
+- **Dependencies**: Automated Dependabot updates
+
+View workflows in `.github/workflows/`.
+
+---
+
+## Roadmap
+
+### Implemented ✅
+
+- [x] Core VS Code server functionality
+- [x] Docker deployment with optimization
+- [x] Kubernetes Helm chart
+- [x] Security headers and HTTPS
+- [x] Performance optimizations (Brotli, HTTP/2, caching)
+- [x] Monitoring with Prometheus
+- [x] Audit logging
+- [x] Comprehensive testing suite
+- [x] CI/CD with GitHub Actions
+
+### Planned 📋
+
+- [ ] Multi-user support with user isolation
+- [ ] Plugin system integration
+- [ ] OAuth authentication providers
+- [ ] Advanced CSRF protection on all forms
+- [ ] Real-time collaboration
+- [ ] Cloud storage integration (S3, GCS, Azure)
+- [ ] Extension marketplace
+- [ ] Horizontal scaling with session persistence
+
+---
+
+## Documentation
+
+- **[Getting Started Guide](GETTING_STARTED.md)** - Detailed setup instructions
+- **[Changelog](CHANGELOG.md)** - Version history and changes
+- **[Improvements](IMPROVEMENTS_IMPLEMENTED.md)** - Implemented improvements
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute
+- **[Architecture Docs](docs/architecture/)** - Technical architecture details
+- **[Historical Audits](docs/historical-audits/)** - Past security and code audits
+
+---
+
+## Contributing
 
 Contributions are welcome! Please:
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes with tests
+4. Ensure tests pass (`npm run test:unit`)
+5. Lint your code (`npm run lint:ts`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
-## 📝 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
----
-
-## 🙏 Acknowledgments
-
-- Built on [code-server](https://github.com/coder/code-server)
-- Powered by [VS Code](https://github.com/microsoft/vscode)
-- Inspired by modern web development best practices
+This project is based on [code-server](https://github.com/coder/code-server) by Coder.
 
 ---
 
-## 📞 Support
+## Acknowledgments
 
-- **Documentation**: See `INTEGRATION_GUIDE.md`
-- **Issues**: GitHub Issues
-- **Examples**: `examples/` directory
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Multi-user support
-- [ ] Cloud storage integration (S3, GCS)
-- [ ] Real-time collaboration
-- [ ] Extension marketplace
-- [ ] Custom themes
-- [ ] API v2 with GraphQL
-- [ ] Horizontal scaling support
+- Built on [code-server](https://github.com/coder/code-server) by Coder
+- Powered by [VS Code](https://github.com/microsoft/vscode) by Microsoft
+- Security best practices from OWASP
+- Performance optimizations inspired by modern web standards
 
 ---
 
-## 🌟 Star History
+## Support
 
-If this project helps you, please give it a ⭐!
+- **Issues**: [GitHub Issues](https://github.com/your-org/vscode-web-main/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/vscode-web-main/discussions)
+- **Documentation**: See `docs/` directory
 
 ---
 
-**Made with ❤️ for developers, by developers**
+**Built for developers who need a powerful, secure, and performant web-based development environment.**
