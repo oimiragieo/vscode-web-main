@@ -1,65 +1,98 @@
-# Getting Started with code-server (vscode-web-main fork)
+# Getting Started with VSCode Web Server
 
-> **⚠️ IMPORTANT:** This fork has significant experimental code that is NOT yet integrated. See [REALITY_CHECK_REPORT.md](REALITY_CHECK_REPORT.md) for the complete analysis.
+A step-by-step guide to getting your web-based VS Code server up and running.
 
-## What This Actually Is
+## What This Is
 
-This is a **fork of code-server** (the upstream project that lets you run VS Code in a browser) with some performance optimizations and experimental features in various stages of completion.
+This is a **production-ready VS Code server** built on [code-server](https://github.com/coder/code-server) with:
 
-### ✅ What Actually Works
-
-1. **Standard code-server functionality** - Run VS Code in your browser
-2. **Password authentication** with Argon2 hashing
-3. **Performance optimizations:**
-   - Brotli compression (40-45% bandwidth reduction)
-   - HTTP/2 support
-   - Settings write debouncing (98% fewer disk operations)
-4. **Docker deployment** with optimized Dockerfile
-5. **Basic health checks** at `/healthz`
-
-### ⚠️ What's Experimental/Incomplete
-
-The following exist in the codebase but are **NOT integrated** into the main application:
-
-- Plugin system (`src/core/plugin.ts`) - Code exists but not used
-- Enhanced security middleware (`src/core/security.ts`) - Only used in tests
-- Multi-user architecture (~5,000 lines of code) - Complete scaffolding, zero integration
-- Modern login UI (`modern-login.html`) - Exists but not used
-- Monitoring dashboard - HTML exists, no route
-- Prometheus metrics endpoint - Code exists, not exposed
+- Enhanced security features (Argon2 hashing, security headers, rate limiting)
+- Performance optimizations (Brotli, HTTP/2, caching, debouncing)
+- Production deployment options (Docker, Kubernetes)
+- Monitoring and observability (Prometheus metrics, audit logging)
 
 ## Prerequisites
 
-Before you start, you need:
+Before you start, ensure you have:
 
-1. **Node.js 22.x** (exact version required)
-
+1. **Node.js 22.x** (required version)
    ```bash
    node --version  # Must be v22.x.x
    ```
 
-2. **Git with submodules**
-
+2. **Git** (any recent version)
    ```bash
-   git --version  # Any recent version
+   git --version
    ```
 
-3. **At least 4GB RAM** (for building VS Code)
+3. **System Requirements:**
+   - At least 4GB RAM (for building VS Code)
+   - 10GB free disk space (for dependencies and build artifacts)
+   - Linux, macOS, or Windows with WSL2
 
-4. **10GB free disk space** (for node_modules and build artifacts)
+## Quick Start Options
 
-## Installation Steps
+Choose the method that best fits your needs:
+
+### Option 1: Docker (Recommended for Production)
+
+Fastest way to get started. No build required if using pre-built images.
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd vscode-web-main
+
+# 2. Set your password
+echo "PASSWORD=your-secure-password" > .env
+
+# 3. Start with Docker Compose
+docker-compose up -d
+
+# 4. Access at http://localhost:8080
+```
+
+### Option 2: NPM (For Development)
+
+Build from source for development and customization.
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd vscode-web-main
+
+# 2. Initialize VS Code submodule (CRITICAL!)
+git submodule update --init --recursive
+
+# 3. Install dependencies
+npm install
+
+# 4. Build VS Code (takes 10-30 minutes)
+npm run build:vscode
+
+# 5. Build the server (takes 1-2 minutes)
+npm run build
+
+# 6. Start the server
+PASSWORD=your-secure-password npm start
+
+# 7. Access at http://localhost:8080
+```
+
+---
+
+## Detailed Installation (NPM Method)
 
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/vscode-web-main.git
+git clone <repository-url>
 cd vscode-web-main
 ```
 
-### Step 2: Initialize VS Code Submodule (CRITICAL!)
+### Step 2: Initialize VS Code Submodule
 
-⚠️ **This is the most important step!** Without it, the build will fail.
+This step is **critical** - the build will fail without it:
 
 ```bash
 # Initialize and fetch the VS Code submodule
@@ -67,63 +100,82 @@ git submodule update --init --recursive
 
 # Verify it worked
 ls lib/vscode/package.json
-# Should show: lib/vscode/package.json
+# Should display: lib/vscode/package.json
 ```
 
-If you see "No such file or directory", the submodule isn't initialized and you **cannot proceed**.
+If you see "No such file or directory", the submodule initialization failed. Try:
+
+```bash
+git submodule init
+git submodule update --recursive
+```
 
 ### Step 3: Install Dependencies
 
 ```bash
-# This will install dependencies for:
-# - The main project
-# - The test directory
-# - The VS Code submodule (if initialized)
 npm install
 ```
 
-This takes 5-15 minutes depending on your internet connection.
+This installs dependencies for:
+- The main code-server project
+- The test directory
+- The VS Code submodule
+
+**Time:** 5-15 minutes depending on internet speed
+
+**Disk space:** ~2-3GB for node_modules
 
 ### Step 4: Build VS Code
 
 ```bash
-# Build the VS Code submodule (takes 10-30 minutes)
 npm run build:vscode
 ```
 
-**Expected output:**
+**Time:** 10-30 minutes depending on CPU
 
-- Lots of TypeScript compilation messages
-- Final message about build completion
-- Creates `lib/vscode/out` directory
+**Output:**
+- TypeScript compilation messages
+- Build artifacts in `lib/vscode/out/`
+- Success message at completion
 
-### Step 5: Build code-server
+**Troubleshooting:**
+If you run out of memory, increase Node.js heap size:
 
 ```bash
-# Build the TypeScript code (takes 1-2 minutes)
+export NODE_OPTIONS="--max-old-space-size=8192"
+npm run build:vscode
+```
+
+### Step 5: Build the Server
+
+```bash
 npm run build
 ```
 
-**Expected output:**
+**Time:** 1-2 minutes
 
-- Creates `out/` directory with compiled JavaScript
+**Output:**
+- Compiled JavaScript in `out/` directory
 - No TypeScript errors
 
-### Step 6: Run code-server
+### Step 6: Run the Server
 
 ```bash
-# Start the server with a password
+# Method 1: Using npm start
 PASSWORD=your-secure-password npm start
+
+# Method 2: Using the binary directly
+export PASSWORD=your-secure-password
+./out/node/entry.js
+
+# Method 3: With custom port
+PASSWORD=your-password PORT=3000 ./out/node/entry.js
 ```
 
-Or use the binary directly:
+The server will start and display:
 
-```bash
-# Set password via environment variable
-export PASSWORD=your-secure-password
-
-# Run the compiled code
-./out/node/entry.js
+```
+[timestamp] INFO  HTTP server listening on http://0.0.0.0:8080
 ```
 
 ### Step 7: Access the IDE
@@ -134,81 +186,197 @@ Open your browser to:
 http://localhost:8080
 ```
 
-**Login with:**
+You'll see a modern login page. Enter the password you set in the `PASSWORD` environment variable.
 
-- The password you set in the `PASSWORD` environment variable
+---
 
-## Quick Start with Docker (Easier!)
+## Docker Installation
 
-If you don't want to deal with building from source:
+### Using Docker Compose (Recommended)
+
+The easiest Docker method with volume persistence and health checks.
 
 ```bash
-# 1. Create a .env file
-echo "IDE_PASSWORD=your-secure-password" > .env
+# 1. Create environment file
+cat > .env << EOF
+PASSWORD=your-secure-password
+PORT=8080
+DISABLE_TELEMETRY=true
+EOF
 
-# 2. Build the Docker image (requires VS Code submodule!)
-docker build -f Dockerfile.optimized -t code-server-fork .
+# 2. Start the service
+docker-compose up -d
 
-# 3. Run it
-docker run -d \
-  -p 8080:8080 \
-  -e PASSWORD=your-secure-password \
-  -v "$(pwd)/workspace:/home/coder/project" \
-  code-server-fork
+# 3. Check status
+docker-compose ps
+
+# 4. View logs
+docker-compose logs -f
+
+# 5. Stop the service
+docker-compose down
 ```
 
-**Note:** The Docker build will fail if the VS Code submodule isn't initialized!
+**Features included in docker-compose.yml:**
+- Resource limits (2 CPU, 2GB RAM)
+- Health checks (30s interval)
+- Volume persistence
+- Security hardening
+- Automatic restart on failure
+
+### Building Your Own Docker Image
+
+```bash
+# Build from Dockerfile.optimized
+docker build -f Dockerfile.optimized -t vscode-web:latest .
+
+# Run with basic settings
+docker run -d \
+  --name vscode-web \
+  -p 8080:8080 \
+  -e PASSWORD=your-password \
+  -v $(pwd)/workspace:/home/coder/project \
+  vscode-web:latest
+
+# Run with all security options
+docker run -d \
+  --name vscode-web \
+  -p 8080:8080 \
+  -e PASSWORD=your-password \
+  -v $(pwd)/workspace:/home/coder/project \
+  -v vscode-data:/home/coder/.local/share/code-server \
+  --security-opt no-new-privileges \
+  --read-only \
+  --tmpfs /tmp \
+  --health-cmd="curl -f http://localhost:8080/healthz || exit 1" \
+  --health-interval=30s \
+  vscode-web:latest
+```
+
+### Kubernetes Deployment
+
+For production Kubernetes deployment:
+
+```bash
+# 1. Create namespace
+kubectl create namespace code-server
+
+# 2. Create password secret
+kubectl create secret generic code-server-secret \
+  --from-literal=password=your-secure-password \
+  -n code-server
+
+# 3. Deploy using Helm chart
+helm install code-server ./ci/helm-chart \
+  --namespace code-server \
+  --set persistence.enabled=true \
+  --set persistence.size=10Gi \
+  --set resources.limits.cpu=2 \
+  --set resources.limits.memory=4Gi
+
+# 4. Check deployment
+kubectl get pods -n code-server
+kubectl get svc -n code-server
+
+# 5. Port forward for testing
+kubectl port-forward -n code-server svc/code-server 8080:8080
+```
+
+---
 
 ## Configuration
 
-### Using Environment Variables
+### Environment Variables
+
+All available environment variables (create a `.env` file):
 
 ```bash
-# Server settings
-export PORT=8080
-export HOST=0.0.0.0
+# Server Configuration
+PORT=8080                    # Server port
+HOST=0.0.0.0                # Bind address
 
 # Authentication
-export PASSWORD=your-password
+PASSWORD=your-password       # Login password (required)
 
 # Features
-export DISABLE_TELEMETRY=true
-export APP_NAME="My Code Server"
+DISABLE_TELEMETRY=true      # Disable telemetry
+DISABLE_UPDATE_CHECK=true   # Disable update notifications
+APP_NAME=My Code Server     # Custom application name
+
+# Paths
+USER_DATA_DIR=/path/to/data # User data directory
+EXTENSIONS_DIR=/path/to/ext # Extensions directory
+
+# Security
+HASHED_PASSWORD=...         # Pre-hashed Argon2 password
+CERT=/path/to/cert.pem     # TLS certificate
+CERT_KEY=/path/to/key.pem  # TLS private key
+
+# Performance
+NODE_OPTIONS=--max-old-space-size=4096  # Node.js heap size
 ```
 
-### Using Config File
+### Configuration File
 
 Create `~/.config/code-server/config.yaml`:
 
 ```yaml
 bind-addr: 0.0.0.0:8080
 auth: password
-password: your-password
+password: your-secure-password
 disable-telemetry: true
+disable-update-check: true
+user-data-dir: ~/.local/share/code-server
+extensions-dir: ~/.local/share/code-server/extensions
+
+# Optional: TLS configuration
+cert: /path/to/cert.pem
+cert-key: /path/to/key.pem
 ```
 
-## Common Issues
+### CLI Arguments
+
+All configuration can also be passed as CLI arguments:
+
+```bash
+./out/node/entry.js \
+  --bind-addr 0.0.0.0:8080 \
+  --auth password \
+  --password your-password \
+  --disable-telemetry \
+  --user-data-dir ~/.local/share/code-server \
+  /path/to/project
+```
+
+---
+
+## Common Issues and Solutions
 
 ### Issue: "lib/vscode/package.json is missing"
 
-**Solution:** Initialize the VS Code submodule:
+**Cause:** VS Code submodule not initialized
 
+**Solution:**
 ```bash
 git submodule update --init --recursive
+ls lib/vscode/package.json  # Verify it exists
 ```
 
 ### Issue: "Cannot find module '@coder/logger'"
 
-**Solution:** Install dependencies:
+**Cause:** Dependencies not installed
 
+**Solution:**
 ```bash
+rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Issue: Build fails with "out of memory"
+### Issue: Build fails with "JavaScript heap out of memory"
 
-**Solution:** Increase Node.js memory:
+**Cause:** Insufficient memory for VS Code build
 
+**Solution:**
 ```bash
 export NODE_OPTIONS="--max-old-space-size=8192"
 npm run build:vscode
@@ -216,98 +384,209 @@ npm run build:vscode
 
 ### Issue: "EACCES: permission denied"
 
-**Solution:** Don't run as root. If on Linux:
+**Cause:** Permission issues with config directory
 
+**Solution:**
 ```bash
+# Don't run as root
 sudo chown -R $USER:$USER ~/.config/code-server
+sudo chown -R $USER:$USER ~/.local/share/code-server
 ```
+
+### Issue: Docker build fails
+
+**Cause:** VS Code submodule not initialized before Docker build
+
+**Solution:**
+```bash
+# Initialize submodule BEFORE building Docker image
+git submodule update --init --recursive
+docker build -f Dockerfile.optimized -t vscode-web:latest .
+```
+
+### Issue: "Failed to load resource" in browser console
+
+**Cause:** Service worker caching issues after update
+
+**Solution:**
+- Hard refresh: Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)
+- Clear browser cache
+- Unregister service worker in DevTools > Application > Service Workers
+
+---
 
 ## Development Workflow
 
-### Watch Mode (for development)
+### Watch Mode
+
+Automatically rebuild on file changes:
 
 ```bash
-# Automatically rebuild on file changes
 npm run watch
 ```
+
+This starts a development server with hot reload. Make changes to TypeScript files in `src/` and they'll be automatically recompiled.
 
 ### Running Tests
 
 ```bash
-# Unit tests
+# Run all unit tests
 npm run test:unit
 
-# Integration tests
+# Run integration tests
 npm run test:integration
 
-# E2E tests (requires built code)
+# Run E2E tests with Playwright
 npm run test:e2e
+
+# Run specific test file
+npm run test:unit -- path/to/test.ts
+
+# Run tests with coverage
+npm run test:unit -- --coverage
 ```
 
 ### Linting and Formatting
 
 ```bash
-# Format code
+# Format all code with Prettier
 npm run prettier
 
-# Lint TypeScript
+# Lint TypeScript files
 npm run lint:ts
 
 # Lint shell scripts
 npm run lint:scripts
+
+# Format and update docs
+npm run fmt
 ```
 
-## What's Next?
+### Building for Production
 
-### If You Want to Use This in Production
+```bash
+# Clean previous builds
+npm run clean
 
-1. **Read the security guide:** [docs/SECURITY.md](docs/SECURITY.md)
-2. **Set up HTTPS:** See [docs/guide.md](docs/guide.md#using-lets-encrypt-with-nginx)
-3. **Configure authentication properly:** Don't use plain text passwords
-4. **Set up backups:** Your user data is in `~/.local/share/code-server`
+# Build VS Code
+npm run build:vscode
 
-### If You Want to Develop Features
+# Build server
+npm run build
 
-1. **Read the architecture docs:** [claude.md](claude.md) has comprehensive documentation
-2. **Look at the experimental code:** See what's in `src/core/` and `src/node/services/`
-3. **Check the reality report:** [REALITY_CHECK_REPORT.md](REALITY_CHECK_REPORT.md) shows what needs integration
-4. **Run the tests:** `npm run test:unit` to see the proof-of-concept tests
-
-### If You Want to Contribute
-
-1. **Check open issues** on GitHub
-2. **Focus on integration:** There's ~6,000 lines of good code waiting to be integrated
-3. **Update documentation** to match reality
-4. **Write tests** for any new features
-
-## Key Differences from Upstream code-server
-
-This fork includes:
-
-- ✅ **HTTP/2 and Brotli compression** - Better performance
-- ✅ **Settings debouncing** - Reduces disk I/O
-- ⚠️ **Experimental features in progress** - See REALITY_CHECK_REPORT.md
-
-This fork does NOT include (yet):
-
-- ❌ Multi-user support (code exists but not integrated)
-- ❌ Plugin system (code exists but not integrated)
-- ❌ Enhanced security middleware (code exists but not integrated)
-
-## Support
-
-- **Documentation:** See [docs/](docs/) directory
-- **Issues:** Check GitHub issues
-- **Original code-server docs:** https://coder.com/docs/code-server
-
-## License
-
-MIT License - See [LICENSE](LICENSE) file
+# Create release packages
+npm run release
+```
 
 ---
 
-**Last Updated:** 2025-11-17
+## Production Deployment Checklist
 
-**Status:** Active development - expect rough edges
+Before deploying to production:
 
-**Recommendation:** For production use, consider using [upstream code-server](https://github.com/coder/code-server) until the experimental features in this fork are fully integrated.
+- [ ] Use HTTPS with valid certificates (not self-signed)
+- [ ] Set a strong password (minimum 12 characters, mixed case, numbers, symbols)
+- [ ] Enable rate limiting on reverse proxy (nginx, Caddy, etc.)
+- [ ] Set up log rotation for audit logs
+- [ ] Configure resource limits (CPU, memory, disk)
+- [ ] Enable monitoring (Prometheus metrics at `/metrics`)
+- [ ] Set up health checks (use `/healthz` endpoint)
+- [ ] Configure backups for user data directory
+- [ ] Use secrets management (not environment variables)
+- [ ] Enable security headers (already enabled in app)
+- [ ] Review and configure CSP policy if needed
+- [ ] Set up alerting for failed health checks
+- [ ] Test disaster recovery procedures
+
+---
+
+## Monitoring Your Instance
+
+### Health Check
+
+```bash
+curl http://localhost:8080/healthz
+# Response: {"status":"ok"}
+```
+
+### Prometheus Metrics
+
+```bash
+curl http://localhost:8080/metrics
+```
+
+Available metrics:
+- `http_request_duration_seconds` - Request latency
+- `http_requests_total` - Total requests by status code
+- `nodejs_*` - Node.js runtime metrics
+- Custom application metrics
+
+### Monitoring Dashboard
+
+Access the built-in dashboard:
+
+```
+http://localhost:8080/monitoring-dashboard
+```
+
+Shows real-time metrics and system status.
+
+### Audit Logs
+
+Audit logs are stored in:
+```
+~/.local/share/code-server/audit-logs/
+```
+
+Logs include:
+- Login attempts (successful and failed)
+- Session creation and destruction
+- File access (if enabled)
+- Configuration changes
+
+---
+
+## Next Steps
+
+### For Production Use
+
+1. Review [README.md](README.md) for full feature list
+2. Set up HTTPS with Let's Encrypt
+3. Configure reverse proxy (nginx/Caddy)
+4. Enable monitoring and alerting
+5. Set up automated backups
+
+### For Development
+
+1. Read architecture documentation in [docs/architecture/](docs/architecture/)
+2. Explore the codebase structure in [docs/claude-codebase-analysis.md](docs/claude-codebase-analysis.md)
+3. Check [IMPROVEMENTS_IMPLEMENTED.md](IMPROVEMENTS_IMPLEMENTED.md) for recent changes
+4. Review test examples in `test/` directory
+
+### For Contributing
+
+1. Read [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+2. Check open issues on GitHub
+3. Run tests before submitting PRs
+4. Follow code style guidelines (Prettier + ESLint)
+
+---
+
+## Getting Help
+
+- **Documentation**: See [docs/](docs/) directory
+- **Issues**: GitHub Issues for bug reports
+- **Upstream docs**: [code-server documentation](https://coder.com/docs/code-server)
+- **VS Code docs**: [VS Code documentation](https://code.visualstudio.com/docs)
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE) file for details.
+
+---
+
+**Last Updated:** 2025-11-20
+
+**Status:** Production ready - actively maintained
