@@ -229,7 +229,7 @@ Express application factory:
 | Service                        | Location                                                   | Purpose                                           | Integration Status                                         |
 | ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
 | **PasswordWorkerPool**         | `src/node/workers/PasswordWorkerPool.ts`                   | Worker threads for Argon2 (200-400ms faster auth) | ✅ Integrated (util.ts:149,169)                            |
-| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ⚠️ Available (utility class, not activated as middleware)  |
+| **RequestBatcher**             | `src/node/utils/RequestBatcher.ts`                         | Request deduplication (30-50% fewer requests)     | ✅ Integrated (routes/index.ts:42,52 for static files)     |
 | **RequestTimeout**             | `src/node/utils/RequestTimeout.ts`                         | Timeout handling & retry with backoff             | ✅ Integrated (routes/index.ts:116-131)                    |
 | **ExtensionMemoryMonitor**     | `src/node/services/extensions/ExtensionMemoryMonitor.ts`   | Memory tracking & leak detection (512MB limit)    | ✅ Integrated (routes/index.ts:274)                        |
 | **MessageCoalescer**           | `src/node/services/extensions/MessageCoalescer.ts`         | IPC batching (20% overhead reduction)             | ✅ Available (initialized but not auto-enabled for IPC)    |
@@ -239,7 +239,7 @@ Express application factory:
 | **SecurityHeaders**            | `src/node/services/security/SecurityHeaders.ts`            | OWASP security headers                            | ❌ Orphaned (using core/security.ts via app.ts:78 instead) |
 | **ExtensionSignatureVerifier** | `src/node/services/security/ExtensionSignatureVerifier.ts` | Extension signature validation                    | ❌ Orphaned                                                |
 
-**Integration Summary:** ✅ **7 of 10 Fully Integrated** (PasswordWorkerPool, RequestTimeout, ExtensionMemoryMonitor, ExtensionCache, MessageCoalescer, PrometheusMetrics, plus security headers from core/security.ts). ⚠️ **1 Available** (RequestBatcher ready but not activated). ❌ **2 Orphaned** (Advanced security services RateLimiter and ExtensionSignatureVerifier not used).
+**Integration Summary:** ✅ **9 of 10 Fully Integrated** (PasswordWorkerPool, RequestBatcher, RequestTimeout, ExtensionMemoryMonitor, ExtensionCache, MessageCoalescer, PrometheusMetrics, AuditLogger, plus security headers from core/security.ts). ❌ **1 Orphaned** (ExtensionSignatureVerifier not used).
 
 **Evidence:**
 
@@ -247,21 +247,24 @@ Express application factory:
 - Metrics middleware active at `src/node/routes/index.ts:137` via `metricsMiddleware()`
 - Periodic metrics collection at `src/node/routes/index.ts:267` via `startMetricsCollection(10000)`
 - Request timeout middleware at `src/node/routes/index.ts:116-131`
+- Request batcher activated at `src/node/routes/index.ts:42,52` via `getRequestBatcher()`
+- Audit logger initialized at `src/node/routes/index.ts:167` via `initializeAuditLogger()`
+- Audit events logged in `src/node/routes/login.ts` and `src/node/routes/logout.ts`
 - Security integration at `src/node/app.ts:78` via `setupSecurity()`
 
 ### Multi-User Services ❌ (Not Integrated - Orphaned)
 
-| Service                  | Location                                              | Purpose                                               | Lines | Status            |
-| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ----- | ----------------- |
-| **AuthService**          | `src/node/services/auth/AuthService.ts`               | User authentication, session management, login/logout | 475   | ❌ Orphaned       |
-| **UserRepository**       | `src/node/services/auth/UserRepository.ts`            | User data persistence (Memory, SQLite, PostgreSQL)    | 254   | ❌ Orphaned       |
-| **SessionStore**         | `src/node/services/session/SessionStore.ts`           | Session storage (Memory, Redis, Database)             | 572   | ❌ Orphaned       |
-| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas          | 335   | ❌ Orphaned       |
-| **AuditLogger**          | `src/node/services/audit/AuditLogger.ts`              | Security audit logging (File, Database)               | 338   | ❌ Orphaned       |
-| **MultiUserConfig**      | `src/node/services/config/MultiUserConfig.ts`         | Multi-user configuration loader                       | 330   | ❌ Orphaned       |
-| **MultiUserService**     | `src/node/services/MultiUserService.ts`               | Service container & orchestration                     | N/A   | ❌ Does not exist |
+| Service                  | Location                                              | Purpose                                               | Lines | Status                                        |
+| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ----- | --------------------------------------------- |
+| **AuthService**          | `src/node/services/auth/AuthService.ts`               | User authentication, session management, login/logout | 475   | ❌ Orphaned                                   |
+| **UserRepository**       | `src/node/services/auth/UserRepository.ts`            | User data persistence (Memory, SQLite, PostgreSQL)    | 254   | ❌ Orphaned                                   |
+| **SessionStore**         | `src/node/services/session/SessionStore.ts`           | Session storage (Memory, Redis, Database)             | 572   | ❌ Orphaned                                   |
+| **UserIsolationManager** | `src/node/services/isolation/UserIsolationManager.ts` | User environment isolation & resource quotas          | 335   | ❌ Orphaned                                   |
+| **AuditLogger**          | `src/node/services/audit/AuditLogger.ts`              | Security audit logging (File, Database)               | 338   | ✅ Integrated (audit.ts, login.ts, logout.ts) |
+| **MultiUserConfig**      | `src/node/services/config/MultiUserConfig.ts`         | Multi-user configuration loader                       | 330   | ❌ Orphaned                                   |
+| **MultiUserService**     | `src/node/services/MultiUserService.ts`               | Service container & orchestration                     | N/A   | ❌ Does not exist                             |
 
-**Total**: ~2,304 lines of orphaned code. None of these services are imported or used in the main application. This is a design specification with implementation scaffolding, NOT a functional feature. See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md#1-multi-user-services-2304-lines----orphaned) for details.
+**Total**: ~1,966 lines of orphaned code (338 lines of AuditLogger now integrated). The remaining services are not imported or used in the main application. This is a design specification with implementation scaffolding, NOT a functional feature. See [COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md](COMPREHENSIVE_CODEBASE_AUDIT_2025-11-19.md#1-multi-user-services-2304-lines----orphaned) for details.
 
 ### Request Flow
 

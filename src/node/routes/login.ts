@@ -7,6 +7,8 @@ import { rootPath } from "../constants"
 import { authenticated, getCookieOptions, redirect, replaceTemplates } from "../http"
 import i18n from "../i18n"
 import { getPasswordMethod, handlePasswordValidation, sanitizeString, escapeHtml } from "../util"
+import { createAuditEvent, logAuditEvent } from "../audit"
+import { AuditEventType } from "../services/types"
 
 // RateLimiter wraps around the limiter library for logins.
 // It allows 2 logins every minute plus 12 logins every hour.
@@ -79,6 +81,19 @@ router.post<{}, string, { password?: string; base?: string } | undefined, { to?:
   try {
     // Check to see if they exceeded their login attempts
     if (!limiter.canTry()) {
+      // AUDIT: Log rate limit violation
+      await logAuditEvent(
+        createAuditEvent(
+          AuditEventType.UserLoginFailed,
+          req,
+          "failure",
+          {
+            method: "password",
+            reason: "rate_limit_exceeded",
+          },
+          "Login rate limit exceeded",
+        ),
+      )
       throw new Error(i18n.t("LOGIN_RATE_LIMIT") as string)
     }
 
@@ -104,19 +119,30 @@ router.post<{}, string, { password?: string; base?: string } | undefined, { to?:
       // obfuscation purposes (and as a side effect it handles escaping).
       res.cookie(CookieKeys.Session, hashedPassword, getCookieOptions(req))
 
+      // AUDIT: Log successful login
+      await logAuditEvent(
+        createAuditEvent(AuditEventType.UserLogin, req, "success", {
+          method: "password",
+          to: (typeof req.query.to === "string" && req.query.to) || "/",
+        }),
+      )
+
       const to = (typeof req.query.to === "string" && req.query.to) || "/"
       return redirect(req, res, to, { to: undefined })
     }
 
-    // Failed login - log the attempt
-    console.error(
-      "Failed login attempt",
-      JSON.stringify({
-        xForwardedFor: req.headers["x-forwarded-for"],
-        remoteAddress: req.connection.remoteAddress,
-        userAgent: req.headers["user-agent"],
-        timestamp: Math.floor(new Date().getTime() / 1000),
-      }),
+    // AUDIT: Log failed login attempt with proper audit trail
+    await logAuditEvent(
+      createAuditEvent(
+        AuditEventType.UserLoginFailed,
+        req,
+        "failure",
+        {
+          method: "password",
+          reason: "incorrect_password",
+        },
+        "Incorrect password provided",
+      ),
     )
 
     throw new Error(i18n.t("INCORRECT_PASSWORD") as string)
